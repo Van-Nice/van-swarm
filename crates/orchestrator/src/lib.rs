@@ -1,123 +1,149 @@
 //! # rustmastra-orchestrator
 //!
-//! Graph-based workflow orchestration engine.
+//! Graph-based workflow orchestration engine for the RustMastra agent framework.
 //!
-//! Implements checklist §4: directed-graph execution with arena allocation,
-//! parallel node scheduling, conditional edges, and HITL pause/resume.
+//! ## Key types
 //!
-//! ## Key types (§4 — to be implemented)
+//! | Type | Purpose |
+//! |------|---------|
+//! | [`GraphBuilder`] | Fluent API for composing nodes and edges |
+//! | [`ExecutionGraph`] | Compiled, immutable graph (petgraph + slotmap) |
+//! | [`FlowRunner`] | Executes a graph; manages the ready queue |
+//! | [`Task`] | Trait for a single node's logic |
+//! | [`NextAction`] | What a node instructs the runner to do next |
+//! | [`NodeKey`] | Generational index into the node arena |
 //!
-//! * `GraphBuilder` – fluent API: `.then()`, `.branch()`, `.parallel()`
-//! * `FlowRunner`   – executes a graph; manages Ready Queue
-//! * `AgentNode`    – one step (agent or pure function) in the graph
-//! * `NextAction`   – `Continue | Parallelize | WaitForInput | End`
+//! ## Quick example
+//!
+//! ```rust,no_run
+//! use rustmastra_orchestrator::{FlowRunner, GraphBuilder, NextAction, NodeKey, Task};
+//! use async_trait::async_trait;
+//! use serde::{Deserialize, Serialize};
+//! use std::sync::Arc;
+//!
+//! #[derive(Clone, Default, Serialize, Deserialize)]
+//! struct PipelineState { result: String }
+//!
+//! struct ExtractNode;
+//!
+//! #[async_trait]
+//! impl Task for ExtractNode {
+//!     type State = PipelineState;
+//!     async fn run(&self, _key: NodeKey, mut s: PipelineState)
+//!         -> rustmastra_core::Result<(PipelineState, NextAction)>
+//!     {
+//!         s.result = "extracted".into();
+//!         Ok((s, NextAction::Continue))
+//!     }
+//!     fn name(&self) -> &str { "extract" }
+//! }
+//!
+//! #[tokio::main]
+//! async fn main() -> rustmastra_core::Result<()> {
+//!     let mut b = GraphBuilder::new();
+//!     let n = b.add_node(ExtractNode);
+//!     b.start(n);
+//!     let graph = Arc::new(b.build());
+//!     let result = FlowRunner::new(graph)
+//!         .run(serde_json::json!({}))
+//!         .await?;
+//!     println!("{:?}", result.state);
+//!     Ok(())
+//! }
+//! ```
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
-use slotmap::{new_key_type, DenseSlotMap};
+pub mod graph;
+pub mod runner;
+pub mod task;
+
+// ── Re-exports ────────────────────────────────────────────────────────────────
+
+pub use graph::{EdgeKind, ExecutionGraph, GraphBuilder, Predicate};
+pub use runner::{FlowRunner, RunResult, RunStatus, RunnerConfig};
+pub use task::{ErasedTask, TaskAdapter};
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Node key (generational index — prevents ABA problem)
+// NodeKey
 // ─────────────────────────────────────────────────────────────────────────────
+
+use slotmap::new_key_type;
 
 new_key_type! {
-    /// Stable handle into the `DenseSlotMap<NodeKey, AgentNode>`.
+    /// Stable, generational handle into the `DenseSlotMap<NodeKey, _>`.
+    ///
+    /// A `NodeKey` remains valid even after other nodes are removed (ABA-safe).
     pub struct NodeKey;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NextAction / TaskResult (checklist §4.10)
+// NextAction
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// What a node instructs the `FlowRunner` to do after it completes.
+use serde::{Deserialize, Serialize};
+
+/// What a task instructs the `FlowRunner` to do after it finishes.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NextAction {
-    /// Proceed to the next node(s) in the graph.
+    /// Follow all outgoing edges whose conditions pass; schedule eligible
+    /// successors in the next round.
     Continue,
 
-    /// Spawn several independent branches in parallel.
-    Parallelize { node_keys: Vec<NodeKey> },
+    /// Immediately schedule the listed nodes, bypassing edge conditions.
+    ///
+    /// Used to implement explicit fan-out or cyclic evaluator-optimizer loops.
+    Parallelize {
+        node_keys: Vec<NodeKey>,
+    },
 
-    /// Pause and wait for external input before resuming.
-    /// The workflow state is checkpointed to the durable journal.
+    /// Pause the workflow and surface a prompt to a human operator.
+    ///
+    /// `FlowRunner::run()` returns `RunStatus::WaitingForInput` so the caller
+    /// can collect the response and resume the workflow.
     WaitForInput {
-        /// Describes what input is required (shown to the human approver).
+        /// Human-readable description of what input is required.
         prompt: String,
     },
 
-    /// The workflow has finished successfully.
+    /// Terminate traversal from this node; do not follow its successors.
     End,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Task trait (checklist §4.9)
+// Task trait
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// A single node in the execution graph.
+use async_trait::async_trait;
+
+/// A single, executable node in the `ExecutionGraph`.
 ///
-/// `State` is the data structure accumulated across nodes:
-/// `S_{n+1} = S_n + result(node_n)`.
+/// `State` is the data structure shared across all nodes in the graph.
+/// Each call receives the current state and must return an updated state plus
+/// a `NextAction` that tells the runner what to do next.
+///
+/// ## State merging
+///
+/// When multiple nodes run in parallel, their output states are JSON-merged
+/// (right-wins on scalar conflicts) into the single accumulated state before
+/// the next round of scheduling.
 #[async_trait]
 pub trait Task: Send + Sync {
-    /// The shared state type flowing through the graph.
+    /// The shared state type that flows through the graph.
+    ///
+    /// Must be `Serialize + DeserializeOwned` so it can be erased to
+    /// `serde_json::Value` and restored for each node.
     type State: Send + Sync + Clone + Serialize + serde::de::DeserializeOwned + 'static;
 
-    /// Execute this task and return the updated state + what to do next.
+    /// Execute this node.
+    ///
+    /// # Errors
+    ///
+    /// Return `Err` to propagate a fatal error that aborts the entire run.
     async fn run(
         &self,
         key: NodeKey,
         state: Self::State,
     ) -> rustmastra_core::Result<(Self::State, NextAction)>;
 
+    /// Human-readable name used in logs and error messages.
     fn name(&self) -> &str;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Graph topology (§4.1–4.4) — stubs; full implementation in next phase
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// A directed, possibly-cyclic execution graph.
-///
-/// Internal representation: `petgraph::stable_graph::StableGraph` for
-/// topology + `slotmap::DenseSlotMap` for node data.
-/// Full implementation: checklist §4.
-pub struct ExecutionGraph {
-    _topology: petgraph::stable_graph::StableGraph<NodeKey, ()>,
-    _nodes: DenseSlotMap<NodeKey, String>, // placeholder: will hold Box<dyn Task>
-}
-
-impl ExecutionGraph {
-    pub fn new() -> Self {
-        Self {
-            _topology: petgraph::stable_graph::StableGraph::new(),
-            _nodes: DenseSlotMap::with_key(),
-        }
-    }
-}
-
-impl Default for ExecutionGraph {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Fluent builder for `ExecutionGraph`.
-pub struct GraphBuilder {
-    graph: ExecutionGraph,
-}
-
-impl GraphBuilder {
-    pub fn new() -> Self {
-        Self { graph: ExecutionGraph::new() }
-    }
-
-    pub fn build(self) -> ExecutionGraph {
-        self.graph
-    }
-}
-
-impl Default for GraphBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
 }

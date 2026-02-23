@@ -23,5 +23,6 @@ chrono.workspace      = true
 schemars.workspace    = true
 
 [dev-dependencies]
-tokio     = { workspace = true, features = ["test-util"] }
+tokio              = { workspace = true, features = ["test-util"] }
 tracing-subscriber.workspace = true
+tempfile           = "3"

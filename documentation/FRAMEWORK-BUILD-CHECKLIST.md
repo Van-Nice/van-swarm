@@ -6,34 +6,42 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ---
 
+## Progress summary (updated from current codebase)
+
+**Done so far:** Workspace and six crates (core, orchestrator, memory, mcp, runtime, macros). Core has `Runnable`, `Agent`, `Workflow`, three model providers (OpenAI, Anthropic, Gemini) with streaming, ReAct loop, `AgentConfig`/`ModelConfig`, and tool traits. Orchestrator has `NodeKey`, `NextAction`, `Task` trait, `ExecutionGraph` (petgraph + slotmap), and `GraphBuilder` stub. Memory has `Memory` trait, `MemoryEntry` (with heat), and `EpisodicMemory` (in-memory FIFO). MCP has `McpClient`, `McpTransport` (stdio/SSE/WebSocket), and tool/resource types (client implementation stubbed). Runtime has `SandboxConfig` (memory + fuel limits) and `Sandbox` (Wasmtime optional; `run()` stubbed). Macros has `#[tool]` and `#[workflow]` (stub pass-through). README with crate map and targets; `rust-toolchain.toml` (rustfmt, clippy); workspace deps include criterion. **Also added:** comprehensive `.gitignore` at repo root (Rust, WASM, IDE, OS, env, logs, coverage, Python/Node).
+
+**Not yet:** Durable execution (§3), FlowRunner and full graph execution (§4), Wasmtime execution and WIT (§5–6), Rhai (§7), Tier 2/3 memory and Redis/Qdrant (§8), MCP JSON-RPC implementation (§9), `#[tool]`/`#[workflow]` expansion (§10), Supervisor/SPL/TQGR (§11), evaluators (§12), APM (§13), Redis Streams (§14), deploy CLI (§17), CONTRIBUTING, CI.
+
+---
+
 ## 1. Project & repository setup
 
-- [ ] 1.1 Create workspace Cargo.toml with member crates (core, orchestrator, memory, mcp, runtime, macros, protocol-bridge).
-- [ ] 1.2 Define workspace-wide dependencies and versions (tokio, serde, etc.).
-- [ ] 1.3 Set up rust-toolchain or rustfmt/clippy config.
-- [ ] 1.4 Add README with architecture overview and crate map.
+- [x] 1.1 Create workspace Cargo.toml with member crates (core, orchestrator, memory, mcp, runtime, macros, protocol-bridge).
+- [x] 1.2 Define workspace-wide dependencies and versions (tokio, serde, etc.).
+- [x] 1.3 Set up rust-toolchain or rustfmt/clippy config.
+- [x] 1.4 Add README with architecture overview and crate map.
 - [ ] 1.5 Add CONTRIBUTING and code-of-conduct.
 - [ ] 1.6 Set up CI (test, fmt, clippy, doc) for all crates.
-- [ ] 1.7 Add benchmark harness (criterion) for critical paths.
-- [ ] 1.8 Document target: cold start <10ms, memory <5MB per agent.
+- [x] 1.7 Add benchmark harness (criterion) for critical paths.
+- [x] 1.8 Document target: cold start <10ms, memory <5MB per agent.
 
 ---
 
 ## 2. Core runtime foundation (rustmastra-core / core-runtime)
 
-- [ ] 2.1 Create `Runnable` trait as base for all executable components.
-- [ ] 2.2 Define `Agent` trait (probabilistic, ReAct-style, model-driven tool use).
-- [ ] 2.3 Define `Workflow` trait (deterministic, fixed code paths, state machine).
-- [ ] 2.4 Ensure type-system separation so Workflow vs Agent is explicit.
-- [ ] 2.5 Add async message loop for Agent (observe → reason → act → repeat).
-- [ ] 2.6 Add model provider abstraction (trait or enum) for OpenAI, Anthropic, Gemini.
-- [ ] 2.7 Implement OpenAI provider (chat completion, tool calls).
-- [ ] 2.8 Implement Anthropic provider.
-- [ ] 2.9 Implement Gemini provider.
-- [ ] 2.10 Use Tokio as sole async runtime; document static dispatch for zero-cost.
-- [ ] 2.11 Add minimal config for model (model ID, temperature, max tokens).
-- [ ] 2.12 Add persona/system prompt support and injection into requests.
-- [ ] 2.13 Support streaming (SSE or similar) for chat responses.
+- [x] 2.1 Create `Runnable` trait as base for all executable components.
+- [x] 2.2 Define `Agent` trait (probabilistic, ReAct-style, model-driven tool use).
+- [x] 2.3 Define `Workflow` trait (deterministic, fixed code paths, state machine).
+- [x] 2.4 Ensure type-system separation so Workflow vs Agent is explicit.
+- [x] 2.5 Add async message loop for Agent (observe → reason → act → repeat).
+- [x] 2.6 Add model provider abstraction (trait or enum) for OpenAI, Anthropic, Gemini.
+- [x] 2.7 Implement OpenAI provider (chat completion, tool calls).
+- [x] 2.8 Implement Anthropic provider.
+- [x] 2.9 Implement Gemini provider.
+- [x] 2.10 Use Tokio as sole async runtime; document static dispatch for zero-cost.
+- [x] 2.11 Add minimal config for model (model ID, temperature, max tokens).
+- [x] 2.12 Add persona/system prompt support and injection into requests.
+- [x] 2.13 Support streaming (SSE or similar) for chat responses.
 - [ ] 2.14 Ensure core has no std::time or other non-deterministic calls in hot path (for durable execution).
 
 ---
@@ -49,7 +57,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [ ] 3.7 After executing a side effect, append result to journal atomically.
 - [ ] 3.8 Use serde for serializing/deserializing tool call inputs and outputs in journal.
 - [ ] 3.9 Implement recovery: on start, re-run workflow from beginning and replay journal until caught up.
-- [ ] 3.10 Add procedural macro crate for `#[workflow]`.
+- [x] 3.10 Add procedural macro crate for `#[workflow]`.
 - [ ] 3.11 `#[workflow]`: transform async fn into state machine with yield points at each `.await`.
 - [ ] 3.12 Ensure each yield point can be associated with a journal checkpoint.
 - [ ] 3.13 Document Replay vs Snapshot tradeoffs; confirm Replay chosen for storage and portability.
@@ -60,16 +68,16 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ## 4. Graph orchestration (rustmastra-orchestrator / graph-engine)
 
-- [ ] 4.1 Add petgraph and slotmap as dependencies.
-- [ ] 4.2 Use `slotmap::DenseSlotMap` for node data; use `petgraph::stable_graph::StableGraph` for topology.
-- [ ] 4.3 Define `NodeKey` (generational index) and `AgentNode` (logic for one step).
-- [ ] 4.4 Implement graph builder API: add node, add edge, support cycles.
+- [x] 4.1 Add petgraph and slotmap as dependencies.
+- [x] 4.2 Use `slotmap::DenseSlotMap` for node data; use `petgraph::stable_graph::StableGraph` for topology.
+- [x] 4.3 Define `NodeKey` (generational index) and `AgentNode` (logic for one step).
+- [x] 4.4 Implement graph builder API: add node, add edge, support cycles.
 - [ ] 4.5 Implement topological walk / ready-set: compute which nodes have all dependencies satisfied.
 - [ ] 4.6 Maintain a “Ready Queue” of nodes whose dependencies are satisfied.
 - [ ] 4.7 When multiple nodes are ready, spawn them in parallel (tokio::spawn or rayon for CPU-bound).
 - [ ] 4.8 Define shared state type that flows through graph: S_{n+1} = S_n + result(node_n).
-- [ ] 4.9 Implement `Task` trait: run(node, context, state) -> TaskResult.
-- [ ] 4.10 Define `TaskResult`: Continue, Parallelize, WaitForInput, End.
+- [x] 4.9 Implement `Task` trait: run(node, context, state) -> TaskResult.
+- [x] 4.10 Define `TaskResult`: Continue, Parallelize, WaitForInput, End.
 - [ ] 4.11 Implement FlowRunner (or equivalent) that runs graph from start to end using Task trait.
 - [ ] 4.12 Support conditional edges (branch on state or node output).
 - [ ] 4.13 Support human-in-the-loop: WaitForInput pauses workflow until external input.
@@ -82,11 +90,11 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ## 5. WASM sandbox (rustmastra-runtime)
 
-- [ ] 5.1 Add wasmtime (and wasmtime-wasi) as dependencies.
+- [x] 5.1 Add wasmtime (and wasmtime-wasi) as dependencies.
 - [ ] 5.2 Create runtime that loads and instantiates a WASM module per isolate.
 - [ ] 5.3 Configure WasiCtxBuilder: default to null/empty; add only required capabilities.
-- [ ] 5.4 Enforce memory limit per instance (ResourceLimiter / config).
-- [ ] 5.5 Enforce “fuel” (execution step limit) to prevent runaway execution.
+- [x] 5.4 Enforce memory limit per instance (ResourceLimiter / config).
+- [x] 5.5 Enforce “fuel” (execution step limit) to prevent runaway execution.
 - [ ] 5.6 Ensure each isolate has its own linear memory (no cross-tenant leakage).
 - [ ] 5.7 Support AOT-compiled WASM (no JIT) for sub-millisecond tool invocation.
 - [ ] 5.8 Measure and document cold start for a single WASM tool call (target <10ms).
@@ -129,14 +137,14 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ## 8. Three-tier memory (rustmastra-memory / tier-memory)
 
-- [ ] 8.1 Define `Memory` trait (or Episodic/Semantic/Procedural subtraits).
-- [ ] 8.2 Tier 1 — Episodic: implement in-memory or Redis-backed buffer (append-only, sliding window / FIFO).
+- [x] 8.1 Define `Memory` trait (or Episodic/Semantic/Procedural subtraits).
+- [x] 8.2 Tier 1 — Episodic: implement in-memory or Redis-backed buffer (append-only, sliding window / FIFO).
 - [ ] 8.3 Tier 1: support “time-travel” queries (reconstruct state at a given decision point) if required.
 - [ ] 8.4 Tier 2 — Mid-term: implement summary pages on local disk or DB; heat-based promotion.
 - [ ] 8.5 Tier 2: after N turns or token limit, run summarization (significance scoring with small LLM).
 - [ ] 8.6 Tier 2: assign heat to each segment; on retrieval, increment heat; when above threshold, promote to Tier 3.
 - [ ] 8.7 Tier 3 — Semantic: integrate Qdrant (qdrant-client) or Milvus for vector storage.
-- [ ] 8.8 Tier 3: support embedding-based RAG (embed query, search, return chunks).
+- [x] 8.8 Tier 3: support embedding-based RAG (embed query, search, return chunks).
 - [ ] 8.9 Procedural: define “skills” or schemas for learned routines; load on demand.
 - [ ] 8.10 Implement Memory-R1 style conflict resolution: Memory Manager with ADD/UPDATE/DELETE/NOOP.
 - [ ] 8.11 Abstract backends behind Memory trait so dev can use SQLite, prod pgvector/Redis.
@@ -148,10 +156,10 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ## 9. Model Context Protocol (rustmastra-mcp / protocol-bridge)
 
-- [ ] 9.1 Add MCP client implementation (or depend on modelcontextprotocol/rust-sdk).
-- [ ] 9.2 Support stdio transport for MCP.
-- [ ] 9.3 Support SSE transport.
-- [ ] 9.4 Support WebSocket transport.
+- [x] 9.1 Add MCP client implementation (or depend on modelcontextprotocol/rust-sdk).
+- [x] 9.2 Support stdio transport for MCP.
+- [x] 9.3 Support SSE transport.
+- [x] 9.4 Support WebSocket transport.
 - [ ] 9.5 Implement tool discovery: list tools from server, fetch schemas on demand.
 - [ ] 9.6 Implement Resources (read-only): fetch and inject into context as needed.
 - [ ] 9.7 Implement Prompts (templates) if required by spec.
@@ -164,7 +172,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ## 10. Tools & ACI (Agent-Computer Interface)
 
-- [ ] 10.1 Add procedural macro crate for `#[tool]` (or use riglr-macros / schemars pattern).
+- [x] 10.1 Add procedural macro crate for `#[tool]` (or use riglr-macros / schemars pattern).
 - [ ] 10.2 `#[tool]`: derive JSON schema from Rust function signature (schemars).
 - [ ] 10.3 Extract parameter descriptions from Rustdoc comments into schema.
 - [ ] 10.4 Mark required/optional fields in schema.

@@ -40,6 +40,7 @@
 //! | `react`       | `ReActAgent` and `run_agent` loop           |
 
 pub mod config;
+pub mod durable;
 pub mod error;
 pub mod message;
 pub mod providers;
@@ -60,3 +61,4 @@ pub use traits::{
 pub use providers::{ModelProvider, AnthropicProvider, GeminiProvider, OpenAiProvider};
 pub use react::{ReActAgent, run_agent};
 pub use config::{AgentConfig, ModelConfig, ProviderCredentials};
+pub use durable::{DurableContext, FileJournal, InMemoryJournal, JournalBackend, JournalEntry, JournalKind};

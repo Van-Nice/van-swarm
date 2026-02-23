@@ -254,7 +254,7 @@ pub async fn run_agent(agent: &impl Agent, user_input: impl Into<String>) -> cra
 /// Try to get a reference to the concrete `ReActAgent` for accessing
 /// its `effective_system_prompt()`.  Falls back gracefully if the
 /// runtime agent is not a `ReActAgent`.
-fn agent_as_react<A: Agent>(agent: &A) -> Option<&ReActAgent> {
+fn agent_as_react<A: Agent>(_agent: &A) -> Option<&ReActAgent> {
     // Use `Any` downcasting only if we add `+ Any` to the `Agent` bound,
     // which we deliberately avoid to keep object safety.
     // For now, system-prompt injection is done in `ReActAgent::step()` itself

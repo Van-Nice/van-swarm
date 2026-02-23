@@ -11,9 +11,7 @@
 
 use async_trait::async_trait;
 
-use crate::message::{
-    CompletionRequest, CompletionResponse, Message, ResponseStream, ToolDefinition,
-};
+use crate::message::{CompletionRequest, CompletionResponse, ResponseStream};
 
 pub mod anthropic;
 pub mod gemini;
