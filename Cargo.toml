@@ -1,0 +1,81 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/orchestrator",
+    "crates/memory",
+    "crates/mcp",
+    "crates/runtime",
+    "crates/macros",
+]
+
+[workspace.package]
+version      = "0.1.0"
+edition      = "2021"
+rust-version = "1.82"
+license      = "MIT OR Apache-2.0"
+repository   = "https://github.com/your-org/rust-agent-framework"
+authors      = ["RustMastra Contributors"]
+
+# ─────────────────────────────────────────────────────────────
+# Shared dependency versions — all crates inherit from here.
+# ─────────────────────────────────────────────────────────────
+[workspace.dependencies]
+
+# ── Async runtime ─────────────────────────────────────────────
+tokio        = { version = "1",    features = ["full"] }
+tokio-stream = { version = "0.1",  features = ["sync"] }
+futures      = "0.3"
+async-trait  = "0.1"
+
+# ── Serialisation ─────────────────────────────────────────────
+serde        = { version = "1",   features = ["derive"] }
+serde_json   = "1"
+
+# ── Error handling ────────────────────────────────────────────
+thiserror = "2"
+anyhow    = "1"
+
+# ── Observability ─────────────────────────────────────────────
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"] }
+
+# ── HTTP client ───────────────────────────────────────────────
+# rustls-tls → consistent TLS across platforms; no OpenSSL dep required.
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+
+# ── Utility ───────────────────────────────────────────────────
+uuid    = { version = "1", features = ["v4", "serde"] }
+bytes   = "1"
+chrono  = { version = "0.4", features = ["serde"] }
+
+# ── Schema generation ─────────────────────────────────────────
+schemars = { version = "0.8", features = ["uuid1"] }
+
+# ── Graph / arena ─────────────────────────────────────────────
+petgraph = "0.6"
+slotmap  = { version = "1", features = ["serde"] }
+
+# ── Benchmarks ────────────────────────────────────────────────
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# ── Internal crates ───────────────────────────────────────────
+rustmastra-core        = { path = "crates/core" }
+rustmastra-orchestrator = { path = "crates/orchestrator" }
+rustmastra-memory       = { path = "crates/memory" }
+rustmastra-mcp          = { path = "crates/mcp" }
+rustmastra-runtime      = { path = "crates/runtime" }
+rustmastra-macros       = { path = "crates/macros" }
+
+# ─────────────────────────────────────────────────────────────
+# Workspace-wide profile tuning
+# ─────────────────────────────────────────────────────────────
+[profile.release]
+opt-level     = 3
+lto           = "thin"
+codegen-units = 1
+strip         = "debuginfo"
+
+[profile.bench]
+inherits  = "release"
+debug     = true   # keep symbols for flamegraphs

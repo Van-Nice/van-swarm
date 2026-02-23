@@ -1,0 +1,149 @@
+# --- Rust / Cargo ---
+/target/
+**/target/
+# Cargo.lock: commit for apps/workspace (reproducible builds); add "Cargo.lock" to ignore if only publishing libs
+*.rs.bk
+*.pdb
+*.rlib
+*.rmeta
+*.d
+*.dSYM/
+
+# --- Build artifacts ---
+/dist/
+/build/
+*.so
+*.dylib
+*.dll
+*.exe
+!**/benches/*.exe
+!**/examples/*.exe
+
+# --- WASM (build outputs; source .wat/.wasm in repo are optional) ---
+*.wasm
+!tests/**/*.wasm
+!fixtures/**/*.wasm
+!examples/**/*.wasm
+/wasm/target/
+**/pkg/
+*.wasm.map
+
+# --- IDE / Editor ---
+.idea/
+*.iml
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+.cursor/
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- Environment / Secrets ---
+.env
+.env.*
+!.env.example
+*.local
+.env.local
+.env.*.local
+.secret
+*.pem
+*.key
+credentials*
+*.credentials
+
+# --- Logs / Temp / Cache ---
+*.log
+/logs/
+/tmp/
+/temp/
+/tmp/
+.cache/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# --- Test / Coverage ---
+coverage/
+*.profraw
+*.profdata
+tarpaulin-report.html
+tarpaulin-report.xml
+lcov.info
+.grcov/
+/coverage/
+
+# --- Documentation (generated) ---
+/doc/
+/docs/book/
+*.pdf
+!documentation/**/*.pdf
+
+# --- Python (if any tooling / scripts) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+ENV/
+.eggs/
+*.egg-info/
+*.egg
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# --- Node (if any frontend / tooling) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+.yarn-integrity
+.next/
+.nuxt/
+dist/
+out/
+.nx/cache
+
+# --- Debug / Profiling ---
+*.gcda
+*.gcno
+perf.data
+perf.data.old
+flamegraph.svg
+flamegraph.txt
+
+# --- Local / Editor config (keep examples only) ---
+.claude/
+*.local.json
+!*.local.json.example
+
+# --- JetBrains ---
+.idea/
+*.iml
+out/
+
+# --- Misc ---
+*.orig
+*.rej
+.cache
+*.pid
+*.seed
+*.pid.lock
+.grpc/

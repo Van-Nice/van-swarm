@@ -1,0 +1,21 @@
+[package]
+name        = "rustmastra-macros"
+description = "Procedural macros (#[tool], #[workflow]) for RustMastra"
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+repository.workspace = true
+authors.workspace    = true
+
+# proc-macro crates MUST declare this.
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote       = "1"
+syn         = { version = "2", features = ["full"] }
+schemars    = { workspace = true }
+
+[dev-dependencies]
+rustmastra-core.workspace = true

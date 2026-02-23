@@ -1,0 +1,28 @@
+[package]
+name        = "rustmastra-runtime"
+description = "Wasmtime-based WASM sandbox runtime for RustMastra tool isolation"
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+repository.workspace = true
+authors.workspace    = true
+
+[features]
+default = ["wasm"]
+# Gate the heavy wasmtime dependency behind a feature flag so it's opt-in.
+wasm    = ["dep:wasmtime", "dep:wasmtime-wasi"]
+
+[dependencies]
+rustmastra-core.workspace = true
+tokio.workspace           = true
+async-trait.workspace     = true
+serde.workspace           = true
+serde_json.workspace      = true
+thiserror.workspace       = true
+tracing.workspace         = true
+# Optional heavy deps – only compiled when "wasm" feature is active.
+wasmtime      = { version = "26", optional = true }
+wasmtime-wasi = { version = "26", optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

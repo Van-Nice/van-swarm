@@ -1,0 +1,25 @@
+[package]
+name        = "rustmastra-orchestrator"
+description = "Graph-based workflow orchestration engine for RustMastra"
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+repository.workspace = true
+authors.workspace    = true
+
+[dependencies]
+rustmastra-core.workspace = true
+tokio.workspace           = true
+futures.workspace         = true
+async-trait.workspace     = true
+serde.workspace           = true
+serde_json.workspace      = true
+thiserror.workspace       = true
+tracing.workspace         = true
+petgraph.workspace        = true
+slotmap.workspace         = true
+uuid.workspace            = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
+tracing-subscriber.workspace = true
