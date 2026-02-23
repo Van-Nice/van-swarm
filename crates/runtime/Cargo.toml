@@ -8,9 +8,11 @@ repository.workspace = true
 authors.workspace    = true
 
 [features]
-default = ["wasm"]
+default = ["wasm", "scripting"]
 # Gate the heavy wasmtime dependency behind a feature flag so it's opt-in.
-wasm    = ["dep:wasmtime", "dep:wasmtime-wasi"]
+wasm      = ["dep:wasmtime", "dep:wasmtime-wasi"]
+# Rhai embedded scripting (§7).
+scripting = ["dep:rhai"]
 
 [dependencies]
 rustmastra-core.workspace = true
@@ -23,6 +25,8 @@ tracing.workspace         = true
 # Optional heavy deps – only compiled when "wasm" feature is active.
 wasmtime      = { version = "26", optional = true }
 wasmtime-wasi = { version = "26", optional = true }
+# Rhai embedded scripting engine (§7).
+rhai          = { version = "1", optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
