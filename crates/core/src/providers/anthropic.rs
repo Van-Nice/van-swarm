@@ -67,12 +67,38 @@ impl std::fmt::Debug for AnthropicProvider {
 // Wire types
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Cache-control marker for Anthropic prompt caching (§20.2).
+#[derive(Serialize)]
+struct AntCacheControl {
+    r#type: &'static str,
+}
+
+/// A single block in the Anthropic system-prompt field (needed for cache_control).
+#[derive(Serialize)]
+struct AntSystemBlock {
+    r#type: &'static str,
+    text: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cache_control: Option<AntCacheControl>,
+}
+
+/// Anthropic `system` field: either a plain string or a list of typed blocks.
+///
+/// Plain string is used when caching is off (simpler wire format).
+/// Block list is required when `cache_control` must be attached.
+#[derive(Serialize)]
+#[serde(untagged)]
+enum AntSystemField {
+    Plain(String),
+    Blocks(Vec<AntSystemBlock>),
+}
+
 #[derive(Serialize)]
 struct AntRequest<'a> {
     model: &'a str,
     messages: Vec<AntMessage>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    system: Option<String>,
+    system: Option<AntSystemField>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     tools: Vec<AntTool<'a>>,
     max_tokens: u32,
@@ -193,12 +219,16 @@ struct AntUsageDelta {
 // Conversion helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Split the framework messages into (system_prompt, ant_messages).
+/// Split the framework messages into (system_field, ant_messages).
 ///
 /// Anthropic does not accept a system message in the `messages` array;
-/// it must be passed separately.
-fn split_system(messages: &[Message]) -> (Option<String>, Vec<AntMessage>) {
-    let mut system = None;
+/// it must be passed as a top-level `system` field.
+///
+/// When `cache` is `true`, the system text is emitted as a content-block array
+/// with `cache_control: {"type": "ephemeral"}` on the final block, enabling
+/// Anthropic prompt caching (§20.2).  The beta header must also be set by the caller.
+fn split_system(messages: &[Message], cache: bool) -> (Option<AntSystemField>, Vec<AntMessage>) {
+    let mut system_text: Option<String> = None;
     let mut out = Vec::new();
 
     for msg in messages {
@@ -206,8 +236,8 @@ fn split_system(messages: &[Message]) -> (Option<String>, Vec<AntMessage>) {
             Role::System => {
                 // Concatenate all system messages (there should only be one).
                 let text = msg.text_content();
-                match &mut system {
-                    None => system = Some(text),
+                match &mut system_text {
+                    None => system_text = Some(text),
                     Some(s) => {
                         s.push('\n');
                         s.push_str(&text);
@@ -265,6 +295,20 @@ fn split_system(messages: &[Message]) -> (Option<String>, Vec<AntMessage>) {
         }
     }
 
+    // Convert the collected system text into the appropriate wire format.
+    let system = system_text.map(|text| {
+        if cache {
+            // Emit as a content-block array so cache_control can be attached.
+            AntSystemField::Blocks(vec![AntSystemBlock {
+                r#type: "text",
+                text,
+                cache_control: Some(AntCacheControl { r#type: "ephemeral" }),
+            }])
+        } else {
+            AntSystemField::Plain(text)
+        }
+    });
+
     (system, out)
 }
 
@@ -310,7 +354,7 @@ fn ant_blocks_to_framework(blocks: Vec<AntContentBlock>) -> Message {
 impl ModelProvider for AnthropicProvider {
     #[instrument(skip(self, request), fields(provider = "anthropic", model = %request.model))]
     async fn complete(&self, request: CompletionRequest) -> crate::Result<CompletionResponse> {
-        let (system, messages) = split_system(&request.messages);
+        let (system, messages) = split_system(&request.messages, request.cache_system_prompt);
 
         let max_tokens = request.max_tokens.unwrap_or(4096);
 
@@ -336,12 +380,20 @@ impl ModelProvider for AnthropicProvider {
 
         debug!(model = %request.model, "Sending completion request to Anthropic");
 
-        let resp = self
+        let mut req_builder = self
             .client
             .post(&self.messages_url())
             .header("x-api-key", &self.api_key)
             .header("anthropic-version", Self::ANTHROPIC_VERSION)
-            .header("content-type", "application/json")
+            .header("content-type", "application/json");
+
+        // Prompt caching requires the beta header (§20.2).
+        if request.cache_system_prompt {
+            req_builder =
+                req_builder.header("anthropic-beta", "prompt-caching-2024-07-31");
+        }
+
+        let resp = req_builder
             .json(&body)
             .send()
             .await
@@ -388,7 +440,7 @@ impl ModelProvider for AnthropicProvider {
 
     #[instrument(skip(self, request), fields(provider = "anthropic", model = %request.model))]
     async fn stream(&self, request: CompletionRequest) -> crate::Result<ResponseStream> {
-        let (system, messages) = split_system(&request.messages);
+        let (system, messages) = split_system(&request.messages, request.cache_system_prompt);
         let max_tokens = request.max_tokens.unwrap_or(4096);
 
         let tools: Vec<AntTool<'_>> = request
@@ -411,12 +463,19 @@ impl ModelProvider for AnthropicProvider {
             stream: true,
         };
 
-        let resp = self
+        let mut req_builder = self
             .client
             .post(&self.messages_url())
             .header("x-api-key", &self.api_key)
             .header("anthropic-version", Self::ANTHROPIC_VERSION)
-            .header("content-type", "application/json")
+            .header("content-type", "application/json");
+
+        if request.cache_system_prompt {
+            req_builder =
+                req_builder.header("anthropic-beta", "prompt-caching-2024-07-31");
+        }
+
+        let resp = req_builder
             .json(&body)
             .send()
             .await

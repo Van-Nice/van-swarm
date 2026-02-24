@@ -381,6 +381,13 @@ pub struct CompletionRequest {
     #[serde(default)]
     pub stream: bool,
 
+    /// Whether to cache the system prompt (Anthropic prompt caching, §20.2).
+    ///
+    /// When `true`, the Anthropic provider adds `cache_control: {"type": "ephemeral"}`
+    /// to the system-prompt block.  Ignored by other providers.
+    #[serde(default)]
+    pub cache_system_prompt: bool,
+
     /// Provider-specific extra parameters (passed through as-is).
     #[serde(default, skip_serializing_if = "serde_json::Map::is_empty")]
     pub extra: serde_json::Map<String, serde_json::Value>,
@@ -396,6 +403,7 @@ impl CompletionRequest {
             temperature: None,
             max_tokens: None,
             stream: false,
+            cache_system_prompt: false,
             extra: serde_json::Map::new(),
         }
     }
@@ -417,6 +425,12 @@ impl CompletionRequest {
 
     pub fn streaming(mut self) -> Self {
         self.stream = true;
+        self
+    }
+
+    /// Enable Anthropic prompt caching on the system-prompt block (§20.2).
+    pub fn with_cache_system_prompt(mut self, enabled: bool) -> Self {
+        self.cache_system_prompt = enabled;
         self
     }
 }

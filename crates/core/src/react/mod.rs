@@ -89,7 +89,8 @@ impl Agent for ReActAgent {
         let request = CompletionRequest::new(self.config.model.model_id.clone(), ctx.messages.clone())
             .with_tools(tools)
             .with_temperature(self.config.model.temperature.unwrap_or(0.7))
-            .with_max_tokens(self.config.model.max_tokens.unwrap_or(4096));
+            .with_max_tokens(self.config.model.max_tokens.unwrap_or(4096))
+            .with_cache_system_prompt(self.config.cache_system_prompt);
 
         debug!(
             agent = %self.config.name,

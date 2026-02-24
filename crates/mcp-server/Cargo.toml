@@ -1,0 +1,31 @@
+[package]
+name        = "rustmastra-mcp-server"
+description = "MCP server exposing RustMastra agent-framework capabilities over stdio"
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+repository.workspace = true
+authors.workspace    = true
+
+[[bin]]
+name = "rustmastra-mcp-server"
+path = "src/main.rs"
+
+[dependencies]
+rustmastra-core.workspace    = true
+rustmastra-memory.workspace  = true
+
+# MCP protocol — same SDK as rust-mcp.
+# Features: server handler, stdio transport, proc-macro helpers, schemars integration.
+rmcp = { version = "0.16", features = ["server", "transport-io", "macros", "schemars"] }
+
+# schemars 1.0 is required by rmcp's #[tool] macro (JsonSchema derive).
+# Do NOT use the workspace version (0.8) here — they are distinct crates in the dep graph.
+schemars = "1.0"
+
+tokio.workspace             = true
+serde.workspace             = true
+serde_json.workspace        = true
+tracing.workspace           = true
+tracing-subscriber.workspace = true
+anyhow.workspace            = true

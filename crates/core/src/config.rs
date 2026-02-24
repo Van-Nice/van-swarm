@@ -93,6 +93,17 @@ pub struct AgentConfig {
     /// its system prompt instructing it to reason before each tool call.
     #[serde(default)]
     pub enable_chain_of_thought: bool,
+
+    /// If `true`, request Anthropic-style prompt caching on the system prompt (§20.2).
+    ///
+    /// When enabled, the Anthropic provider adds `cache_control: {"type": "ephemeral"}`
+    /// to the system-prompt block.  Cached tokens cost ~10 % of normal input-token price
+    /// on subsequent requests that share the same prefix, reducing latency and cost for
+    /// agents with long system prompts or large injected context.
+    ///
+    /// Has **no effect** on OpenAI or Gemini providers (ignored silently).
+    #[serde(default)]
+    pub cache_system_prompt: bool,
 }
 
 fn default_max_iterations() -> usize {
@@ -107,6 +118,7 @@ impl AgentConfig {
             system_prompt: None,
             max_iterations: default_max_iterations(),
             enable_chain_of_thought: false,
+            cache_system_prompt: false,
         }
     }
 
@@ -122,6 +134,15 @@ impl AgentConfig {
 
     pub fn with_chain_of_thought(mut self) -> Self {
         self.enable_chain_of_thought = true;
+        self
+    }
+
+    /// Enable Anthropic prompt caching on the system prompt (§20.2).
+    ///
+    /// Reduces cost and latency for repeated calls with the same system prompt
+    /// by caching it on Anthropic's side.  No-op for other providers.
+    pub fn with_prompt_caching(mut self) -> Self {
+        self.cache_system_prompt = true;
         self
     }
 }

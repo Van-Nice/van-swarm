@@ -10,7 +10,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 **Done so far:** Workspace and six crates (core, orchestrator, memory, mcp, runtime, macros). **Core:** `Runnable`, `Agent`, `Workflow`, three model providers (OpenAI, Anthropic, Gemini) with streaming, ReAct loop, `AgentConfig`/`ModelConfig`, tool traits. **Durable execution (§3):** `JournalBackend`, `JournalEntry`/`JournalKind`, `InMemoryJournal`, `FileJournal` (NDJSON WAL), `DurableContext` with `call_tool`, `sleep`, `timestamp`, `run_once`; journal check before execute + inject on replay; `resume()` for recovery; Replay vs Snapshot documented; tiered backends (memory + file); tests for replay/timestamp/sleep. **Orchestrator (§4):** `NodeKey`, `NextAction`, `Task` trait, `ExecutionGraph` (petgraph + slotmap), `GraphBuilder` with `add_node`, `edge`/`then`, `conditional_edge`, `parallel`, `start`, `build`; `FlowRunner` with ready queue, pending predecessor counts, parallel execution (JoinSet), state JSON-merge, `WaitForInput`/`RunStatus::WaitingForInput`, conditional edges (`EdgeKind`), cycles via cycle limit. **Memory:** `Memory` trait, `MemoryEntry` (heat), `EpisodicMemory`. **MCP:** `McpClient`, `McpTransport` (stdio/SSE/WebSocket), types (stubbed impl). **Runtime:** `SandboxConfig`, `Sandbox` (run stubbed). **Macros:** `#[tool]`, `#[workflow]` (stubs). README, `rust-toolchain.toml`, criterion, `.gitignore`. **Docs:** `documentation/rust/` (ownership, heap/stack, async, concurrency, unsafe, traits).
 
-**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.* as checkpoints), wasmtime-wasi-http/jsonrpsee/WASI-Virt/middleware (§6.5–6.8), Redis/Qdrant Tier 2/3 backends (§8.12–8.13), §11.11 Supervisor grading, APM §13.6–13.7, Redis Streams (§14), deploy CLI (§17). **Done this pass:** §11.2–11.4 KeywordRouter (heuristic keyword tier classification) + LlmRouter (LLM-powered classifier); §12.12 GoldenCase/GoldenDataset/GoldenDatasetEval/GoldenDatasetSummary (NDJSON load/save, tag filtering, pass rate); §15.7 EvaluatorOptimizerLoop (generate→score→refine with feedback, best-answer tracking); §15.8 PlanAndExecute (planner→sequential executor→synthesizer with context accumulation). **Prior pass:** §8.4–8.11 Memory Tier 2/3 + MemoryManager; §9.7 MCP prompts; §9.10 FilteredToolExecutor; §15.6 voting patterns; §16.5 guardrails.
+**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.* as checkpoints), wasmtime-wasi-http/jsonrpsee/WASI-Virt/middleware (§6.5–6.8), Redis/Qdrant Tier 2/3 backends (§8.12–8.13), §11.11 Supervisor grading, APM §13.6–13.7, Redis Streams (§14), deploy CLI (§17). **Done this pass:** `crates/mcp-server` — production-grade stdio MCP server using `rmcp` v0.16 (same SDK as rust-mcp). Exposes `rustmastra_run_agent` (full ReAct loop, built-in `time` tool, provider auto-detection via ANTHROPIC_API_KEY/OPENAI_API_KEY/GEMINI_API_KEY), `rustmastra_memory_store/search/recent` (episodic memory), `rustmastra_framework_info`. Ships as `rustmastra-mcp-server` binary (6.1 MB release). Add to `~/.cursor/mcp.json` to use from Cursor IDE alongside rust-mcp. **Prior passes:** §20.2 Prompt caching; §22.1–22.4 Integration tests (130 total passing); §11.2–11.4 KeywordRouter + LlmRouter; §12.12 GoldenDataset; §15.7 EvaluatorOptimizerLoop; §15.8 PlanAndExecute; §8.4–8.11 Memory Tier 2/3 + MemoryManager; §9.7 MCP prompts; §9.10 FilteredToolExecutor; §15.6 voting patterns; §16.5 guardrails.
 
 ---
 
@@ -313,7 +313,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 ## 20. FinOps & pricing
 
 - [ ] 20.1 Value metrics: “Execution Minutes” and “Successful Outcomes” (not failed iterations).
-- [ ] 20.2 Prompt caching: cache system instructions / large context to reduce cost and latency.
+- [x] 20.2 Prompt caching: cache system instructions / large context to reduce cost and latency.
 - [ ] 20.3 Model tiering: route by complexity to minimize cost while preserving accuracy.
 - [ ] 20.4 Budget alerts and token-caching analytics in dashboard.
 - [ ] 20.5 Feature-gate SupervisorAgent / tiered routing as premium capability.
@@ -339,10 +339,10 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ## 22. Testing & quality
 
-- [ ] 22.1 Unit tests for Task trait, state accumulation, and graph transitions.
-- [ ] 22.2 Integration test: full ReAct loop with mock LLM and one tool.
-- [ ] 22.3 Integration test: workflow with cycle (e.g. evaluator-optimizer) and durable replay.
-- [ ] 22.4 Integration test: MCP client discovers and calls tool.
+- [x] 22.1 Unit tests for Task trait, state accumulation, and graph transitions.
+- [x] 22.2 Integration test: full ReAct loop with mock LLM and one tool.
+- [x] 22.3 Integration test: workflow with cycle (e.g. evaluator-optimizer) and durable replay.
+- [x] 22.4 Integration test: MCP client discovers and calls tool.
 - [ ] 22.5 Integration test: Rhai script in sandbox calls MCP tools; gas limit enforced.
 - [ ] 22.6 Integration test: memory Tier 1 → Tier 2 summarization and Tier 2 → Tier 3 heat promotion.
 - [ ] 22.7 Benchmark: cold start &lt;10ms for WASM tool; document results.

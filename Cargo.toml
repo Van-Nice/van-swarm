@@ -5,6 +5,7 @@ members = [
     "crates/orchestrator",
     "crates/memory",
     "crates/mcp",
+    "crates/mcp-server",
     "crates/runtime",
     "crates/macros",
 ]
