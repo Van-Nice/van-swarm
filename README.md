@@ -140,4 +140,4 @@ Step-by-step guides and examples live in **documentation/guides/**: quick start,
 
 ## License
 
-MIT OR Apache-2.0
+MIT OR Apache-2.0 (see [LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE)). Before publishing the repo, set the `repository` URL in the root `Cargo.toml` and see [documentation/OPEN-SOURCE-READINESS.md](documentation/OPEN-SOURCE-READINESS.md).
