@@ -211,6 +211,17 @@ impl Sandbox {
         self.run_compiled(&module, params).await
     }
 
+    /// Safe API: run a WASM script with JSON params and return JSON result (§5.9).
+    ///
+    /// Alias for `run()`; use when the semantic is "script invocation".
+    pub async fn run_script(
+        &self,
+        wasm_bytes: &[u8],
+        params: serde_json::Value,
+    ) -> rustmastra_core::Result<serde_json::Value> {
+        self.run(wasm_bytes, params).await
+    }
+
     /// Execute a pre-compiled module with the given JSON parameters.
     ///
     /// Internally uses `tokio::task::spawn_blocking` so the Tokio thread is

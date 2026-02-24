@@ -29,7 +29,7 @@ flowchart TB
     Transport --> Channel
 
     McpToolExecutor --> McpClient
-    McpToolExecutor ..> ToolExecutor
+    McpToolExecutor -->|implements| ToolExecutor
 
     McpServer --> ToolExecutor
     McpServer --> Channel

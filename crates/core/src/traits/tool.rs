@@ -137,6 +137,8 @@ mod tests {
     use super::*;
     use crate::message::ToolDefinition;
 
+    // ── Hand-written tool (baseline) ───────────────────────────────────────
+
     struct EchoTool;
 
     #[async_trait]
@@ -176,6 +178,41 @@ mod tests {
     async fn registry_returns_error_for_unknown_tool() {
         let reg = LocalToolRegistry::new().register(EchoTool);
         let block = reg.execute("missing_tool", "call_02", serde_json::json!({})).await;
+        assert!(matches!(&block, ContentBlock::ToolResult { is_error: true, .. }));
+    }
+
+    // ── #[tool] macro: schema + type-safe wrapper (§10.2–10.5) ──────────────
+
+    use rustmastra_macros::tool;
+
+    #[tool]
+    /// Echoes the input text back. Use for testing tool dispatch.
+    async fn echo_tool(text: String) -> crate::Result<String> {
+        Ok(text)
+    }
+
+    #[tokio::test]
+    async fn tool_macro_roundtrip() {
+        let reg = LocalToolRegistry::new().register(EchoToolTool);
+        let defs = reg.tool_definitions();
+        assert_eq!(defs.len(), 1);
+        assert_eq!(defs[0].name, "echo_tool");
+        assert!(!defs[0].description.is_empty());
+        assert!(defs[0].parameters.get("properties").is_some(), "JSON schema has properties");
+
+        let block = reg
+            .execute("echo_tool", "call_01", serde_json::json!({"text": "hello"}))
+            .await;
+        assert!(matches!(
+            &block,
+            ContentBlock::ToolResult { content, is_error: false, .. } if content == "hello"
+        ));
+    }
+
+    #[tokio::test]
+    async fn tool_macro_validation_error() {
+        let reg = LocalToolRegistry::new().register(EchoToolTool);
+        let block = reg.execute("echo_tool", "call_02", serde_json::json!({})).await;
         assert!(matches!(&block, ContentBlock::ToolResult { is_error: true, .. }));
     }
 }

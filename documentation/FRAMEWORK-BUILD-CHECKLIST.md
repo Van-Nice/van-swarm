@@ -91,14 +91,14 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 ## 5. WASM sandbox (rustmastra-runtime)
 
 - [x] 5.1 Add wasmtime (and wasmtime-wasi) as dependencies.
-- [ ] 5.2 Create runtime that loads and instantiates a WASM module per isolate.
+- [x] 5.2 Create runtime that loads and instantiates a WASM module per isolate.
 - [ ] 5.3 Configure WasiCtxBuilder: default to null/empty; add only required capabilities.
 - [x] 5.4 Enforce memory limit per instance (ResourceLimiter / config).
 - [x] 5.5 Enforce “fuel” (execution step limit) to prevent runaway execution.
-- [ ] 5.6 Ensure each isolate has its own linear memory (no cross-tenant leakage).
+- [x] 5.6 Ensure each isolate has its own linear memory (no cross-tenant leakage).
 - [ ] 5.7 Support AOT-compiled WASM (no JIT) for sub-millisecond tool invocation.
 - [ ] 5.8 Measure and document cold start for a single WASM tool call (target <10ms).
-- [ ] 5.9 Expose safe API: run_script(wasm_bytes, params) -> result.
+- [x] 5.9 Expose safe API: run_script(wasm_bytes, params) -> result.
 - [ ] 5.10 Add capability-gated access: only expose MCP or specific WIT interfaces to guest.
 - [ ] 5.11 Integrate with WIT (Wasm Interface Type) for guest/host contract.
 - [ ] 5.12 Document security model: no host filesystem or arbitrary network by default.
@@ -173,10 +173,10 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 ## 10. Tools & ACI (Agent-Computer Interface)
 
 - [x] 10.1 Add procedural macro crate for `#[tool]` (or use riglr-macros / schemars pattern).
-- [ ] 10.2 `#[tool]`: derive JSON schema from Rust function signature (schemars).
-- [ ] 10.3 Extract parameter descriptions from Rustdoc comments into schema.
-- [ ] 10.4 Mark required/optional fields in schema.
-- [ ] 10.5 Generate type-safe wrapper: deserialize model output to Rust struct; return validation errors to model.
+- [x] 10.2 `#[tool]`: derive JSON schema from Rust function signature (schemars).
+- [x] 10.3 Extract parameter descriptions from Rustdoc comments into schema.
+- [x] 10.4 Mark required/optional fields in schema.
+- [x] 10.5 Generate type-safe wrapper: deserialize model output to Rust struct; return validation errors to model.
 - [ ] 10.6 Poka-yoke: support enums for parameters; min/max; absolute paths where appropriate.
 - [ ] 10.7 Document tool naming: clear, specific (e.g. fetch_order_history).
 - [ ] 10.8 Document error handling: return structured errors as tool results so model can self-correct.

@@ -7,14 +7,14 @@ Graph-based workflow orchestration: build a DAG (or graph with cycles), then exe
 ```mermaid
 flowchart LR
     subgraph orchestrator["rustmastra-orchestrator"]
-        graph[graph.rs]
+        graph_mod[graph.rs]
         runner[runner.rs]
         task[task.rs]
     end
 
-    runner --> graph
+    runner --> graph_mod
     runner --> task
-    graph --> task
+    graph_mod --> task
 ```
 
 ## Key types
@@ -71,7 +71,7 @@ classDiagram
 ```mermaid
 flowchart TB
     subgraph init["Initialization"]
-        A[FlowRunner::run(initial_state)]
+        A["FlowRunner::run(initial_state)"]
         B[Mark start node ready]
         C[Initialize pending_preds for all nodes]
     end

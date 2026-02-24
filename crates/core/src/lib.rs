@@ -39,6 +39,8 @@
 //! | `providers`   | `ModelProvider` + OpenAI / Anthropic / Gemini|
 //! | `react`       | `ReActAgent` and `run_agent` loop           |
 
+extern crate self as rustmastra_core;
+
 pub mod config;
 pub mod durable;
 pub mod error;

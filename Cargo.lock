@@ -1867,6 +1867,7 @@ dependencies = [
  "chrono",
  "futures",
  "reqwest",
+ "rustmastra-macros",
  "schemars",
  "serde",
  "serde_json",
