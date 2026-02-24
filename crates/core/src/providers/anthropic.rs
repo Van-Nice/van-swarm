@@ -160,6 +160,7 @@ struct AntUsage {
 #[serde(tag = "type", rename_all = "snake_case")]
 enum AntStreamEvent {
     MessageStart {
+        #[allow(dead_code)]
         message: AntMessageStartData,
     },
     ContentBlockStart {
@@ -175,6 +176,7 @@ enum AntStreamEvent {
         index: usize,
     },
     MessageDelta {
+        #[allow(dead_code)]
         delta: AntMessageDelta,
         usage: Option<AntUsageDelta>,
     },
@@ -186,6 +188,7 @@ enum AntStreamEvent {
 
 #[derive(Deserialize)]
 struct AntMessageStartData {
+    #[allow(dead_code)]
     id: String,
     #[allow(dead_code)]
     usage: Option<AntUsage>,
@@ -194,7 +197,10 @@ struct AntMessageStartData {
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum AntContentBlockStart {
-    Text { text: String },
+    Text {
+        #[allow(dead_code)]
+        text: String,
+    },
     ToolUse { id: String, name: String },
 }
 
@@ -207,6 +213,7 @@ enum AntDelta {
 
 #[derive(Deserialize)]
 struct AntMessageDelta {
+    #[allow(dead_code)]
     stop_reason: Option<String>,
 }
 

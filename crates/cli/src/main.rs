@@ -3,6 +3,8 @@
 //! Run from workspace: `cargo run -p vanswarm-cli -- new my_agent`
 //! Or install: `cargo install --path crates/cli` then `vanswarm new my_agent`
 
+mod cursor_rules;
+
 use std::fs;
 use std::path::Path;
 
@@ -18,6 +20,33 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Initialize current (or given) directory as a VanSwarm project: MCP config, .cursor/rules (Rust), and optional libsql data dir.
+    Init {
+        /// Directory to initialize (default: current directory).
+        #[arg(default_value = ".")]
+        path: String,
+
+        /// Only add MCP config and .vanswarm/data; skip creating vanswarm.toml if directory already has one.
+        #[arg(long)]
+        mcp_only: bool,
+
+        /// Overwrite existing .cursor/mcp.json or vanswarm.toml.
+        #[arg(long)]
+        overwrite: bool,
+
+        /// Do not set up .vanswarm/data or VANSWARM_DB_PATH (in-memory only).
+        #[arg(long)]
+        no_libsql: bool,
+
+        /// Do not add .cursor/rules (Rust basics, cargo workflow, refactor, architecture, rust-mcp routing).
+        #[arg(long)]
+        no_cursor_rules: bool,
+
+        /// Log each file created or updated.
+        #[arg(short, long)]
+        verbose: bool,
+    },
+
     /// Create a new agent project with boilerplate.
     New {
         /// Project name (folder and crate name; use underscores for crate).
@@ -124,6 +153,14 @@ impl std::str::FromStr for FrameworkPath {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     match cli.command {
+        Commands::Init {
+            path,
+            mcp_only,
+            overwrite,
+            no_libsql,
+            no_cursor_rules,
+            verbose,
+        } => run_init(path, mcp_only, overwrite, no_libsql, no_cursor_rules, verbose)?,
         Commands::New {
             name,
             path,
@@ -232,6 +269,141 @@ fn run_new(
 
     println!("Done. Next: cd {} && cp .env.example .env && set your API key, then cargo run", out_dir);
     Ok(())
+}
+
+fn run_init(
+    path: String,
+    mcp_only: bool,
+    overwrite: bool,
+    no_libsql: bool,
+    no_cursor_rules: bool,
+    verbose: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let root = Path::new(&path);
+    if !root.exists() {
+        fs::create_dir_all(root)?;
+    }
+    if !root.is_dir() {
+        return Err(format!("{} is not a directory", path).into());
+    }
+
+    let log = |msg: &str| {
+        if verbose {
+            println!("  {}", msg);
+        }
+    };
+
+    println!("Initializing VanSwarm project in {}", root.display());
+
+    // .vanswarm/data/
+    if !no_libsql {
+        let data_dir = root.join(".vanswarm").join("data");
+        fs::create_dir_all(&data_dir)?;
+        log(".vanswarm/data/");
+        let gitkeep = data_dir.join(".gitkeep");
+        if !gitkeep.exists() {
+            fs::write(gitkeep, "")?;
+            log(".vanswarm/data/.gitkeep");
+        }
+        // .gitignore
+        let gitignore_path = root.join(".gitignore");
+        let db_ignore = ".vanswarm/data/*.db";
+        if gitignore_path.exists() {
+            let content = fs::read_to_string(&gitignore_path)?;
+            if !content.contains(db_ignore) {
+                let appended = format!("{}\n{}\n", content.trim_end(), db_ignore);
+                fs::write(&gitignore_path, appended)?;
+                log(".gitignore (appended)");
+            }
+        } else {
+            fs::write(&gitignore_path, format!("{}\n", db_ignore))?;
+            log(".gitignore");
+        }
+    }
+
+    // .cursor/rules (same as rust-mcp cursor_init_rules)
+    if !no_cursor_rules {
+        let rules_dir = root.join(".cursor").join("rules");
+        fs::create_dir_all(&rules_dir)?;
+        log(".cursor/rules/");
+        for (name, content) in cursor_rules::all_rules() {
+            let p = rules_dir.join(name);
+            if overwrite || !p.exists() {
+                fs::write(&p, content)?;
+                log(&format!(".cursor/rules/{}", name));
+            }
+        }
+    }
+
+    // .cursor/mcp.json
+    let cursor_dir = root.join(".cursor");
+    fs::create_dir_all(&cursor_dir)?;
+    let mcp_json_path = cursor_dir.join("mcp.json");
+    let db_path = if no_libsql {
+        None
+    } else {
+        Some(".vanswarm/data/vanswarm.db".to_string())
+    };
+    let mcp_json = mcp_json_content(db_path.as_deref());
+    if overwrite || !mcp_json_path.exists() {
+        fs::write(&mcp_json_path, mcp_json)?;
+        log(".cursor/mcp.json");
+    }
+
+    // vanswarm.toml
+    if !mcp_only || !root.join("vanswarm.toml").exists() {
+        let toml_path = root.join("vanswarm.toml");
+        if overwrite || !toml_path.exists() {
+            let toml_content = vanswarm_toml_content(no_libsql);
+            fs::write(&toml_path, toml_content)?;
+            log("vanswarm.toml");
+        }
+    }
+
+    println!("Done. MCP: .cursor/mcp.json. Rules: .cursor/rules/. Set VANSWARM_DB_PATH in env or mcp.json for persistent memory.");
+    Ok(())
+}
+
+fn mcp_json_content(db_path: Option<&str>) -> String {
+    let env = if let Some(p) = db_path {
+        format!(r#", "env": {{ "VANSWARM_DB_PATH": "{}" }}"#, p)
+    } else {
+        String::new()
+    };
+    // format!: "{{" → "{", "}}" → "}"
+    let s = format!(
+        r#"{{{{
+  "mcpServers": {{{{
+    "vanswarm": {{{{
+      "command": "vanswarm-mcp-server"{}
+    }}}}
+  }}}}
+}}"#,
+        env
+    );
+    s.replace("{{", "{").replace("}}", "}")
+}
+
+fn vanswarm_toml_content(no_libsql: bool) -> String {
+    let mcp_section = if no_libsql {
+        r#"
+# [mcp]
+# server_path = "vanswarm-mcp-server"
+"#.to_string()
+    } else {
+        r#"
+[mcp]
+# server_path = "vanswarm-mcp-server"
+db_path = ".vanswarm/data/vanswarm.db"
+"#.to_string()
+    };
+    format!(
+        r#"[project]
+name = "vanswarm-project"
+{}
+"#,
+        mcp_section
+    )
 }
 
 fn cargo_toml(

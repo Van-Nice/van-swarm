@@ -248,8 +248,6 @@ pub struct ChannelTransport {
     request_tx: tokio::sync::mpsc::Sender<String>,
     /// Receive serialised JSON-RPC response lines from the server.
     response_rx: Arc<Mutex<tokio::sync::mpsc::Receiver<String>>>,
-    /// Per-in-flight-request oneshot channels, keyed by request ID.
-    pending: PendingMap,
     next_id: AtomicI64,
 }
 
@@ -285,26 +283,18 @@ impl ChannelTransport {
         let json = serde_json::to_string(&request)
             .map_err(|e| vanswarm_core::FrameworkError::Serialization(e.into()))?;
 
-        let (tx, rx) = oneshot::channel();
-        self.pending.lock().await.insert(id, tx);
-
         self.request_tx.send(json).await.map_err(|e| {
             vanswarm_core::FrameworkError::Config(format!(
                 "Channel transport closed: {e}"
             ))
         })?;
 
-        // Poll the response channel until we get a matching response.
+        // Drain the response channel until we find a response matching our ID.
+        // Note: ChannelTransport serialises concurrent requests through the
+        // response_rx lock; it is designed for sequential test scenarios only.
         let mut rx_guard = self.response_rx.lock().await;
         while let Some(line) = rx_guard.recv().await {
             if let Ok(resp) = serde_json::from_str::<Response>(&line) {
-                if let RequestId::Number(resp_id) = &resp.id {
-                    let mut map = self.pending.lock().await;
-                    if let Some(sender) = map.remove(resp_id) {
-                        let _ = sender.send(resp.clone());
-                    }
-                    drop(map);
-                }
                 if let RequestId::Number(n) = &resp.id {
                     if *n == id {
                         return resp.into_result();

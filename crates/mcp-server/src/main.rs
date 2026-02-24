@@ -23,17 +23,20 @@
 //! ANTHROPIC_API_KEY=sk-ant-... cargo run -p vanswarm-mcp-server
 //! ```
 //!
-//! Add to `~/.cursor/mcp.json`:
+//! Add to `~/.cursor/mcp.json` (or run `vanswarm init` in your project):
 //! ```json
 //! {
 //!   "mcpServers": {
 //!     "vanswarm": {
 //!       "command": "/path/to/vanswarm-mcp-server",
-//!       "env": { "ANTHROPIC_API_KEY": "sk-ant-..." }
+//!       "env": { "ANTHROPIC_API_KEY": "sk-ant-...", "VANSWARM_DB_PATH": ".vanswarm/data/vanswarm.db" }
 //!     }
 //!   }
 //! }
 //! ```
+//!
+//! **Persistent memory:** Set `VANSWARM_DB_PATH` to a file path (e.g. `.vanswarm/data/vanswarm.db`)
+//! to persist episodic memory in a local libsql database. Build with `--features libsql` to enable.
 
 use std::sync::Arc;
 

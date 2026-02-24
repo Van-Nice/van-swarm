@@ -160,6 +160,7 @@ struct OaiUsage {
 
 #[derive(Deserialize)]
 struct OaiChunk {
+    #[allow(dead_code)]
     id: String,
     choices: Vec<OaiChunkChoice>,
     usage: Option<OaiUsage>,
@@ -168,6 +169,7 @@ struct OaiChunk {
 #[derive(Deserialize)]
 struct OaiChunkChoice {
     delta: OaiDelta,
+    #[allow(dead_code)]
     finish_reason: Option<String>,
 }
 
