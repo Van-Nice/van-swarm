@@ -13,7 +13,7 @@ pub mod runnable;
 pub mod tool;
 pub mod workflow;
 
-pub use agent::{Agent, AgentAction, AgentContext, ToolCall};
+pub use agent::{Agent, AgentAction, AgentContext, RunMetrics, ToolCall};
 pub use runnable::Runnable;
 pub use tool::{LocalToolRegistry, Tool, ToolExecutor};
 pub use workflow::{Workflow, WorkflowStatus, WorkflowStep};

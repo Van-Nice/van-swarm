@@ -99,6 +99,10 @@ flowchart TB
 - **serve_channel()** — returns a transport and handle for in-process tests.
 - **add_resource()** — register static resources (name, content provider).
 
+### MCP server for IDEs (§9.8)
+
+The framework exposes **Agents, Tools, and Resources** as an MCP server so IDEs (Cursor, Claude Desktop, etc.) can discover and call your tools over stdio. Build a `LocalToolRegistry` (or any `ToolExecutor`), register your `#[tool]` implementations and optional resources, then run `McpServer::new("my-agent", "0.1.0", Arc::new(registry)).serve_stdio()` so the IDE’s MCP client connects via stdin/stdout. No HTTP or sockets required for local use.
+
 ## Protocol and transport
 
 ```mermaid
@@ -119,3 +123,11 @@ flowchart LR
 - **protocol** — MCP types: `InitializeResult`, `ListToolsResult`, `McpTool`, `CallToolResult`, resources, etc.
 - **jsonrpc** — parse/serialize JSON-RPC requests and responses.
 - **transport** — abstraction over stdio, HTTP, or in-memory channel so client and server can be tested without subprocesses.
+
+### Context rot mitigation (§9.11)
+
+When many tools or resources are exposed via MCP, the model’s context can degrade (“context rot”): vague or overlapping descriptions lead to wrong tool choices or duplicated effort. Mitigate by:
+
+- **Clear, action-oriented server and tool descriptions**: For each tool, state *what* it does and *when* to use it (e.g. “Fetch order history by customer ID. Use when the user asks for past orders or order status.”). Avoid generic text like “get data”.
+- **Distinct names and purposes**: Prefer one clear responsibility per tool so the model can pick the right one without guessing.
+- **Keep lists focused**: Use defer loading or tool search (§9.10) so the agent only sees tools relevant to the current task, reducing noise in the context.

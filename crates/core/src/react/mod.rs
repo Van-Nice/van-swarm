@@ -20,7 +20,7 @@ use crate::{
     message::{CompletionRequest, StopReason},
     providers::ModelProvider,
     traits::{
-        agent::{extract_tool_calls, Agent, AgentAction, AgentContext},
+        agent::{extract_tool_calls, Agent, AgentAction, AgentContext, RunMetrics},
         tool::ToolExecutor,
     },
 };
@@ -169,6 +169,18 @@ impl Agent for ReActAgent {
 /// ```
 #[instrument(skip(agent, user_input), fields(agent = %agent.name()))]
 pub async fn run_agent(agent: &impl Agent, user_input: impl Into<String>) -> crate::Result<String> {
+    let (answer, _) = run_agent_with_metrics(agent, user_input).await?;
+    Ok(answer)
+}
+
+/// Run the agent and return the final answer plus per-run metrics (§11.5).
+///
+/// Use for SPL, APM, and tuning: `metrics.tool_call_count` is the executed path length.
+#[instrument(skip(agent, user_input), fields(agent = %agent.name()))]
+pub async fn run_agent_with_metrics(
+    agent: &impl Agent,
+    user_input: impl Into<String>,
+) -> crate::Result<(String, RunMetrics)> {
     let system_prompt = if let Some(ra) = agent_as_react(agent) {
         ra.effective_system_prompt()
     } else {
@@ -190,19 +202,25 @@ pub async fn run_agent(agent: &impl Agent, user_input: impl Into<String>) -> cra
 
         match action {
             AgentAction::FinalAnswer { content } => {
+                let metrics = RunMetrics {
+                    iterations: ctx.iteration,
+                    tool_call_count: ctx.tool_call_count,
+                };
                 info!(
                     agent = %agent.name(),
-                    iterations = ctx.iteration,
+                    iterations = metrics.iterations,
+                    tool_call_count = metrics.tool_call_count,
                     input_tokens = ctx.token_usage.input_tokens,
                     output_tokens = ctx.token_usage.output_tokens,
                     "Agent run complete"
                 );
-                return Ok(content);
+                return Ok((content, metrics));
             }
 
             AgentAction::CallTools { assistant_message, calls } => {
                 // 1. Add the assistant's message (with tool-use blocks) to history.
                 ctx.push_assistant(assistant_message);
+                ctx.tool_call_count += calls.len();
 
                 // 2. Execute every tool call concurrently.
                 //    We use join_all so parallel tools don't block each other.
@@ -241,7 +259,11 @@ pub async fn run_agent(agent: &impl Agent, user_input: impl Into<String>) -> cra
                 // HITL pause point.  For now return the question as the answer;
                 // the durable execution layer (§3) will handle resumption.
                 info!(agent = %agent.name(), "Agent requested human clarification");
-                return Ok(question);
+                let metrics = RunMetrics {
+                    iterations: ctx.iteration,
+                    tool_call_count: ctx.tool_call_count,
+                };
+                return Ok((question, metrics));
             }
         }
     }

@@ -44,23 +44,32 @@ extern crate self as rustmastra_core;
 pub mod config;
 pub mod durable;
 pub mod error;
+pub mod evaluators;
 pub mod message;
 pub mod providers;
 pub mod react;
+pub mod supervisor;
 pub mod traits;
+pub mod tools;
 
 // ── Top-level re-exports ─────────────────────────────────────────────────────
 
 pub use error::{FrameworkError, Result};
 pub use message::{
-    CompletionRequest, CompletionResponse, ContentBlock, Message, ResponseStream, Role, StopReason,
-    StreamChunk, ToolDefinition, ToolExample, TokenUsage,
+    extract_xml_blocks, CompletionRequest, CompletionResponse, ContentBlock, Message, ResponseStream,
+    Role, StopReason, StreamChunk, ToolDefinition, ToolExample, TokenUsage,
 };
 pub use traits::{
-    Agent, AgentAction, AgentContext, LocalToolRegistry, Runnable, Tool, ToolCall, ToolExecutor,
-    Workflow, WorkflowStatus, WorkflowStep,
+    Agent, AgentAction, AgentContext, LocalToolRegistry, RunMetrics, Runnable, Tool, ToolCall,
+    ToolExecutor, Workflow, WorkflowStatus, WorkflowStep,
 };
+pub use tools::builtin::{ReadFileTool, SearchTool, TimeTool};
 pub use providers::{ModelProvider, AnthropicProvider, GeminiProvider, OpenAiProvider};
-pub use react::{ReActAgent, run_agent};
+pub use react::{run_agent, run_agent_with_metrics, ReActAgent};
 pub use config::{AgentConfig, ModelConfig, ProviderCredentials};
 pub use durable::{DurableContext, FileJournal, InMemoryJournal, JournalBackend, JournalEntry, JournalKind};
+pub use evaluators::{
+    batch_score, BenchmarkTask, ContainsScorer, NonEmptyScorer, ScoreInput, ScoreResult, Scorer,
+    SplRun, spl,
+};
+pub use supervisor::{AlwaysTier1, Route, Router};

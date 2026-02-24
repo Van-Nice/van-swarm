@@ -175,6 +175,31 @@ impl Message {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// XML-style tag parsing (§10.10 thinking time)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Extract content of all `<tag>…</tag>` blocks from `text` (case-sensitive).
+///
+/// Use for parsing model output when chain-of-thought is enabled (e.g. `<thinking>…</thinking>`).
+/// Returns only the inner content of each block; unclosed or nested tags are best-effort.
+pub fn extract_xml_blocks(text: &str, tag: &str) -> Vec<String> {
+    let open = format!("<{tag}>");
+    let close = format!("</{tag}>");
+    let mut out = Vec::new();
+    let mut rest = text;
+    while let Some(start) = rest.find(&open) {
+        let after_open = &rest[start + open.len()..];
+        if let Some(end) = after_open.find(&close) {
+            out.push(after_open[..end].trim().to_string());
+            rest = &after_open[end + close.len()..];
+        } else {
+            break;
+        }
+    }
+    out
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tool definition (what the model sees)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -415,6 +440,15 @@ mod tests {
     fn message_text_content_concat() {
         let m = Message::assistant("Hello, world!");
         assert_eq!(m.text_content(), "Hello, world!");
+    }
+
+    #[test]
+    fn extract_xml_blocks_thinking() {
+        let text = "First <thinking>reason one</thinking> then <thinking>reason two</thinking> end";
+        let blocks = extract_xml_blocks(text, "thinking");
+        assert_eq!(blocks.len(), 2);
+        assert_eq!(blocks[0], "reason one");
+        assert_eq!(blocks[1], "reason two");
     }
 
     #[test]

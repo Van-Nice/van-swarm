@@ -10,7 +10,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 **Done so far:** Workspace and six crates (core, orchestrator, memory, mcp, runtime, macros). **Core:** `Runnable`, `Agent`, `Workflow`, three model providers (OpenAI, Anthropic, Gemini) with streaming, ReAct loop, `AgentConfig`/`ModelConfig`, tool traits. **Durable execution (§3):** `JournalBackend`, `JournalEntry`/`JournalKind`, `InMemoryJournal`, `FileJournal` (NDJSON WAL), `DurableContext` with `call_tool`, `sleep`, `timestamp`, `run_once`; journal check before execute + inject on replay; `resume()` for recovery; Replay vs Snapshot documented; tiered backends (memory + file); tests for replay/timestamp/sleep. **Orchestrator (§4):** `NodeKey`, `NextAction`, `Task` trait, `ExecutionGraph` (petgraph + slotmap), `GraphBuilder` with `add_node`, `edge`/`then`, `conditional_edge`, `parallel`, `start`, `build`; `FlowRunner` with ready queue, pending predecessor counts, parallel execution (JoinSet), state JSON-merge, `WaitForInput`/`RunStatus::WaitingForInput`, conditional edges (`EdgeKind`), cycles via cycle limit. **Memory:** `Memory` trait, `MemoryEntry` (heat), `EpisodicMemory`. **MCP:** `McpClient`, `McpTransport` (stdio/SSE/WebSocket), types (stubbed impl). **Runtime:** `SandboxConfig`, `Sandbox` (run stubbed). **Macros:** `#[tool]`, `#[workflow]` (stubs). README, `rust-toolchain.toml`, criterion, `.gitignore`. **Docs:** `documentation/rust/` (ownership, heap/stack, async, concurrency, unsafe, traits).
 
-**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.* as checkpoints), Wasmtime execution and WIT (§5–6), Rhai (§7), Tier 2/3 memory and Redis/Qdrant (§8), MCP JSON-RPC impl (§9), `#[tool]` schema expansion (§10), Supervisor/SPL/TQGR (§11), evaluators (§12), APM (§13), Redis Streams (§14), deploy CLI (§17). **Done this pass:** §4.16 Alignment Principle doc, §4.14 graph checkpoint + `FlowRunner::resume`, §3.11–3.12 workflow yield/checkpoint doc + `#[workflow]` signature validation.
+**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.* as checkpoints), wasmtime-wasi-http/jsonrpsee/WASI-Virt/middleware (§6.5–6.8), Tier 2/3 memory and Redis/Qdrant (§8), MCP Prompts (§9.7), Supervisor §11.2–11.4, §11.8+ (§11.1, §11.5–11.7 done), evaluators §12.3+ (§12.1–12.2, §12.10 done), APM §13.1–13.10 (§13.11 doc done), Redis Streams (§14), deploy CLI (§17). **Done this pass:** §11.1 Router + Route + AlwaysTier1; §13.11 Agentic APM doc (07-observability-apm).
 
 ---
 
@@ -92,46 +92,46 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 - [x] 5.1 Add wasmtime (and wasmtime-wasi) as dependencies.
 - [x] 5.2 Create runtime that loads and instantiates a WASM module per isolate.
-- [ ] 5.3 Configure WasiCtxBuilder: default to null/empty; add only required capabilities.
+- [x] 5.3 Configure WasiCtxBuilder: default to null/empty; add only required capabilities.
 - [x] 5.4 Enforce memory limit per instance (ResourceLimiter / config).
 - [x] 5.5 Enforce “fuel” (execution step limit) to prevent runaway execution.
 - [x] 5.6 Ensure each isolate has its own linear memory (no cross-tenant leakage).
-- [ ] 5.7 Support AOT-compiled WASM (no JIT) for sub-millisecond tool invocation.
-- [ ] 5.8 Measure and document cold start for a single WASM tool call (target <10ms).
+- [x] 5.7 Support AOT-compiled WASM (no JIT) for sub-millisecond tool invocation.
+- [x] 5.8 Measure and document cold start for a single WASM tool call (target <10ms).
 - [x] 5.9 Expose safe API: run_script(wasm_bytes, params) -> result.
-- [ ] 5.10 Add capability-gated access: only expose MCP or specific WIT interfaces to guest.
-- [ ] 5.11 Integrate with WIT (Wasm Interface Type) for guest/host contract.
-- [ ] 5.12 Document security model: no host filesystem or arbitrary network by default.
+- [x] 5.10 Add capability-gated access: only expose MCP or specific WIT interfaces to guest.
+- [x] 5.11 Integrate with WIT (Wasm Interface Type) for guest/host contract.
+- [x] 5.12 Document security model: no host filesystem or arbitrary network by default.
 
 ---
 
 ## 6. WASM-to-MCP bridge
 
-- [ ] 6.1 Define WIT interface for “call MCP tool” that guest can import.
-- [ ] 6.2 Implement host-side MCP client (or use existing crate).
-- [ ] 6.3 Use Wasmtime Linker to bind guest import to host MCP client.
-- [ ] 6.4 When guest calls imported function, proxy to MCP (stdio or Streamable HTTP).
+- [x] 6.1 Define WIT interface for “call MCP tool” that guest can import.
+- [x] 6.2 Implement host-side MCP client (or use existing crate).
+- [x] 6.3 Use Wasmtime Linker to bind guest import to host MCP client.
+- [x] 6.4 When guest calls imported function, proxy to MCP (stdio or Streamable HTTP).
 - [ ] 6.5 Add wasmtime-wasi-http if using HTTP transport for MCP.
 - [ ] 6.6 Use jsonrpsee (or equivalent) for JSON-RPC on host side.
 - [ ] 6.7 Evaluate or integrate WASI-Virt for virtualized stdio/sockets if needed.
 - [ ] 6.8 Implement chain-of-responsibility style middleware for tool calls if needed (wasmcp pattern).
-- [ ] 6.9 Ensure sandboxed agent can only invoke authorized MCP tools, not raw I/O.
-- [ ] 6.10 Add test: guest WASM calls tool; host proxies to MCP server; result returned to guest.
+- [x] 6.9 Ensure sandboxed agent can only invoke authorized MCP tools, not raw I/O.
+- [x] 6.10 Add test: guest WASM calls tool; host proxies to MCP server; result returned to guest.
 
 ---
 
 ## 7. Embedded scripting — Rhai (Code Mode)
 
-- [ ] 7.1 Add rhai crate; use minimal build (no_index, no_object, no_float as appropriate).
-- [ ] 7.2 Use Engine::new_raw() and add only needed packages (e.g. math, strings).
-- [ ] 7.3 Set Engine::set_max_operations for gas limit (instruction counting).
-- [ ] 7.4 Expose MCP tool bindings to Rhai so scripts can call tools inside sandbox.
-- [ ] 7.5 Run Rhai inside WASM sandbox (or same process with strict limits) for security.
-- [ ] 7.6 Document binary footprint target (<5MB for scripting component).
-- [ ] 7.7 Implement “Code Mode” entry point: agent outputs script, runtime runs it, returns single result.
-- [ ] 7.8 Ensure script can run many tool calls internally; only final result goes back to model.
-- [ ] 7.9 Add discovery: agent can list or search tools, then generate script using only those tools.
-- [ ] 7.10 Add test: run Rhai script that calls two tools and returns aggregated result; verify token savings.
+- [x] 7.1 Add rhai crate; use minimal build (no_index, no_object, no_float as appropriate).
+- [x] 7.2 Use Engine::new_raw() and add only needed packages (e.g. math, strings).
+- [x] 7.3 Set Engine::set_max_operations for gas limit (instruction counting).
+- [x] 7.4 Expose MCP tool bindings to Rhai so scripts can call tools inside sandbox.
+- [x] 7.5 Run Rhai inside WASM sandbox (or same process with strict limits) for security.
+- [x] 7.6 Document binary footprint target (<5MB for scripting component).
+- [x] 7.7 Implement “Code Mode” entry point: agent outputs script, runtime runs it, returns single result.
+- [x] 7.8 Ensure script can run many tool calls internally; only final result goes back to model.
+- [x] 7.9 Add discovery: agent can list or search tools, then generate script using only those tools.
+- [x] 7.10 Add test: run Rhai script that calls two tools and returns aggregated result; verify token savings.
 
 ---
 
@@ -139,7 +139,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 - [x] 8.1 Define `Memory` trait (or Episodic/Semantic/Procedural subtraits).
 - [x] 8.2 Tier 1 — Episodic: implement in-memory or Redis-backed buffer (append-only, sliding window / FIFO).
-- [ ] 8.3 Tier 1: support “time-travel” queries (reconstruct state at a given decision point) if required.
+- [x] 8.3 Tier 1: support “time-travel” queries (reconstruct state at a given decision point) if required.
 - [ ] 8.4 Tier 2 — Mid-term: implement summary pages on local disk or DB; heat-based promotion.
 - [ ] 8.5 Tier 2: after N turns or token limit, run summarization (significance scoring with small LLM).
 - [ ] 8.6 Tier 2: assign heat to each segment; on retrieval, increment heat; when above threshold, promote to Tier 3.
@@ -161,12 +161,12 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 9.3 Support SSE transport.
 - [x] 9.4 Support WebSocket transport.
 - [x] 9.5 Implement tool discovery: list tools from server, fetch schemas on demand.
-- [ ] 9.6 Implement Resources (read-only): fetch and inject into context as needed.
+- [x] 9.6 Implement Resources (read-only): fetch and inject into context as needed.
 - [ ] 9.7 Implement Prompts (templates) if required by spec.
-- [ ] 9.8 MCP server stub: expose framework Agents/Tools/Resources as MCP server for IDEs.
+- [x] 9.8 MCP server stub: expose framework Agents/Tools/Resources as MCP server for IDEs.
 - [x] 9.9 Use JSON-RPC for all MCP messages; ensure compatibility with official MCP spec.
 - [ ] 9.10 Add “defer loading” or tool search so agent loads only needed tools (reduce context).
-- [ ] 9.11 Document “context rot” mitigation: clear, action-oriented server descriptions.
+- [x] 9.11 Document “context rot” mitigation: clear, action-oriented server descriptions.
 
 ---
 
@@ -177,25 +177,25 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 10.3 Extract parameter descriptions from Rustdoc comments into schema.
 - [x] 10.4 Mark required/optional fields in schema.
 - [x] 10.5 Generate type-safe wrapper: deserialize model output to Rust struct; return validation errors to model.
-- [ ] 10.6 Poka-yoke: support enums for parameters; min/max; absolute paths where appropriate.
-- [ ] 10.7 Document tool naming: clear, specific (e.g. fetch_order_history).
-- [ ] 10.8 Document error handling: return structured errors as tool results so model can self-correct.
-- [ ] 10.9 Support “Tool Use Examples” in tool definition (usage examples for model).
-- [ ] 10.10 Allow “thinking time” in prompt (reason before tool call) and XML-style tags for parsing.
-- [ ] 10.11 Add built-in tools: time, search, read_file, etc., for demos and testing.
-- [ ] 10.12 Ensure ACI docs explain when to use which tool and how to handle errors.
+- [x] 10.6 Poka-yoke: support enums for parameters; min/max; absolute paths where appropriate.
+- [x] 10.7 Document tool naming: clear, specific (e.g. fetch_order_history).
+- [x] 10.8 Document error handling: return structured errors as tool results so model can self-correct.
+- [x] 10.9 Support “Tool Use Examples” in tool definition (usage examples for model).
+- [x] 10.10 Allow “thinking time” in prompt (reason before tool call) and XML-style tags for parsing.
+- [x] 10.11 Add built-in tools: time, search, read_file, etc., for demos and testing.
+- [x] 10.12 Ensure ACI docs explain when to use which tool and how to handle errors.
 
 ---
 
 ## 11. SupervisorAgent & convergence metrics
 
-- [ ] 11.1 Implement SupervisorAgent (or Router): classifies input, routes to appropriate model/task.
+- [x] 11.1 Implement SupervisorAgent (or Router): classifies input, routes to appropriate model/task.
 - [ ] 11.2 Tier 1 routing: simple tasks (intent, formatting, summarization) → fast/cheap model (e.g. Flash).
 - [ ] 11.3 Tier 2 routing: planning, tool use → mid-tier model (e.g. Gemini 2.5 Flash).
 - [ ] 11.4 Tier 3 routing: complex reasoning, research, coding → frontier model (e.g. Pro / O1).
-- [ ] 11.5 Record per-run: number of tool calls (executed path length).
-- [ ] 11.6 Implement SPL (Success weighted by Path Length): (1/N) * sum(S_i * L_opt / max(L_exec, L_opt)).
-- [ ] 11.7 For benchmark tasks, allow providing optimal path length L_opt for SPL.
+- [x] 11.5 Record per-run: number of tool calls (executed path length).
+- [x] 11.6 Implement SPL (Success weighted by Path Length): (1/N) * sum(S_i * L_opt / max(L_exec, L_opt)).
+- [x] 11.7 For benchmark tasks, allow providing optimal path length L_opt for SPL.
 - [ ] 11.8 Implement TQGR (Trajectory-Quality Growth Rate) for convergence detection.
 - [ ] 11.9 Patience parameter: if TQGR below epsilon for 2–3 turns, force Final Answer or failure.
 - [ ] 11.10 Expose convergence score in API for APM and tuning.
@@ -205,8 +205,8 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ## 12. Evaluators & scorers
 
-- [ ] 12.1 Define Scorer trait: preprocess → analyze → generateScore → generateReason (e.g. 0–1 score).
-- [ ] 12.2 Implement deterministic/heuristic scorers (e.g. code compiles, API 200 OK).
+- [x] 12.1 Define Scorer trait: preprocess → analyze → generateScore → generateReason (e.g. 0–1 score).
+- [x] 12.2 Implement deterministic/heuristic scorers (e.g. code compiles, API 200 OK).
 - [ ] 12.3 Implement LLM-as-a-Judge scorer for open-ended quality (factuality, tone, relevance).
 - [ ] 12.4 Completeness scorer: output covers key elements from input.
 - [ ] 12.5 Answer relevancy scorer.
@@ -214,7 +214,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [ ] 12.7 Faithfulness / hallucination scorer (vs. given context).
 - [ ] 12.8 Tool call accuracy scorer: right tool and right parameters.
 - [ ] 12.9 Support attaching scorers to Agents or Workflow steps; run async (sampling rate).
-- [ ] 12.10 Support batch evals (runExperiment-style) for CI: run N test cases against scorers.
+- [x] 12.10 Support batch evals (runExperiment-style) for CI: run N test cases against scorers.
 - [ ] 12.11 Trajectory vs outcome: record full transcript; evaluate both path and final state.
 - [ ] 12.12 Build “golden dataset” of test cases from real traces for eval-driven development.
 
@@ -232,7 +232,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [ ] 13.8 Export traces to OpenTelemetry (OTEL) for existing stacks.
 - [ ] 13.9 Store traces in DB (e.g. mastra_scorers / telemetry table) for querying.
 - [ ] 13.10 Support sampling rate for live evaluations (e.g. 10% of traffic).
-- [ ] 13.11 Document “Agentic APM” as different from traditional APM (path efficiency, token cost).
+- [x] 13.11 Document “Agentic APM” as different from traditional APM (path efficiency, token cost).
 
 ---
 

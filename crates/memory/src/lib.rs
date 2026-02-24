@@ -89,6 +89,29 @@ impl EpisodicMemory {
             entries: tokio::sync::RwLock::new(std::collections::VecDeque::new()),
         }
     }
+
+    /// Time-travel query (§8.3): return entries in chronological order as they were *before*
+    /// the given entry. Use to reconstruct state at a past decision point.
+    ///
+    /// Returns all entries that appear before `id` in the buffer (oldest first). If `id` is not
+    /// found, returns an empty vec.
+    pub async fn entries_before(&self, id: Uuid) -> rustmastra_core::Result<Vec<MemoryEntry>> {
+        let entries = self.entries.read().await;
+        let before: Vec<MemoryEntry> = entries
+            .iter()
+            .take_while(|e| e.id != id)
+            .cloned()
+            .collect();
+        Ok(before)
+    }
+
+    /// Return the most recent `limit` entries in **chronological order** (oldest first).
+    /// Useful for reconstructing a linear timeline up to "now".
+    pub async fn recent_ordered(&self, limit: usize) -> rustmastra_core::Result<Vec<MemoryEntry>> {
+        let entries = self.entries.read().await;
+        let n = entries.len().saturating_sub(limit);
+        Ok(entries.range(n..).cloned().collect())
+    }
 }
 
 #[async_trait]

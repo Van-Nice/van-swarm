@@ -41,6 +41,9 @@ pub struct AgentContext {
 
     /// The maximum number of iterations before the agent is forcibly stopped.
     pub max_iterations: usize,
+
+    /// Total number of tool calls executed this run (path length for §11.5, SPL).
+    pub tool_call_count: usize,
 }
 
 impl AgentContext {
@@ -61,6 +64,7 @@ impl AgentContext {
             token_usage: TokenUsage::default(),
             iteration: 0,
             max_iterations: 10,
+            tool_call_count: 0,
         }
     }
 
@@ -91,6 +95,15 @@ impl AgentContext {
     pub fn is_exhausted(&self) -> bool {
         self.iteration >= self.max_iterations
     }
+}
+
+/// Per-run metrics for SPL, APM, and tuning (§11.5).
+#[derive(Debug, Clone)]
+pub struct RunMetrics {
+    /// Number of ReAct iterations (LLM turns).
+    pub iterations: usize,
+    /// Number of tool calls executed (path length).
+    pub tool_call_count: usize,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

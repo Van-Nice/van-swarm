@@ -13,6 +13,7 @@ This folder contains **implementation documentation** for the Rust Agent Framewo
 | [04-mcp.md](04-mcp.md) | McpClient, McpServer, McpToolExecutor, transports |
 | [05-runtime.md](05-runtime.md) | WASM sandbox, SandboxConfig, run_json protocol |
 | [06-macros.md](06-macros.md) | `#[tool]` and `#[workflow]` macros |
+| [07-observability-apm.md](07-observability-apm.md) | Agentic APM vs traditional APM (§13.11) |
 
 Start with **00-overview.md** for the big picture, then open the per-crate files for details.
 

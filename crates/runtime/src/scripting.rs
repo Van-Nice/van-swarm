@@ -20,6 +20,11 @@
 //! * Only explicitly registered host functions are callable.
 //! * Instruction count is capped by `max_operations` (default 1 000 000).
 //! * Script memory is bounded by `max_string_size` / `max_array_size` limits.
+//!
+//! ## Binary footprint (§7.6)
+//!
+//! Target: **&lt;5 MB** for the scripting component. The `rhai` crate is used with
+//! minimal features (`new_raw`, selected packages only); no file I/O or OS packages.
 
 #[cfg(feature = "scripting")]
 mod inner {

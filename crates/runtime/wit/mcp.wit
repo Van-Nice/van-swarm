@@ -1,0 +1,17 @@
+// WIT interface for the WASM-to-MCP bridge (§5.11, §6.1).
+// Guest modules that import this can call MCP tools via the host.
+// The host linker binds these when SandboxConfig::allow_mcp is true.
+
+package rustmastra:runtime;
+
+interface mcp {
+  // Invoke an MCP tool by name with JSON params.
+  // name: UTF-8 tool name. params: JSON object as UTF-8.
+  // Returns (ptr, len) of result in linear memory, or error string.
+  call-tool: func(
+    name-ptr: u32,
+    name-len: u32,
+    params-ptr: u32,
+    params-len: u32,
+  ) -> result<tuple<u32, u32>, string>;
+}

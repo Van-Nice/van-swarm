@@ -191,6 +191,12 @@ mod tests {
         Ok(text)
     }
 
+    #[tool(example(description = "Echo hello", input = r#"{"text":"hello"}"#, output = r#""hello""#))]
+    /// Echoes the input text with an example for the model.
+    async fn echo_with_example(text: String) -> crate::Result<String> {
+        Ok(text)
+    }
+
     #[tokio::test]
     async fn tool_macro_roundtrip() {
         let reg = LocalToolRegistry::new().register(EchoToolTool);
@@ -214,5 +220,17 @@ mod tests {
         let reg = LocalToolRegistry::new().register(EchoToolTool);
         let block = reg.execute("echo_tool", "call_02", serde_json::json!({})).await;
         assert!(matches!(&block, ContentBlock::ToolResult { is_error: true, .. }));
+    }
+
+    #[tokio::test]
+    async fn tool_macro_examples_in_definition() {
+        let reg = LocalToolRegistry::new().register(EchoWithExampleTool);
+        let defs = reg.tool_definitions();
+        assert_eq!(defs.len(), 1);
+        assert_eq!(defs[0].examples.len(), 1, "one example from #[tool(example(...))]");
+        let ex = &defs[0].examples[0];
+        assert_eq!(ex.description, "Echo hello");
+        assert_eq!(ex.input.get("text").and_then(|v| v.as_str()), Some("hello"));
+        assert_eq!(ex.output.as_str(), Some("hello"));
     }
 }

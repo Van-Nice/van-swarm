@@ -147,6 +147,35 @@ impl McpClient {
         serde_json::from_value(raw)
             .map_err(|e| rustmastra_core::FrameworkError::Config(format!("resources/read parse: {e}")))
     }
+
+    /// Fetch one or more resources and return their text concatenated for context injection (§9.6).
+    ///
+    /// Use this to inject read-only MCP resource content into the agent's context or system
+    /// prompt. Each resource's text (from `EmbeddedResource::text`) is prefixed with
+    /// `--- Resource: {uri} ---` and concatenated. Binary or missing text is skipped.
+    #[instrument(skip(self), fields(uris = uris.len()))]
+    pub async fn fetch_resources_for_context(
+        &self,
+        uris: &[impl AsRef<str>],
+    ) -> rustmastra_core::Result<String> {
+        let mut out = String::new();
+        for uri in uris {
+            let uri = uri.as_ref();
+            let result = self.read_resource(uri).await?;
+            for content in &result.contents {
+                if let Some(ref text) = content.text {
+                    if !out.is_empty() {
+                        out.push_str("\n\n");
+                    }
+                    out.push_str("--- Resource: ");
+                    out.push_str(uri);
+                    out.push_str(" ---\n");
+                    out.push_str(text);
+                }
+            }
+        }
+        Ok(out)
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
