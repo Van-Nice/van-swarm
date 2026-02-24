@@ -53,3 +53,4 @@ This directory contains **how-to guides and examples** for using the RustMastra 
 - **High-level overview:** [documentation/HOW-IT-WORKS.md](../HOW-IT-WORKS.md)
 - **Architecture (per crate):** [documentation/architecture/](../architecture/README.md)
 - **Build checklist:** [documentation/FRAMEWORK-BUILD-CHECKLIST.md](../FRAMEWORK-BUILD-CHECKLIST.md)
+- **Scaffold a new agent:** run `cargo run -p rustmastra-cli -- new my_agent`; see [documentation/proposals/CLI-NEW-AGENT-BOILERPLATE.md](../proposals/CLI-NEW-AGENT-BOILERPLATE.md) for flags and options.

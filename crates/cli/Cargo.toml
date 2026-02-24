@@ -1,0 +1,15 @@
+[package]
+name = "rustmastra-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "CLI for scaffolding RustMastra agent projects"
+
+[[bin]]
+name = "rustmastra"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }

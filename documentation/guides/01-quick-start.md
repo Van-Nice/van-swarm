@@ -2,6 +2,8 @@
 
 Get the RustMastra framework into your project and run your first agent in a few minutes.
 
+**Scaffold a new agent:** From the framework repo, run `cargo run -p rustmastra-cli -- new my_agent` to generate a ready-to-build project (see [CLI proposal](../proposals/CLI-NEW-AGENT-BOILERPLATE.md) for `--provider`, `--with-tools`, and other flags).
+
 ---
 
 ## 1. Add the dependency

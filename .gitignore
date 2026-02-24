@@ -139,6 +139,9 @@ flamegraph.txt
 *.iml
 out/
 
+# --- Scaffolded projects (rustmastra new) ---
+/test_agent/
+
 # --- Misc ---
 *.orig
 *.rej
