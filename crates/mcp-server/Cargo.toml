@@ -11,9 +11,14 @@ authors.workspace    = true
 name = "vanswarm-mcp-server"
 path = "src/main.rs"
 
+[features]
+default = []
+# Persistent episodic memory via libsql when VANSWARM_DB_PATH is set.
+libsql = ["vanswarm-memory/libsql"]
+
 [dependencies]
 vanswarm-core.workspace    = true
-vanswarm-memory.workspace  = true
+vanswarm-memory.workspace = true
 
 # MCP protocol — same SDK as rust-mcp.
 # Features: server handler, stdio transport, proc-macro helpers, schemars integration.

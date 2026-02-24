@@ -210,10 +210,11 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 
 ### 3.4 Tier 3 — Semantic
 
-- **SemanticMemory** — in-memory vector store, cosine similarity
+- **SemanticMemory** — in-memory vector store, cosine similarity (zero-dependency default)
 - **store_with_embedding(entry, embedding)** — store with vector
 - **semantic_search(query_embedding, limit)** — top-k by similarity
 - **cosine_similarity(a, b)** — exported utility
+- **Default persistent vector DB (recommended):** libsql (embedding-based RAG; optional Qdrant/pgvector for scale-out)
 
 ### 3.5 Memory manager
 

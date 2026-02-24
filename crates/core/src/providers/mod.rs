@@ -8,6 +8,7 @@
 //! * [`openai`]     – OpenAI Chat Completions API (GPT-4o, o1, …)
 //! * [`anthropic`]  – Anthropic Messages API  (Claude 3.x / 4.x)
 //! * [`gemini`]     – Google Gemini API (Gemini 2.5 Flash/Pro)
+//! * [`lm_studio`]  – LM Studio local (OpenAI-compatible at http://127.0.0.1:1234/v1)
 
 use async_trait::async_trait;
 
@@ -15,10 +16,12 @@ use crate::message::{CompletionRequest, CompletionResponse, ResponseStream};
 
 pub mod anthropic;
 pub mod gemini;
+pub mod lm_studio;
 pub mod openai;
 
 pub use anthropic::AnthropicProvider;
 pub use gemini::GeminiProvider;
+pub use lm_studio::LmStudioProvider;
 pub use openai::OpenAiProvider;
 
 // ─────────────────────────────────────────────────────────────────────────────

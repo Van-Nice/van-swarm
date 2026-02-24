@@ -7,6 +7,11 @@ license.workspace    = true
 repository.workspace = true
 authors.workspace    = true
 
+[features]
+default = []
+# Persistent episodic memory via libsql (file or :memory:).
+libsql = ["dep:libsql"]
+
 [dependencies]
 vanswarm-core.workspace = true
 tokio.workspace           = true
@@ -17,6 +22,7 @@ thiserror.workspace       = true
 tracing.workspace         = true
 uuid.workspace            = true
 chrono.workspace          = true
+libsql = { version = "0.9", optional = true, default-features = false, features = ["core"] }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }

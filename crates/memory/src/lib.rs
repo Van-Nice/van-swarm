@@ -10,6 +10,11 @@
 //! | 2    | Mid-term   | Disk / summaries   | Heat-based promotion    |
 //! | 3    | Semantic   | Qdrant / pgvector  | Embedding-based RAG     |
 
+#[cfg(feature = "libsql")]
+mod libsql_store;
+#[cfg(feature = "libsql")]
+pub use libsql_store::LibSqlEpisodicMemory;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

@@ -36,7 +36,18 @@ flowchart TB
 | ---- | -------- | ----------------- | ---------------------- |
 | 1    | Episodic | Redis / in-memory | Sliding window / FIFO  |
 | 2    | Mid-term | Disk / summaries  | Heat-based promotion   |
-| 3    | Semantic | Qdrant / pgvector | Embedding-based RAG    |
+| 3    | Semantic | **libsql** (default) / Qdrant / pgvector | Embedding-based RAG    |
+
+### Default vector database: libsql (recommendation)
+
+For Tier 3 (semantic / vector) storage, **libsql** is recommended as the **default** backend:
+
+- **Single, embeddable default** — No separate vector server; works in-process and scales to [Turso](https://turso.tech) cloud. Aligns with the existing “SQLite for dev” story in the docs.
+- **Native vector support** — libsql has built-in vector types (e.g. `F32_BLOB`), `vector_distance_cos()`, and `vector_top_k()`; optional DiskANN for approximate nearest-neighbor at scale.
+- **One store for multiple tiers** — SQL allows episodic metadata, mid-term summaries, and semantic vectors in one database, simplifying deployment and backups.
+- **Rust ecosystem** — `libsql-client` supports sync/async; fits behind the existing `Memory` trait as a `LibSqlSemanticMemory` (or similar) implementation.
+
+**Optional scale-out:** Qdrant or pgvector remain valid choices when you need a dedicated vector service or existing Postgres infrastructure; the `Memory` trait allows swapping backends without changing agent code.
 
 ## Implemented: Memory trait and EpisodicMemory
 

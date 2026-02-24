@@ -67,7 +67,7 @@ pub use traits::{
     Runnable, Tool, ToolCall, ToolExecutor, Workflow, WorkflowStatus, WorkflowStep,
 };
 pub use tools::builtin::{ReadFileTool, SearchTool, TimeTool};
-pub use providers::{ModelProvider, AnthropicProvider, GeminiProvider, OpenAiProvider};
+pub use providers::{ModelProvider, AnthropicProvider, GeminiProvider, LmStudioProvider, OpenAiProvider};
 pub use react::{run_agent, run_agent_traced, run_agent_with_metrics, ReActAgent};
 pub use config::{AgentConfig, ModelConfig, ProviderCredentials};
 pub use durable::{DurableContext, FileJournal, InMemoryJournal, JournalBackend, JournalEntry, JournalKind};
