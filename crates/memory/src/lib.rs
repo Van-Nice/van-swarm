@@ -1,4 +1,4 @@
-//! # openswarm-memory
+//! # vanswarm-memory
 //!
 //! Three-tier cognitive memory subsystem (checklist §8).
 //!
@@ -55,17 +55,17 @@ impl MemoryEntry {
 #[async_trait]
 pub trait Memory: Send + Sync {
     /// Store a new entry.
-    async fn store(&self, entry: MemoryEntry) -> openswarm_core::Result<()>;
+    async fn store(&self, entry: MemoryEntry) -> vanswarm_core::Result<()>;
 
     /// Retrieve the most recent `limit` entries.
-    async fn recent(&self, limit: usize) -> openswarm_core::Result<Vec<MemoryEntry>>;
+    async fn recent(&self, limit: usize) -> vanswarm_core::Result<Vec<MemoryEntry>>;
 
     /// Full-text or semantic search.
     async fn search(&self, query: &str, limit: usize)
-        -> openswarm_core::Result<Vec<MemoryEntry>>;
+        -> vanswarm_core::Result<Vec<MemoryEntry>>;
 
     /// Delete an entry by ID.
-    async fn delete(&self, id: Uuid) -> openswarm_core::Result<()>;
+    async fn delete(&self, id: Uuid) -> vanswarm_core::Result<()>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ impl EpisodicMemory {
     ///
     /// Returns all entries that appear before `id` in the buffer (oldest first). If `id` is not
     /// found, returns an empty vec.
-    pub async fn entries_before(&self, id: Uuid) -> openswarm_core::Result<Vec<MemoryEntry>> {
+    pub async fn entries_before(&self, id: Uuid) -> vanswarm_core::Result<Vec<MemoryEntry>> {
         let entries = self.entries.read().await;
         let before: Vec<MemoryEntry> = entries
             .iter()
@@ -105,7 +105,7 @@ impl EpisodicMemory {
 
     /// Return the most recent `limit` entries in **chronological order** (oldest first).
     /// Useful for reconstructing a linear timeline up to "now".
-    pub async fn recent_ordered(&self, limit: usize) -> openswarm_core::Result<Vec<MemoryEntry>> {
+    pub async fn recent_ordered(&self, limit: usize) -> vanswarm_core::Result<Vec<MemoryEntry>> {
         let entries = self.entries.read().await;
         let n = entries.len().saturating_sub(limit);
         Ok(entries.range(n..).cloned().collect())
@@ -114,7 +114,7 @@ impl EpisodicMemory {
 
 #[async_trait]
 impl Memory for EpisodicMemory {
-    async fn store(&self, entry: MemoryEntry) -> openswarm_core::Result<()> {
+    async fn store(&self, entry: MemoryEntry) -> vanswarm_core::Result<()> {
         let mut entries = self.entries.write().await;
         if entries.len() >= self.max_entries {
             entries.pop_front();
@@ -123,7 +123,7 @@ impl Memory for EpisodicMemory {
         Ok(())
     }
 
-    async fn recent(&self, limit: usize) -> openswarm_core::Result<Vec<MemoryEntry>> {
+    async fn recent(&self, limit: usize) -> vanswarm_core::Result<Vec<MemoryEntry>> {
         let entries = self.entries.read().await;
         Ok(entries.iter().rev().take(limit).cloned().collect())
     }
@@ -132,7 +132,7 @@ impl Memory for EpisodicMemory {
         &self,
         query: &str,
         limit: usize,
-    ) -> openswarm_core::Result<Vec<MemoryEntry>> {
+    ) -> vanswarm_core::Result<Vec<MemoryEntry>> {
         let entries = self.entries.read().await;
         let q = query.to_lowercase();
         Ok(entries
@@ -143,7 +143,7 @@ impl Memory for EpisodicMemory {
             .collect())
     }
 
-    async fn delete(&self, id: Uuid) -> openswarm_core::Result<()> {
+    async fn delete(&self, id: Uuid) -> vanswarm_core::Result<()> {
         let mut entries = self.entries.write().await;
         entries.retain(|e| e.id != id);
         Ok(())
@@ -222,7 +222,7 @@ impl MidTermMemory {
     /// Load existing summaries from the NDJSON file (if a path was given).
     ///
     /// Call once during startup. Silently succeeds if the file does not exist yet.
-    pub async fn load(&self) -> openswarm_core::Result<()> {
+    pub async fn load(&self) -> vanswarm_core::Result<()> {
         let Some(ref path) = self.path else { return Ok(()); };
         let text = match tokio::fs::read_to_string(path).await {
             Ok(t) => t,
@@ -242,7 +242,7 @@ impl MidTermMemory {
     }
 
     /// Flush the current in-memory state back to the NDJSON file.
-    async fn flush(&self, summaries: &[SummaryEntry]) -> openswarm_core::Result<()> {
+    async fn flush(&self, summaries: &[SummaryEntry]) -> vanswarm_core::Result<()> {
         let Some(ref path) = self.path else { return Ok(()); };
         let mut lines = String::new();
         for s in summaries {
@@ -255,7 +255,7 @@ impl MidTermMemory {
     }
 
     /// Store a pre-built summary entry.
-    pub async fn store_summary(&self, entry: SummaryEntry) -> openswarm_core::Result<()> {
+    pub async fn store_summary(&self, entry: SummaryEntry) -> vanswarm_core::Result<()> {
         let mut summaries = self.summaries.write().await;
         summaries.push(entry);
         self.flush(&summaries).await
@@ -272,7 +272,7 @@ impl MidTermMemory {
         &self,
         entries: &[MemoryEntry],
         summary_text: Option<String>,
-    ) -> openswarm_core::Result<SummaryEntry> {
+    ) -> vanswarm_core::Result<SummaryEntry> {
         let content = summary_text.unwrap_or_else(|| {
             entries.iter().map(|e| e.content.as_str()).collect::<Vec<_>>().join("\n")
         });
@@ -285,7 +285,7 @@ impl MidTermMemory {
     /// Return entries whose heat score is at or above `heat_threshold` (§8.7).
     ///
     /// These are candidates for promotion to Tier 3 (semantic memory).
-    pub async fn hot_entries(&self) -> openswarm_core::Result<Vec<SummaryEntry>> {
+    pub async fn hot_entries(&self) -> vanswarm_core::Result<Vec<SummaryEntry>> {
         let summaries = self.summaries.read().await;
         Ok(summaries.iter().filter(|s| s.heat >= self.heat_threshold).cloned().collect())
     }
@@ -294,7 +294,7 @@ impl MidTermMemory {
     pub async fn recent_summaries(
         &self,
         limit: usize,
-    ) -> openswarm_core::Result<Vec<SummaryEntry>> {
+    ) -> vanswarm_core::Result<Vec<SummaryEntry>> {
         let mut summaries = self.summaries.write().await;
         let n = summaries.len().saturating_sub(limit);
         for s in summaries[n..].iter_mut() {
@@ -311,7 +311,7 @@ impl MidTermMemory {
         &self,
         query: &str,
         limit: usize,
-    ) -> openswarm_core::Result<Vec<SummaryEntry>> {
+    ) -> vanswarm_core::Result<Vec<SummaryEntry>> {
         let mut summaries = self.summaries.write().await;
         let q = query.to_lowercase();
         let matched_indices: Vec<usize> = summaries
@@ -342,7 +342,7 @@ impl MidTermMemory {
 /// Returns `None` if either vector is empty or the lengths differ.
 ///
 /// ```
-/// use openswarm_memory::cosine_similarity;
+/// use vanswarm_memory::cosine_similarity;
 /// let a = [1.0_f32, 0.0, 0.0];
 /// let b = [0.0_f32, 1.0, 0.0];
 /// assert_eq!(cosine_similarity(&a, &b), Some(0.0));
@@ -383,7 +383,7 @@ impl SemanticMemory {
         &self,
         mut entry: MemoryEntry,
         embedding: Vec<f32>,
-    ) -> openswarm_core::Result<()> {
+    ) -> vanswarm_core::Result<()> {
         entry.embedding = Some(embedding.clone());
         self.store.write().await.push((entry, embedding));
         Ok(())
@@ -396,7 +396,7 @@ impl SemanticMemory {
         &self,
         query_embedding: &[f32],
         limit: usize,
-    ) -> openswarm_core::Result<Vec<(MemoryEntry, f32)>> {
+    ) -> vanswarm_core::Result<Vec<(MemoryEntry, f32)>> {
         let store = self.store.read().await;
         let mut scored: Vec<(f32, usize)> = store
             .iter()
@@ -433,17 +433,17 @@ impl Default for SemanticMemory {
 
 #[async_trait]
 impl Memory for SemanticMemory {
-    async fn store(&self, entry: MemoryEntry) -> openswarm_core::Result<()> {
+    async fn store(&self, entry: MemoryEntry) -> vanswarm_core::Result<()> {
         let embedding = entry.embedding.clone().unwrap_or_default();
         self.store_with_embedding(entry, embedding).await
     }
 
-    async fn recent(&self, limit: usize) -> openswarm_core::Result<Vec<MemoryEntry>> {
+    async fn recent(&self, limit: usize) -> vanswarm_core::Result<Vec<MemoryEntry>> {
         let store = self.store.read().await;
         Ok(store.iter().rev().take(limit).map(|(e, _)| e.clone()).collect())
     }
 
-    async fn search(&self, query: &str, limit: usize) -> openswarm_core::Result<Vec<MemoryEntry>> {
+    async fn search(&self, query: &str, limit: usize) -> vanswarm_core::Result<Vec<MemoryEntry>> {
         let store = self.store.read().await;
         let q = query.to_lowercase();
         Ok(store
@@ -454,7 +454,7 @@ impl Memory for SemanticMemory {
             .collect())
     }
 
-    async fn delete(&self, id: Uuid) -> openswarm_core::Result<()> {
+    async fn delete(&self, id: Uuid) -> vanswarm_core::Result<()> {
         self.store.write().await.retain(|(e, _)| e.id != id);
         Ok(())
     }

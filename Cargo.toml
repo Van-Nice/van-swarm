@@ -17,7 +17,7 @@ edition      = "2021"
 rust-version = "1.82"
 license      = "MIT OR Apache-2.0"
 repository   = "https://github.com/your-org/rust-agent-framework"
-authors      = ["OpenSwarm Contributors"]
+authors      = ["VanSwarm Contributors"]
 
 # ─────────────────────────────────────────────────────────────
 # Shared dependency versions — all crates inherit from here.
@@ -62,12 +62,12 @@ slotmap  = { version = "1", features = ["serde"] }
 criterion = { version = "0.5", features = ["html_reports"] }
 
 # ── Internal crates ───────────────────────────────────────────
-openswarm-core        = { path = "crates/core" }
-openswarm-orchestrator = { path = "crates/orchestrator" }
-openswarm-memory       = { path = "crates/memory" }
-openswarm-mcp          = { path = "crates/mcp" }
-openswarm-runtime      = { path = "crates/runtime" }
-openswarm-macros       = { path = "crates/macros" }
+vanswarm-core        = { path = "crates/core" }
+vanswarm-orchestrator = { path = "crates/orchestrator" }
+vanswarm-memory       = { path = "crates/memory" }
+vanswarm-mcp          = { path = "crates/mcp" }
+vanswarm-runtime      = { path = "crates/runtime" }
+vanswarm-macros       = { path = "crates/macros" }
 
 # ─────────────────────────────────────────────────────────────
 # Workspace-wide profile tuning

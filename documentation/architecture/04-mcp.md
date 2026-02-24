@@ -1,6 +1,6 @@
-# MCP crate (openswarm-mcp)
+# MCP crate (vanswarm-mcp)
 
-Model Context Protocol client and server: connect agents to external MCP servers (e.g. filesystem, fetch) and expose OpenSwarm tools as an MCP server.
+Model Context Protocol client and server: connect agents to external MCP servers (e.g. filesystem, fetch) and expose VanSwarm tools as an MCP server.
 
 ## Components
 

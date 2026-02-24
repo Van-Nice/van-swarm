@@ -1,6 +1,6 @@
 [package]
-name        = "openswarm-orchestrator"
-description = "Graph-based workflow orchestration engine for OpenSwarm"
+name        = "vanswarm-orchestrator"
+description = "Graph-based workflow orchestration engine for VanSwarm"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -8,7 +8,7 @@ repository.workspace = true
 authors.workspace    = true
 
 [dependencies]
-openswarm-core.workspace = true
+vanswarm-core.workspace = true
 tokio.workspace           = true
 futures.workspace         = true
 async-trait.workspace     = true

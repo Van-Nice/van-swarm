@@ -9,13 +9,13 @@
 //!
 //! Run this example (from the rust-agent-framework workspace root):
 //!
-//!   cargo run -p openswarm-mcp --example rust_mcp_client
+//!   cargo run -p vanswarm-mcp --example rust_mcp_client
 //!
 //! Or set the server binary path explicitly:
 //!
-//!   RUST_MCP_BIN=/path/to/rust-mcp/target/release/rust-mcp cargo run -p openswarm-mcp --example rust_mcp_client
+//!   RUST_MCP_BIN=/path/to/rust-mcp/target/release/rust-mcp cargo run -p vanswarm-mcp --example rust_mcp_client
 
-use openswarm_mcp::{CallToolResult, McpClient};
+use vanswarm_mcp::{CallToolResult, McpClient};
 
 fn rust_mcp_bin() -> String {
     std::env::var("RUST_MCP_BIN").unwrap_or_else(|_| {
@@ -28,7 +28,7 @@ fn rust_mcp_bin() -> String {
 }
 
 #[tokio::main]
-async fn main() -> openswarm_core::Result<()> {
+async fn main() -> vanswarm_core::Result<()> {
     let bin = rust_mcp_bin();
     let args = ["--client=cursor"];
 
@@ -80,7 +80,7 @@ async fn main() -> openswarm_core::Result<()> {
 fn print_call_result(r: &CallToolResult) {
     for c in &r.content {
         match c {
-            openswarm_mcp::ToolContent::Text { text } => println!("{}", text),
+            vanswarm_mcp::ToolContent::Text { text } => println!("{}", text),
             _ => {}
         }
     }

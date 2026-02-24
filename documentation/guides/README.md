@@ -1,6 +1,6 @@
-# OpenSwarm Framework — User Guides
+# VanSwarm Framework — User Guides
 
-This directory contains **how-to guides and examples** for using the OpenSwarm framework to build agents, workflows, and tool-integrated applications.
+This directory contains **how-to guides and examples** for using the VanSwarm framework to build agents, workflows, and tool-integrated applications.
 
 ---
 
@@ -23,7 +23,7 @@ This directory contains **how-to guides and examples** for using the OpenSwarm f
 **What to tell users:**
 
 - **You can build production-style agents today:** ReAct loop, tools (local or MCP), multiple providers, durable workflows, graph orchestration, memory, and evaluation are implemented and documented.
-- **Publish as a library:** Add your crate to [crates.io](https://crates.io) (or use path/ git deps). Depend on `openswarm-core`, `openswarm-mcp`, etc. as needed. See [01-quick-start](01-quick-start.md) for a minimal `Cargo.toml`.
+- **Publish as a library:** Add your crate to [crates.io](https://crates.io) (or use path/ git deps). Depend on `vanswarm-core`, `vanswarm-mcp`, etc. as needed. See [01-quick-start](01-quick-start.md) for a minimal `Cargo.toml`.
 - **Caveats:** Some checklist items (e.g. wasmtime-wasi-http, Redis/Qdrant backends) are optional or future work. The framework is in **active development**; semver will apply once you tag a stable release (e.g. 0.1.x for early adopters).
 
 ---
@@ -53,5 +53,5 @@ This directory contains **how-to guides and examples** for using the OpenSwarm f
 - **High-level overview:** [documentation/HOW-IT-WORKS.md](../HOW-IT-WORKS.md)
 - **Architecture (per crate):** [documentation/architecture/](../architecture/README.md)
 - **Build checklist:** [documentation/FRAMEWORK-BUILD-CHECKLIST.md](../FRAMEWORK-BUILD-CHECKLIST.md)
-- **Scaffold a new agent:** run `cargo run -p openswarm-cli -- new my_agent`; see [CLI-NEW-AGENT-BOILERPLATE.md](../proposals/CLI-NEW-AGENT-BOILERPLATE.md) for flags and options.
-- **Multi-agent projects and orchestration:** [AGENT-ORCHESTRATION-AND-PROJECT-CLI.md](../proposals/AGENT-ORCHESTRATION-AND-PROJECT-CLI.md) proposes project layout, `openswarm new <project>`, and `openswarm add agent <name>`.
+- **Scaffold a new agent:** run `cargo run -p vanswarm-cli -- new my_agent`; see [CLI-NEW-AGENT-BOILERPLATE.md](../proposals/CLI-NEW-AGENT-BOILERPLATE.md) for flags and options.
+- **Multi-agent projects and orchestration:** [AGENT-ORCHESTRATION-AND-PROJECT-CLI.md](../proposals/AGENT-ORCHESTRATION-AND-PROJECT-CLI.md) proposes project layout, `vanswarm new <project>`, and `vanswarm add agent <name>`.

@@ -35,12 +35,12 @@ Modular crates keep binary size small and compilation fast.
 ```mermaid
 graph LR
     subgraph RustCrates["Rust Crate Structure"]
-        core["openswarm-core\nRunnable, Agent, Workflow traits\nModel providers"]
-        orch["openswarm-orchestrator\nGraphBuilder, FlowRunner\nTask trait, TaskResult"]
-        mem["openswarm-memory\nThree-tier memory API\nQdrant, Redis, pgvector"]
-        mcp["openswarm-mcp\nMCP client/server\nProgrammatic tool calling"]
-        rt["openswarm-runtime\nWasmtime sandbox\nFuel + memory limits"]
-        macros["openswarm-macros\n#\[tool\], #\[workflow\]"]
+        core["vanswarm-core\nRunnable, Agent, Workflow traits\nModel providers"]
+        orch["vanswarm-orchestrator\nGraphBuilder, FlowRunner\nTask trait, TaskResult"]
+        mem["vanswarm-memory\nThree-tier memory API\nQdrant, Redis, pgvector"]
+        mcp["vanswarm-mcp\nMCP client/server\nProgrammatic tool calling"]
+        rt["vanswarm-runtime\nWasmtime sandbox\nFuel + memory limits"]
+        macros["vanswarm-macros\n#\[tool\], #\[workflow\]"]
     end
 
     core --> orch
@@ -87,4 +87,4 @@ flowchart LR
 
 - _Rust Agent Framework Technical Specification_ — Durable execution, graph orchestration, WASM–MCP, memory, convergence.
 - _AI Agent Framework Strategy & PRD_ — Architecture diagram, crate layout, platform vs framework.
-- _Rust AI Framework Product Strategy_ — OpenSwarm crate design, Workflow vs Agent, ACI.
+- _Rust AI Framework Product Strategy_ — VanSwarm crate design, Workflow vs Agent, ACI.

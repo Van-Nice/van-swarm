@@ -10,7 +10,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 **Done so far:** Workspace and six crates (core, orchestrator, memory, mcp, runtime, macros). **Core:** `Runnable`, `Agent`, `Workflow`, three model providers (OpenAI, Anthropic, Gemini) with streaming, ReAct loop, `AgentConfig`/`ModelConfig`, tool traits. **Durable execution (§3):** `JournalBackend`, `JournalEntry`/`JournalKind`, `InMemoryJournal`, `FileJournal` (NDJSON WAL), `DurableContext` with `call_tool`, `sleep`, `timestamp`, `run_once`; journal check before execute + inject on replay; `resume()` for recovery; Replay vs Snapshot documented; tiered backends (memory + file); tests for replay/timestamp/sleep. **Orchestrator (§4):** `NodeKey`, `NextAction`, `Task` trait, `ExecutionGraph` (petgraph + slotmap), `GraphBuilder` with `add_node`, `edge`/`then`, `conditional_edge`, `parallel`, `start`, `build`; `FlowRunner` with ready queue, pending predecessor counts, parallel execution (JoinSet), state JSON-merge, `WaitForInput`/`RunStatus::WaitingForInput`, conditional edges (`EdgeKind`), cycles via cycle limit. **Memory:** `Memory` trait, `MemoryEntry` (heat), `EpisodicMemory`. **MCP:** `McpClient`, `McpTransport` (stdio/SSE/WebSocket), types (stubbed impl). **Runtime:** `SandboxConfig`, `Sandbox` (run stubbed). **Macros:** `#[tool]`, `#[workflow]` (stubs). README, `rust-toolchain.toml`, criterion, `.gitignore`. **Docs:** `documentation/rust/` (ownership, heap/stack, async, concurrency, unsafe, traits).
 
-**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.\* as checkpoints), wasmtime-wasi-http/jsonrpsee/WASI-Virt/middleware (§6.5–6.8), Redis/Qdrant Tier 2/3 backends (§8.12–8.13), §11.11 Supervisor grading, APM §13.6–13.7, Redis Streams (§14), deploy CLI (§17). **Done this pass:** `crates/mcp-server` — production-grade stdio MCP server using `rmcp` v0.16 (same SDK as rust-mcp). Exposes `openswarm_run_agent` (full ReAct loop, built-in `time` tool, provider auto-detection via ANTHROPIC_API_KEY/OPENAI_API_KEY/GEMINI_API_KEY), `openswarm_memory_store/search/recent` (episodic memory), `openswarm_framework_info`. Ships as `openswarm-mcp-server` binary (6.1 MB release). Add to `~/.cursor/mcp.json` to use from Cursor IDE alongside rust-mcp. **Prior passes:** §20.2 Prompt caching; §22.1–22.4 Integration tests (130 total passing); §11.2–11.4 KeywordRouter + LlmRouter; §12.12 GoldenDataset; §15.7 EvaluatorOptimizerLoop; §15.8 PlanAndExecute; §8.4–8.11 Memory Tier 2/3 + MemoryManager; §9.7 MCP prompts; §9.10 FilteredToolExecutor; §15.6 voting patterns; §16.5 guardrails.
+**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.\* as checkpoints), wasmtime-wasi-http/jsonrpsee/WASI-Virt/middleware (§6.5–6.8), Redis/Qdrant Tier 2/3 backends (§8.12–8.13), §11.11 Supervisor grading, APM §13.6–13.7, Redis Streams (§14), deploy CLI (§17). **Done this pass:** `crates/mcp-server` — production-grade stdio MCP server using `rmcp` v0.16 (same SDK as rust-mcp). Exposes `vanswarm_run_agent` (full ReAct loop, built-in `time` tool, provider auto-detection via ANTHROPIC_API_KEY/OPENAI_API_KEY/GEMINI_API_KEY), `vanswarm_memory_store/search/recent` (episodic memory), `vanswarm_framework_info`. Ships as `vanswarm-mcp-server` binary (6.1 MB release). Add to `~/.cursor/mcp.json` to use from Cursor IDE alongside rust-mcp. **Prior passes:** §20.2 Prompt caching; §22.1–22.4 Integration tests (130 total passing); §11.2–11.4 KeywordRouter + LlmRouter; §12.12 GoldenDataset; §15.7 EvaluatorOptimizerLoop; §15.8 PlanAndExecute; §8.4–8.11 Memory Tier 2/3 + MemoryManager; §9.7 MCP prompts; §9.10 FilteredToolExecutor; §15.6 voting patterns; §16.5 guardrails.
 
 ---
 
@@ -27,7 +27,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ---
 
-## 2. Core runtime foundation (openswarm-core / core-runtime)
+## 2. Core runtime foundation (vanswarm-core / core-runtime)
 
 - [x] 2.1 Create `Runnable` trait as base for all executable components.
 - [x] 2.2 Define `Agent` trait (probabilistic, ReAct-style, model-driven tool use).
@@ -66,7 +66,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ---
 
-## 4. Graph orchestration (openswarm-orchestrator / graph-engine)
+## 4. Graph orchestration (vanswarm-orchestrator / graph-engine)
 
 - [x] 4.1 Add petgraph and slotmap as dependencies.
 - [x] 4.2 Use `slotmap::DenseSlotMap` for node data; use `petgraph::stable_graph::StableGraph` for topology.
@@ -88,7 +88,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ---
 
-## 5. WASM sandbox (openswarm-runtime)
+## 5. WASM sandbox (vanswarm-runtime)
 
 - [x] 5.1 Add wasmtime (and wasmtime-wasi) as dependencies.
 - [x] 5.2 Create runtime that loads and instantiates a WASM module per isolate.
@@ -135,7 +135,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ---
 
-## 8. Three-tier memory (openswarm-memory / tier-memory)
+## 8. Three-tier memory (vanswarm-memory / tier-memory)
 
 - [x] 8.1 Define `Memory` trait (or Episodic/Semantic/Procedural subtraits).
 - [x] 8.2 Tier 1 — Episodic: implement in-memory or Redis-backed buffer (append-only, sliding window / FIFO).
@@ -154,7 +154,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ---
 
-## 9. Model Context Protocol (openswarm-mcp / protocol-bridge)
+## 9. Model Context Protocol (vanswarm-mcp / protocol-bridge)
 
 - [x] 9.1 Add MCP client implementation (or depend on modelcontextprotocol/rust-sdk).
 - [x] 9.2 Support stdio transport for MCP.

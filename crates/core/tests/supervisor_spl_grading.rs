@@ -13,7 +13,7 @@
 //! Tuning guidance printed on each run shows per-tier breakdown so the
 //! keyword lists can be adjusted to close gaps.
 
-use openswarm_core::{
+use vanswarm_core::{
     evaluators::{spl, SplRun},
     supervisor::{KeywordRouter, Route, Router},
 };

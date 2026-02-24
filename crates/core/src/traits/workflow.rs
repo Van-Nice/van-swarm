@@ -7,7 +7,7 @@
 //!   * Evaluator-Optimizer loops
 //!   * Anything where auditability and reproducibility are paramount
 //!
-//! The graph engine in `openswarm-orchestrator` composes `Workflow`
+//! The graph engine in `vanswarm-orchestrator` composes `Workflow`
 //! implementations into directed graphs that may include cycles.
 
 use async_trait::async_trait;

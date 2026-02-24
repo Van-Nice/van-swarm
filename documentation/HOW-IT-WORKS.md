@@ -1,21 +1,21 @@
 # How This Codebase Works (High Level)
 
-This document explains the **rust-agent-framework** (OpenSwarm) in one place: what each crate does, how they connect, and how the main flows work.
+This document explains the **rust-agent-framework** (VanSwarm) in one place: what each crate does, how they connect, and how the main flows work.
 
 ---
 
 ## 1. The Big Picture
 
-The framework is a **Rust workspace** of six crates. **openswarm-core** is the center: it defines the agent loop (ReAct), traits for tools and models, durable execution, evaluators, and the supervisor. The other crates depend on core and add orchestration, memory, MCP, WASM/runtime, and procedural macros.
+The framework is a **Rust workspace** of six crates. **vanswarm-core** is the center: it defines the agent loop (ReAct), traits for tools and models, durable execution, evaluators, and the supervisor. The other crates depend on core and add orchestration, memory, MCP, WASM/runtime, and procedural macros.
 
 ```mermaid
 flowchart LR
-  core["openswarm-core"]
-  macros["openswarm-macros"]
-  mcp["openswarm-mcp"]
-  memory["openswarm-memory"]
-  orchestrator["openswarm-orchestrator"]
-  runtime["openswarm-runtime"]
+  core["vanswarm-core"]
+  macros["vanswarm-macros"]
+  mcp["vanswarm-mcp"]
+  memory["vanswarm-memory"]
+  orchestrator["vanswarm-orchestrator"]
+  runtime["vanswarm-runtime"]
 
   orchestrator --> core
   memory --> core
@@ -76,7 +76,7 @@ Durable workflows are **log-centric replay**: every non-deterministic step (tool
 
 ## 5. Orchestrator (Graph Workflows)
 
-**openswarm-orchestrator** runs **graph-based** workflows: you build an **ExecutionGraph** with **GraphBuilder** (add nodes, edges, conditional edges, start node), then run it with **FlowRunner**.
+**vanswarm-orchestrator** runs **graph-based** workflows: you build an **ExecutionGraph** with **GraphBuilder** (add nodes, edges, conditional edges, start node), then run it with **FlowRunner**.
 
 - **Task**: async trait with `State`, `run(key, state) -> (State, NextAction)`, `name()`.
 - **NextAction**: **Continue** (follow graph edges), **Parallelize(node_keys)**, **WaitForInput(prompt)** (checkpoint and pause), **End**.
@@ -89,7 +89,7 @@ Tasks can use **DurableContext** inside their run (e.g. call_tool, sleep) so gra
 
 ## 6. Memory
 
-**openswarm-memory** defines a **Memory** trait (store, recent, search, delete) and **MemoryEntry** (id, content, created_at, heat, optional embedding). Target design is three tiers (Episodic → Mid-term → Semantic); only **EpisodicMemory** exists today.
+**vanswarm-memory** defines a **Memory** trait (store, recent, search, delete) and **MemoryEntry** (id, content, created_at, heat, optional embedding). Target design is three tiers (Episodic → Mid-term → Semantic); only **EpisodicMemory** exists today.
 
 - **EpisodicMemory**: in-memory `VecDeque`, FIFO, max capacity; substring search. **Time-travel**: `entries_before(id)` and `recent_ordered(limit)` for ordered access.
 - Use as `dyn Memory` where the app or agent needs a memory backend; Tier 2/3 will plug in later (disk summaries, vector store).
@@ -98,7 +98,7 @@ Tasks can use **DurableContext** inside their run (e.g. call_tool, sleep) so gra
 
 ## 7. Runtime (WASM and Scripting)
 
-**openswarm-runtime** provides a **Wasmtime** sandbox: **SandboxConfig** (max memory, max fuel, **allow_mcp**), **compile(wasm_bytes)** or **load_aot**, then **run_compiled(module, params)**. Each call gets a fresh **Store**, resource limiter, and fuel; linker is WASI preview1 with an empty context by default. If **allow_mcp** is true, a bridge can expose host MCP tools to the guest.
+**vanswarm-runtime** provides a **Wasmtime** sandbox: **SandboxConfig** (max memory, max fuel, **allow_mcp**), **compile(wasm_bytes)** or **load_aot**, then **run_compiled(module, params)**. Each call gets a fresh **Store**, resource limiter, and fuel; linker is WASI preview1 with an empty context by default. If **allow_mcp** is true, a bridge can expose host MCP tools to the guest.
 
 - WASM modules export **memory**, **alloc**, **run_json(ptr, len)**. Host passes JSON in/out via guest memory; result is `(result_ptr << 32) | result_len` or -1 on error.
 - Optional **Rhai** scripting (feature) for in-process, gas-metered scripting.
@@ -135,7 +135,7 @@ In **core**:
 | Run a DAG or cyclic workflow with state    | **GraphBuilder** → **ExecutionGraph** → **FlowRunner::run(initial_state)**; nodes implement **Task**, return **NextAction**.            |
 | Durable workflow steps (tool/sleep replay) | **DurableContext** + **JournalBackend**; mark entrypoints with **#[workflow]** (first param `Arc<DurableContext>`).                     |
 | Persist recent context for an agent        | **EpisodicMemory** (or other **Memory** impl); pass into your app layer.                                                                |
-| Run untrusted tool logic in isolation      | **openswarm-runtime** **Sandbox** + WASM module (run_json convention); optionally **allow_mcp** for MCP bridge.                         |
+| Run untrusted tool logic in isolation      | **vanswarm-runtime** **Sandbox** + WASM module (run_json convention); optionally **allow_mcp** for MCP bridge.                          |
 | Define tools with schema + examples        | **#[tool]** (and **#[tool(example(...))]**) on async fns; register in **LocalToolRegistry** or expose via **McpServer**.                |
 | Evaluate agent runs (SPL, batch)           | **run_agent_with_metrics**, **Scorer** impls, **batch_score**, **spl(runs)**; use **BenchmarkTask** for L_opt.                          |
 | Route by difficulty (supervisor)           | **Router::route(input)** → **Route** (Tier1/2/3); choose model or agent accordingly (e.g. **AlwaysTier1** for tests).                   |

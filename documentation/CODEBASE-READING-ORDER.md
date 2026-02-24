@@ -6,7 +6,7 @@ Read the listed `.rs` files **in order** to understand the framework from founda
 
 ---
 
-## Part 1 — Core foundations (openswarm-core)
+## Part 1 — Core foundations (vanswarm-core)
 
 Start here: shared types and the contract everything else uses.
 
@@ -165,10 +165,10 @@ Procedural macros for tools and workflows.
 
 Production stdio MCP server that exposes the framework.
 
-| Order | File                                                       | Why read here                                                                           |
-| ----- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| 39    | [mcp-server/server.rs](../crates/mcp-server/src/server.rs) | Tool handlers: `openswarm_run_agent`, `openswarm_memory_*`, `openswarm_framework_info`. |
-| 40    | [mcp-server/main.rs](../crates/mcp-server/src/main.rs)     | Provider detection, stdio transport, server startup.                                    |
+| Order | File                                                       | Why read here                                                                        |
+| ----- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 39    | [mcp-server/server.rs](../crates/mcp-server/src/server.rs) | Tool handlers: `vanswarm_run_agent`, `vanswarm_memory_*`, `vanswarm_framework_info`. |
+| 40    | [mcp-server/main.rs](../crates/mcp-server/src/main.rs)     | Provider detection, stdio transport, server startup.                                 |
 
 ---
 

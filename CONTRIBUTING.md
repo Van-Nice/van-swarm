@@ -1,4 +1,4 @@
-# Contributing to OpenSwarm
+# Contributing to VanSwarm
 
 Thank you for your interest in contributing to the Rust AI Agent Framework.
 

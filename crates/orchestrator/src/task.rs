@@ -28,7 +28,7 @@ pub trait ErasedTask: Send + Sync {
         &self,
         key: NodeKey,
         state: serde_json::Value,
-    ) -> BoxFuture<'_, openswarm_core::Result<(serde_json::Value, NextAction)>>;
+    ) -> BoxFuture<'_, vanswarm_core::Result<(serde_json::Value, NextAction)>>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,11 +51,11 @@ where
         &self,
         key: NodeKey,
         state: serde_json::Value,
-    ) -> BoxFuture<'_, openswarm_core::Result<(serde_json::Value, NextAction)>> {
+    ) -> BoxFuture<'_, vanswarm_core::Result<(serde_json::Value, NextAction)>> {
         Box::pin(async move {
             // Deserialise the generic state into T::State.
             let typed: T::State = serde_json::from_value(state).map_err(|e| {
-                openswarm_core::FrameworkError::Graph(format!(
+                vanswarm_core::FrameworkError::Graph(format!(
                     "Failed to deserialise state for task '{}': {e}",
                     self.0.name()
                 ))
@@ -64,7 +64,7 @@ where
             let (new_state, action) = self.0.run(key, typed).await?;
 
             let json_state = serde_json::to_value(&new_state).map_err(|e| {
-                openswarm_core::FrameworkError::Graph(format!(
+                vanswarm_core::FrameworkError::Graph(format!(
                     "Failed to serialise new state from task '{}': {e}",
                     self.0.name()
                 ))

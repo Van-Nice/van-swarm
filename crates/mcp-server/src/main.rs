@@ -1,6 +1,6 @@
-//! # openswarm-mcp-server
+//! # vanswarm-mcp-server
 //!
-//! Stdio MCP server that exposes the OpenSwarm agent framework to any
+//! Stdio MCP server that exposes the VanSwarm agent framework to any
 //! MCP-capable client (Cursor IDE, Claude Desktop, custom tooling).
 //!
 //! ## Provider auto-detection (checked in order)
@@ -16,15 +16,15 @@
 //! ## Usage
 //!
 //! ```sh
-//! ANTHROPIC_API_KEY=sk-ant-... cargo run -p openswarm-mcp-server
+//! ANTHROPIC_API_KEY=sk-ant-... cargo run -p vanswarm-mcp-server
 //! ```
 //!
 //! Add to `~/.cursor/mcp.json`:
 //! ```json
 //! {
 //!   "mcpServers": {
-//!     "openswarm": {
-//!       "command": "/path/to/openswarm-mcp-server",
+//!     "vanswarm": {
+//!       "command": "/path/to/vanswarm-mcp-server",
 //!       "env": { "ANTHROPIC_API_KEY": "sk-ant-..." }
 //!     }
 //!   }
@@ -36,7 +36,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use rmcp::{transport::stdio, ServiceExt};
 
-use openswarm_core::providers::{AnthropicProvider, GeminiProvider, ModelProvider, OpenAiProvider};
+use vanswarm_core::providers::{AnthropicProvider, GeminiProvider, ModelProvider, OpenAiProvider};
 
 mod server;
 
@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive("openswarm_mcp_server=info".parse()?)
+                .add_directive("vanswarm_mcp_server=info".parse()?)
                 .add_directive("warn".parse()?),
         )
         .with_writer(std::io::stderr)
@@ -106,7 +106,7 @@ async fn main() -> Result<()> {
 
     tracing::info!(
         version = env!("CARGO_PKG_VERSION"),
-        "openswarm-mcp-server starting"
+        "vanswarm-mcp-server starting"
     );
 
     let (provider, default_model, provider_name) = match detect_provider() {
@@ -128,7 +128,7 @@ async fn main() -> Result<()> {
         .await
         .inspect_err(|e| tracing::error!("MCP transport error: {}", e))?;
 
-    tracing::info!("openswarm-mcp-server ready");
+    tracing::info!("vanswarm-mcp-server ready");
     service.waiting().await?;
     Ok(())
 }

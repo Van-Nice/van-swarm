@@ -14,7 +14,7 @@
 use std::sync::Arc;
 
 use proptest::prelude::*;
-use openswarm_core::durable::{
+use vanswarm_core::durable::{
     DurableContext, InMemoryJournal, JournalBackend, JournalEntry, JournalKind,
 };
 

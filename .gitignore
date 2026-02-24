@@ -139,7 +139,7 @@ flamegraph.txt
 *.iml
 out/
 
-# --- Scaffolded projects (openswarm new) ---
+# --- Scaffolded projects (vanswarm new) ---
 /test_agent/
 
 # --- Misc ---

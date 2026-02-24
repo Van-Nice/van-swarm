@@ -141,7 +141,7 @@ impl ExecutionGraph {
 /// ## Example
 ///
 /// ```rust,no_run
-/// use openswarm_orchestrator::{GraphBuilder, NextAction, NodeKey, Task};
+/// use vanswarm_orchestrator::{GraphBuilder, NextAction, NodeKey, Task};
 /// use async_trait::async_trait;
 /// use serde::{Deserialize, Serialize};
 ///
@@ -154,7 +154,7 @@ impl ExecutionGraph {
 /// impl Task for AddOne {
 ///     type State = State;
 ///     async fn run(&self, _key: NodeKey, mut s: State)
-///         -> openswarm_core::Result<(State, NextAction)>
+///         -> vanswarm_core::Result<(State, NextAction)>
 ///     {
 ///         s.value += 1;
 ///         Ok((s, NextAction::Continue))

@@ -35,7 +35,7 @@ mod inner {
     use tokio::runtime::Handle;
     use tracing::{debug, instrument};
 
-    use openswarm_core::{FrameworkError, ToolExecutor};
+    use vanswarm_core::{FrameworkError, ToolExecutor};
 
     // ─────────────────────────────────────────────────────────────────────────
     // ScriptConfig
@@ -119,7 +119,7 @@ mod inner {
             &self,
             script_code: &str,
             context: ScriptContext,
-        ) -> openswarm_core::Result<serde_json::Value> {
+        ) -> vanswarm_core::Result<serde_json::Value> {
             let executor = Arc::clone(&self.executor);
             let config = self.config.clone();
             let script_code = script_code.to_owned();
@@ -133,7 +133,7 @@ mod inner {
         }
 
         /// Return the definitions of all registered tools (for agent discovery, §7.9).
-        pub fn tool_definitions(&self) -> Vec<openswarm_core::ToolDefinition> {
+        pub fn tool_definitions(&self) -> Vec<vanswarm_core::ToolDefinition> {
             self.executor.tool_definitions()
         }
     }
@@ -148,7 +148,7 @@ mod inner {
         executor: Arc<dyn ToolExecutor>,
         config: &ScriptConfig,
         tokio_handle: Handle,
-    ) -> openswarm_core::Result<serde_json::Value> {
+    ) -> vanswarm_core::Result<serde_json::Value> {
         // ── Build engine ───────────────────────────────────────────────────
         let mut engine = Engine::new_raw();
 
@@ -185,8 +185,8 @@ mod inner {
                 let result = handle_clone.block_on(exec.execute(&name, &tool_use_id, args));
 
                 let text = match result {
-                    openswarm_core::ContentBlock::ToolResult { content, .. } => content,
-                    openswarm_core::ContentBlock::Text { text } => text,
+                    vanswarm_core::ContentBlock::ToolResult { content, .. } => content,
+                    vanswarm_core::ContentBlock::Text { text } => text,
                     other => format!("{other:?}"),
                 };
 
@@ -210,8 +210,8 @@ mod inner {
                     handle_print.block_on(exec.execute(&name, &tool_use_id, args_json));
 
                 let text = match result {
-                    openswarm_core::ContentBlock::ToolResult { content, .. } => content,
-                    openswarm_core::ContentBlock::Text { text } => text,
+                    vanswarm_core::ContentBlock::ToolResult { content, .. } => content,
+                    vanswarm_core::ContentBlock::Text { text } => text,
                     other => format!("{other:?}"),
                 };
 
@@ -303,7 +303,7 @@ mod inner {
     mod tests {
         use super::*;
         use async_trait::async_trait;
-        use openswarm_core::{ContentBlock, ToolDefinition};
+        use vanswarm_core::{ContentBlock, ToolDefinition};
 
         struct CountingTool;
 

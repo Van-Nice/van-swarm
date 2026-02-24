@@ -28,7 +28,7 @@ Implementations:
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::durable::{FileJournal, InMemoryJournal, JournalBackend};
+use vanswarm_core::durable::{FileJournal, InMemoryJournal, JournalBackend};
 
 // Development: persist under a directory
 let journal: Arc<dyn JournalBackend> = Arc::new(FileJournal::new("/tmp/my_workflow_journals"));
@@ -52,7 +52,7 @@ let journal = Arc::new(InMemoryJournal::new());
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::durable::{DurableContext, FileJournal, JournalBackend};
+use vanswarm_core::durable::{DurableContext, FileJournal, JournalBackend};
 
 let journal: Arc<dyn JournalBackend> = Arc::new(FileJournal::new("/tmp/journals"));
 let ctx = DurableContext::new("run-1", Arc::clone(&journal), None);
@@ -89,7 +89,7 @@ Generic “run this once and journal the result.” Use for any custom side effe
 ```rust
 let value = ctx.run_once("fetch_config", async {
     let body = reqwest::get("https://api.example.com/config").await?.text().await?;
-    Ok::<_, openswarm_core::FrameworkError>(body)
+    Ok::<_, vanswarm_core::FrameworkError>(body)
 }).await?;
 ```
 
@@ -105,16 +105,16 @@ let value = ctx.run_once("fetch_config", async {
 
 ## 5. #[workflow] macro
 
-The **#[workflow]** procedural macro lives in **openswarm-macros**. It **validates** that the first parameter of the function is `Arc<DurableContext>` (or equivalent). It does **not** transform the body; checkpointing is done by calling `ctx.call_tool`, `ctx.sleep`, `ctx.run_once`, etc.
+The **#[workflow]** procedural macro lives in **vanswarm-macros**. It **validates** that the first parameter of the function is `Arc<DurableContext>` (or equivalent). It does **not** transform the body; checkpointing is done by calling `ctx.call_tool`, `ctx.sleep`, `ctx.run_once`, etc.
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::durable::DurableContext;
-use openswarm_macros::workflow;
+use vanswarm_core::durable::DurableContext;
+use vanswarm_macros::workflow;
 
 #[workflow]
-async fn my_workflow(ctx: Arc<DurableContext>) -> openswarm_core::Result<String> {
-    let x = ctx.run_once("step1", async { Ok::<_, openswarm_core::FrameworkError>("done") }).await?;
+async fn my_workflow(ctx: Arc<DurableContext>) -> vanswarm_core::Result<String> {
+    let x = ctx.run_once("step1", async { Ok::<_, vanswarm_core::FrameworkError>("done") }).await?;
     ctx.sleep(std::time::Duration::from_millis(100)).await?;
     let t = ctx.timestamp().await?;
     Ok(format!("{} at {:?}", x, t))
@@ -129,16 +129,16 @@ If the first parameter is not `Arc<DurableContext>`, the macro emits a compile e
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::{
+use vanswarm_core::{
     durable::{DurableContext, FileJournal, InMemoryJournal, JournalBackend},
     traits::tool::LocalToolRegistry,
 };
-use openswarm_macros::workflow;
+use vanswarm_macros::workflow;
 
 #[workflow]
-async fn demo_workflow(ctx: Arc<DurableContext>) -> openswarm_core::Result<String> {
+async fn demo_workflow(ctx: Arc<DurableContext>) -> vanswarm_core::Result<String> {
     let step1 = ctx.run_once("compute", async {
-        Ok::<_, openswarm_core::FrameworkError>("computed".to_string())
+        Ok::<_, vanswarm_core::FrameworkError>("computed".to_string())
     }).await?;
     ctx.sleep(std::time::Duration::from_secs(1)).await?;
     let result = ctx.call_tool("time", serde_json::json!({})).await?;
@@ -146,9 +146,9 @@ async fn demo_workflow(ctx: Arc<DurableContext>) -> openswarm_core::Result<Strin
 }
 
 #[tokio::main]
-async fn main() -> openswarm_core::Result<()> {
+async fn main() -> vanswarm_core::Result<()> {
     let journal: Arc<dyn JournalBackend> = Arc::new(InMemoryJournal::new());
-    let executor = Arc::new(LocalToolRegistry::new().register(openswarm_core::TimeTool));
+    let executor = Arc::new(LocalToolRegistry::new().register(vanswarm_core::TimeTool));
     let ctx = DurableContext::new("demo-1", journal, Some(executor));
     let out = demo_workflow(ctx).await?;
     println!("{}", out);

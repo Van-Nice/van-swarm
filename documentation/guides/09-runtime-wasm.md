@@ -1,6 +1,6 @@
 # Runtime (WASM sandbox)
 
-This guide covers **openswarm-runtime**: the **Wasmtime**-based sandbox for running WASM modules as tools, and the optional **MCP bridge**.
+This guide covers **vanswarm-runtime**: the **Wasmtime**-based sandbox for running WASM modules as tools, and the optional **MCP bridge**.
 
 ---
 
@@ -25,7 +25,7 @@ The runtime is **optional**; many agents use only **LocalToolRegistry** and **Mc
 **Sandbox** holds the engine and config. You **compile** once, then **run_compiled** many times:
 
 ```rust
-use openswarm_runtime::{Sandbox, SandboxConfig};
+use vanswarm_runtime::{Sandbox, SandboxConfig};
 
 let config = SandboxConfig {
     max_memory_bytes: 5 * 1024 * 1024, // 5 MiB
@@ -55,7 +55,7 @@ The host writes the input JSON into guest memory (via alloc + memory write), cal
 ## 4. Example: run a compiled module
 
 ```rust
-use openswarm_runtime::{Sandbox, SandboxConfig};
+use vanswarm_runtime::{Sandbox, SandboxConfig};
 
 let config = SandboxConfig {
     max_memory_bytes: 2 * 1024 * 1024,
@@ -82,10 +82,10 @@ See [documentation/framework/workflows/04-wasm-mcp-bridge.md](../framework/workf
 
 ## 6. Feature flags
 
-The **openswarm-runtime** crate may have optional features (e.g. **mcp-bridge**, **scripting** for Rhai). Check `crates/runtime/Cargo.toml` and enable what you need:
+The **vanswarm-runtime** crate may have optional features (e.g. **mcp-bridge**, **scripting** for Rhai). Check `crates/runtime/Cargo.toml` and enable what you need:
 
 ```toml
-openswarm-runtime = { path = "../runtime", features = ["wasm", "mcp-bridge"] }
+vanswarm-runtime = { path = "../runtime", features = ["wasm", "mcp-bridge"] }
 ```
 
 ---

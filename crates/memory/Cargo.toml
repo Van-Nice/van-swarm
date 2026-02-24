@@ -1,6 +1,6 @@
 [package]
-name        = "openswarm-memory"
-description = "Three-tier cognitive memory subsystem for OpenSwarm agents"
+name        = "vanswarm-memory"
+description = "Three-tier cognitive memory subsystem for VanSwarm agents"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -8,7 +8,7 @@ repository.workspace = true
 authors.workspace    = true
 
 [dependencies]
-openswarm-core.workspace = true
+vanswarm-core.workspace = true
 tokio.workspace           = true
 async-trait.workspace     = true
 serde.workspace           = true

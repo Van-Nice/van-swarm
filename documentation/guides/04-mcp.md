@@ -6,7 +6,7 @@ This guide covers **McpClient**, **McpToolExecutor** (using MCP tools from an ag
 
 ## 1. Overview
 
-MCP standardises how agents discover and call external tools. OpenSwarm provides:
+MCP standardises how agents discover and call external tools. VanSwarm provides:
 
 - **McpClient** — connect to an MCP server (stdio, HTTP, or in-memory channel), list tools, call tools.
 - **McpToolExecutor** — implements `ToolExecutor`; your ReActAgent uses it to call the MCP server’s tools.
@@ -21,7 +21,7 @@ MCP standardises how agents discover and call external tools. OpenSwarm provides
 Typical for local servers (e.g. filesystem, rust-mcp):
 
 ```rust
-use openswarm_mcp::McpClient;
+use vanswarm_mcp::McpClient;
 
 // Filesystem server (read-only under /tmp)
 let client = McpClient::stdio(
@@ -43,7 +43,7 @@ let client = McpClient::http("https://mcp.example.com/sse").await?;
 ### In-memory (tests)
 
 ```rust
-use openswarm_mcp::transport::ChannelTransport;
+use vanswarm_mcp::transport::ChannelTransport;
 
 let (client, _server_handle) = ChannelTransport::pair().await?;
 ```
@@ -64,15 +64,15 @@ let tools = client.list_tools().await?;
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::{
+use vanswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::AnthropicProvider,
     react::{run_agent, ReActAgent},
 };
-use openswarm_mcp::{McpClient, McpToolExecutor};
+use vanswarm_mcp::{McpClient, McpToolExecutor};
 
 #[tokio::main]
-async fn main() -> openswarm_core::Result<()> {
+async fn main() -> vanswarm_core::Result<()> {
     let client = McpClient::stdio(
         "npx",
         &["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
@@ -82,7 +82,7 @@ async fn main() -> openswarm_core::Result<()> {
     let executor = McpToolExecutor::new(Arc::new(client));
     executor.refresh_tools().await?;
 
-    let provider = openswarm_core::providers::AnthropicProvider::from_env()?;
+    let provider = vanswarm_core::providers::AnthropicProvider::from_env()?;
     let config = AgentConfig::new("mcp-agent", ModelConfig::new("claude-sonnet-4-20250514"))
         .with_max_iterations(15);
     let agent = ReActAgent::new(config, Arc::new(provider), Arc::new(executor));
@@ -105,12 +105,12 @@ client.initialize().await?;
 
 let result = client.call_tool("read_file", serde_json::json!({ "path": "hello.txt" })).await?;
 match result {
-    openswarm_mcp::CallToolResult::Content(blocks) => {
+    vanswarm_mcp::CallToolResult::Content(blocks) => {
         for b in blocks {
             println!("{:?}", b);
         }
     }
-    openswarm_mcp::CallToolResult::Error { text, .. } => eprintln!("Tool error: {}", text),
+    vanswarm_mcp::CallToolResult::Error { text, .. } => eprintln!("Tool error: {}", text),
 }
 ```
 
@@ -122,9 +122,9 @@ Use **McpServer** to serve a **ToolExecutor** (e.g. **LocalToolRegistry**) so ID
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::traits::tool::LocalToolRegistry;
-use openswarm_core::TimeTool;
-use openswarm_mcp::McpServer;
+use vanswarm_core::traits::tool::LocalToolRegistry;
+use vanswarm_core::TimeTool;
+use vanswarm_mcp::McpServer;
 
 let registry = LocalToolRegistry::new().register(TimeTool);
 let server = McpServer::new("my-tools", "0.1.0", Arc::new(registry));
@@ -137,20 +137,20 @@ For tests or in-process use, **serve_channel** returns a transport that you can 
 
 ## 6. Runnable example in this repo
 
-The **openswarm-mcp** crate includes an example that connects to the rust-mcp server and runs `cargo_workspace_action`:
+The **vanswarm-mcp** crate includes an example that connects to the rust-mcp server and runs `cargo_workspace_action`:
 
 ```bash
 # Build rust-mcp first (in its repo):
 #   cd ../rust-mcp && cargo build --release
 
 # From this workspace root:
-cargo run -p openswarm-mcp --example rust_mcp_client
+cargo run -p vanswarm-mcp --example rust_mcp_client
 ```
 
 Or set the server path explicitly:
 
 ```bash
-RUST_MCP_BIN=/path/to/rust-mcp/target/release/rust-mcp cargo run -p openswarm-mcp --example rust_mcp_client
+RUST_MCP_BIN=/path/to/rust-mcp/target/release/rust-mcp cargo run -p vanswarm-mcp --example rust_mcp_client
 ```
 
 ---

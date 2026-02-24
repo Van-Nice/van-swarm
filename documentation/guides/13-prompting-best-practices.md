@@ -1,6 +1,6 @@
 # Prompting & ACI best practices (§25)
 
-Effective prompting is the highest-leverage skill in agent development. These guidelines are distilled from production experience and the Anthropic usage guidelines that inform OpenSwarm's design.
+Effective prompting is the highest-leverage skill in agent development. These guidelines are distilled from production experience and the Anthropic usage guidelines that inform VanSwarm's design.
 
 ---
 
@@ -25,7 +25,7 @@ Return your answer as:
 
 **Why it works:** The model treats `<notes>` content as data, not as instructions. The structured output block is trivially parseable without regex fragility.
 
-**In OpenSwarm:** Use XML tags in `AgentConfig.system_prompt` and pass structured data in the first user message:
+**In VanSwarm:** Use XML tags in `AgentConfig.system_prompt` and pass structured data in the first user message:
 
 ```rust
 let config = AgentConfig {
@@ -141,7 +141,7 @@ let system = format!(
 );
 ```
 
-**TQGR patience check** (§11.8–11.9): OpenSwarm's convergence detector monitors trajectory quality. If the model is not making progress (TQGR below epsilon for 2–3 turns), the runner forces a Final Answer. Clear "done" definitions improve TQGR precision.
+**TQGR patience check** (§11.8–11.9): VanSwarm's convergence detector monitors trajectory quality. If the model is not making progress (TQGR below epsilon for 2–3 turns), the runner forces a Final Answer. Clear "done" definitions improve TQGR precision.
 
 ---
 
@@ -172,7 +172,7 @@ let config = AgentConfig {
 
 **Cost impact:** Anthropic's prompt caching reduces input token cost by ~90% for cache hits. For a 10,000-token system prompt called 100 times, this translates to a ~10× reduction in prompt cost for that prefix.
 
-**Gemini and OpenAI:** Both providers support context caching via their API mechanisms. OpenSwarm's provider layer passes through the `cache_system_prompt` flag; provider-specific caching is controlled server-side.
+**Gemini and OpenAI:** Both providers support context caching via their API mechanisms. VanSwarm's provider layer passes through the `cache_system_prompt` flag; provider-specific caching is controlled server-side.
 
 ---
 

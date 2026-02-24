@@ -217,10 +217,10 @@ impl Scorer for ContainsScorer {
 ///
 /// # Example
 /// ```rust,no_run
-/// use openswarm_core::evaluators::{LlmJudgeScorer, ScoreInput, Scorer};
-/// use openswarm_core::providers::AnthropicProvider;
+/// use vanswarm_core::evaluators::{LlmJudgeScorer, ScoreInput, Scorer};
+/// use vanswarm_core::providers::AnthropicProvider;
 /// use std::sync::Arc;
-/// # async fn example() -> openswarm_core::Result<()> {
+/// # async fn example() -> vanswarm_core::Result<()> {
 /// let provider = AnthropicProvider::from_env()?;
 /// let scorer = LlmJudgeScorer::new(Arc::new(provider), "claude-haiku-4-5-20251001");
 /// let input = ScoreInput {
@@ -333,8 +333,8 @@ fn parse_judge_response(text: &str) -> Result<ScoreResult> {
 ///
 /// # Example
 /// ```rust,no_run
-/// use openswarm_core::evaluators::{CompletenessScorer, ScoreInput, Scorer};
-/// # async fn example() -> openswarm_core::Result<()> {
+/// use vanswarm_core::evaluators::{CompletenessScorer, ScoreInput, Scorer};
+/// # async fn example() -> vanswarm_core::Result<()> {
 /// let scorer = CompletenessScorer::new(vec!["Paris", "France", "capital"]);
 /// let input = ScoreInput {
 ///     final_answer: "Paris is the capital of France.".into(),
@@ -927,7 +927,7 @@ pub struct GoldenDatasetSummary {
 /// # Usage
 ///
 /// ```rust,no_run
-/// use openswarm_core::evaluators::{GoldenCase, GoldenDataset, GoldenDatasetEval, NonEmptyScorer};
+/// use vanswarm_core::evaluators::{GoldenCase, GoldenDataset, GoldenDatasetEval, NonEmptyScorer};
 /// use std::sync::Arc;
 ///
 /// async fn example() {

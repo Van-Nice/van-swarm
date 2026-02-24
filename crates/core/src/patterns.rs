@@ -39,8 +39,8 @@ pub struct EvalOptResult {
 /// # Usage
 ///
 /// ```rust,no_run
-/// use openswarm_core::patterns::{EvaluatorOptimizerLoop, EvalOptResult};
-/// use openswarm_core::evaluators::NonEmptyScorer;
+/// use vanswarm_core::patterns::{EvaluatorOptimizerLoop, EvalOptResult};
+/// use vanswarm_core::evaluators::NonEmptyScorer;
 ///
 /// async fn example() {
 ///     let eval_opt = EvaluatorOptimizerLoop::new(0.8, 3);
@@ -185,7 +185,7 @@ pub struct PlanAndExecuteResult {
 /// # Usage
 ///
 /// ```rust,no_run
-/// use openswarm_core::patterns::PlanAndExecute;
+/// use vanswarm_core::patterns::PlanAndExecute;
 ///
 /// async fn example() {
 ///     let result = PlanAndExecute::new(5)

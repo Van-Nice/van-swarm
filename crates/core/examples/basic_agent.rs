@@ -2,13 +2,13 @@
 //!
 //! Run from workspace root:
 //!
-//!   cargo run -p openswarm-core --example basic_agent
+//!   cargo run -p vanswarm-core --example basic_agent
 //!
 //! Set one of: ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY.
 
 use std::sync::Arc;
 
-use openswarm_core::{
+use vanswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::AnthropicProvider,
     react::{run_agent, ReActAgent},
@@ -16,7 +16,7 @@ use openswarm_core::{
 };
 
 #[tokio::main]
-async fn main() -> openswarm_core::Result<()> {
+async fn main() -> vanswarm_core::Result<()> {
     let provider = AnthropicProvider::from_env()?;
     let executor = LocalToolRegistry::new();
     let config = AgentConfig::new("basic", ModelConfig::new("claude-sonnet-4-20250514"))

@@ -1,8 +1,8 @@
 # Quick start
 
-Get the OpenSwarm framework into your project and run your first agent in a few minutes.
+Get the VanSwarm framework into your project and run your first agent in a few minutes.
 
-**Scaffold a new agent:** From the framework repo, run `cargo run -p openswarm-cli -- new my_agent` to generate a ready-to-build project (see [CLI proposal](../proposals/CLI-NEW-AGENT-BOILERPLATE.md) for `--provider`, `--with-tools`, and other flags).
+**Scaffold a new agent:** From the framework repo, run `cargo run -p vanswarm-cli -- new my_agent` to generate a ready-to-build project (see [CLI proposal](../proposals/CLI-NEW-AGENT-BOILERPLATE.md) for `--provider`, `--with-tools`, and other flags).
 
 ---
 
@@ -28,7 +28,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-openswarm-core = { path = "../../crates/core" }
+vanswarm-core = { path = "../../crates/core" }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -36,9 +36,9 @@ tokio = { version = "1", features = ["full"] }
 
 ```toml
 [dependencies]
-openswarm-core = { path = "../rust-agent-framework/crates/core" }
+vanswarm-core = { path = "../rust-agent-framework/crates/core" }
 # Or:
-# openswarm-core = { git = "https://github.com/your-org/rust-agent-framework", branch = "main" }
+# vanswarm-core = { git = "https://github.com/your-org/rust-agent-framework", branch = "main" }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -63,11 +63,11 @@ export GEMINI_API_KEY=...
 
 ## 3. Minimal agent (no tools)
 
-Create `src/main.rs` (or run inside this repo with the crate that has `openswarm-core`):
+Create `src/main.rs` (or run inside this repo with the crate that has `vanswarm-core`):
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::{
+use vanswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::AnthropicProvider,
     react::{run_agent, ReActAgent},
@@ -75,7 +75,7 @@ use openswarm_core::{
 };
 
 #[tokio::main]
-async fn main() -> openswarm_core::Result<()> {
+async fn main() -> vanswarm_core::Result<()> {
     // Optional: enable logging
     tracing_subscriber::fmt::init();
 
@@ -97,10 +97,10 @@ async fn main() -> openswarm_core::Result<()> {
 Run (from workspace root):
 
 ```bash
-cargo run -p openswarm-core --example basic_agent
+cargo run -p vanswarm-core --example basic_agent
 ```
 
-Or from a crate that depends on `openswarm-core`, run your own binary (e.g. `cargo run`).
+Or from a crate that depends on `vanswarm-core`, run your own binary (e.g. `cargo run`).
 
 ---
 
@@ -110,7 +110,7 @@ Use the built-in **TimeTool** so the model can ask for the current time:
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::{
+use vanswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::AnthropicProvider,
     react::{run_agent, ReActAgent},
@@ -119,7 +119,7 @@ use openswarm_core::{
 };
 
 #[tokio::main]
-async fn main() -> openswarm_core::Result<()> {
+async fn main() -> vanswarm_core::Result<()> {
     tracing_subscriber::fmt::init();
 
     let provider = AnthropicProvider::from_env()?;
@@ -149,12 +149,12 @@ Swap the provider; the rest stays the same:
 
 ```rust
 // OpenAI
-use openswarm_core::providers::OpenAiProvider;
+use vanswarm_core::providers::OpenAiProvider;
 let provider = OpenAiProvider::from_env()?;
 // ModelConfig::new("gpt-4o") or "gpt-4o-mini", etc.
 
 // Gemini
-use openswarm_core::providers::GeminiProvider;
+use vanswarm_core::providers::GeminiProvider;
 let provider = GeminiProvider::from_env()?;
 // ModelConfig::new("gemini-2.0-flash") or your model id
 ```

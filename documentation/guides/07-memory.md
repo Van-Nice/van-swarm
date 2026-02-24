@@ -1,6 +1,6 @@
 # Memory
 
-This guide covers the **openswarm-memory** crate: **Memory** trait, **EpisodicMemory**, **MidTermMemory**, **SemanticMemory**, and **MemoryManager** for conflict resolution.
+This guide covers the **vanswarm-memory** crate: **Memory** trait, **EpisodicMemory**, **MidTermMemory**, **SemanticMemory**, and **MemoryManager** for conflict resolution.
 
 ---
 
@@ -39,7 +39,7 @@ pub trait Memory: Send + Sync {
 In-memory FIFO; when capacity is reached, the oldest entry is dropped. Search is substring match.
 
 ```rust
-use openswarm_memory::{EpisodicMemory, MemoryEntry};
+use vanswarm_memory::{EpisodicMemory, MemoryEntry};
 
 let mem = EpisodicMemory::new(1000);
 mem.store(MemoryEntry::new("User asked about Rust ownership")).await?;
@@ -66,7 +66,7 @@ let timeline = mem.recent_ordered(20).await?;
 Disk-backed (optional NDJSON) summaries with **heat** (retrieval count). Used to consolidate episodic entries and promote hot items toward Tier 3.
 
 ```rust
-use openswarm_memory::{MidTermMemory, MemoryEntry, SummaryEntry};
+use vanswarm_memory::{MidTermMemory, MemoryEntry, SummaryEntry};
 
 let path = std::path::PathBuf::from("/tmp/midterm.json");
 let mem = MidTermMemory::new(Some(path), 5); // heat_threshold = 5
@@ -93,7 +93,7 @@ let hot = mem.hot_entries().await?;
 In-memory vector store; similarity search via **cosine_similarity**. Production would use Qdrant or pgvector.
 
 ```rust
-use openswarm_memory::{MemoryEntry, SemanticMemory};
+use vanswarm_memory::{MemoryEntry, SemanticMemory};
 
 let mem = SemanticMemory::new();
 let mut entry = MemoryEntry::new("Rust has ownership");
@@ -108,7 +108,7 @@ let results = mem.semantic_search(&query_embedding, 5).await?;
 **cosine_similarity** is also exported for custom use:
 
 ```rust
-use openswarm_memory::cosine_similarity;
+use vanswarm_memory::cosine_similarity;
 let sim = cosine_similarity(&[1.0, 0.0], &[0.9, 0.1]);
 ```
 
@@ -124,7 +124,7 @@ let sim = cosine_similarity(&[1.0, 0.0], &[0.9, 0.1]);
 - **Delete { target_id }** — new fact negates an existing entry (negation keywords + overlap).
 
 ```rust
-use openswarm_memory::{MemoryEntry, MemoryManager, MemoryAction};
+use vanswarm_memory::{MemoryEntry, MemoryManager, MemoryAction};
 
 let manager = MemoryManager::new(0.85);
 let existing = mem.recent(100).await?;
@@ -142,10 +142,10 @@ match action {
 ## 7. Full example: episodic + search
 
 ```rust
-use openswarm_memory::{EpisodicMemory, Memory, MemoryEntry};
+use vanswarm_memory::{EpisodicMemory, Memory, MemoryEntry};
 
 #[tokio::main]
-async fn main() -> openswarm_core::Result<()> {
+async fn main() -> vanswarm_core::Result<()> {
     let mem = EpisodicMemory::new(100);
     mem.store(MemoryEntry::new("User: What is Rust?")).await?;
     mem.store(MemoryEntry::new("Agent: Rust is a systems language.")).await?;

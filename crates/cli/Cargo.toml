@@ -1,14 +1,14 @@
 [package]
-name = "openswarm-cli"
+name = "vanswarm-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "CLI for scaffolding OpenSwarm agent projects"
+description = "CLI for scaffolding VanSwarm agent projects"
 
 [[bin]]
-name = "openswarm"
+name = "vanswarm"
 path = "src/main.rs"
 
 [dependencies]

@@ -10,7 +10,7 @@
 //! | `memory_manager_deduplication`          | §22.6     |
 //! | `full_pipeline_tier1_tier2_tier3`       | §22.6     |
 
-use openswarm_memory::{
+use vanswarm_memory::{
     EpisodicMemory, Memory, MemoryAction, MemoryEntry, MemoryManager, MidTermMemory,
     SemanticMemory,
 };

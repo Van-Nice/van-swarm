@@ -7,7 +7,7 @@ mod tests {
     use async_trait::async_trait;
     use serde_json::json;
 
-    use openswarm_core::{ContentBlock, ToolDefinition, ToolExecutor};
+    use vanswarm_core::{ContentBlock, ToolDefinition, ToolExecutor};
 
     use crate::{McpClient, McpServer};
 

@@ -1,4 +1,4 @@
-# OpenSwarm — High-Performance Rust AI Agent Framework
+# VanSwarm — High-Performance Rust AI Agent Framework
 
 > **Status:** Active development — Phase 1 (foundations) in progress.
 
@@ -9,7 +9,7 @@ concurrency.
 
 ## Why Rust?
 
-| Metric              | OpenSwarm         | TypeScript (Node) | Python (CPython) |
+| Metric              | VanSwarm          | TypeScript (Node) | Python (CPython) |
 | ------------------- | ----------------- | ----------------- | ---------------- |
 | Cold start          | **<10 ms**        | >100 ms           | >500 ms          |
 | Memory per agent    | **<5 MB**         | ~200 MB           | ~500 MB          |
@@ -22,12 +22,12 @@ concurrency.
 ```
 rust-agent-framework/
 ├── crates/
-│   ├── core/          openswarm-core       – traits, providers, ReAct loop
-│   ├── orchestrator/  openswarm-orchestrator – graph engine (§4)
-│   ├── memory/        openswarm-memory      – three-tier memory (§8)
-│   ├── mcp/           openswarm-mcp         – Model Context Protocol (§9)
-│   ├── runtime/       openswarm-runtime     – WASM sandbox (§5)
-│   └── macros/        openswarm-macros      – #[tool], #[workflow] (§3,§10)
+│   ├── core/          vanswarm-core       – traits, providers, ReAct loop
+│   ├── orchestrator/  vanswarm-orchestrator – graph engine (§4)
+│   ├── memory/        vanswarm-memory      – three-tier memory (§8)
+│   ├── mcp/           vanswarm-mcp         – Model Context Protocol (§9)
+│   ├── runtime/       vanswarm-runtime     – WASM sandbox (§5)
+│   └── macros/        vanswarm-macros      – #[tool], #[workflow] (§3,§10)
 ```
 
 ## Core concepts
@@ -83,7 +83,7 @@ let executor = LocalToolRegistry::new()
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-cargo run -p openswarm-core --example basic_agent
+cargo run -p vanswarm-core --example basic_agent
 ```
 
 ## Checklist progress

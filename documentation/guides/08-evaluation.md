@@ -1,6 +1,6 @@
 # Evaluation
 
-This guide covers **evaluators** in **openswarm-core**: **Scorer**, **ScoreInput** / **ScoreResult**, **batch_score**, **SPL** (Success weighted by Path Length), and **RunMetrics**.
+This guide covers **evaluators** in **vanswarm-core**: **Scorer**, **ScoreInput** / **ScoreResult**, **batch_score**, **SPL** (Success weighted by Path Length), and **RunMetrics**.
 
 ---
 
@@ -9,7 +9,7 @@ This guide covers **evaluators** in **openswarm-core**: **Scorer**, **ScoreInput
 Use **run_agent_with_metrics** to get **RunMetrics** for each run:
 
 ```rust
-use openswarm_core::react::run_agent_with_metrics;
+use vanswarm_core::react::run_agent_with_metrics;
 
 let (answer, metrics) = run_agent_with_metrics(&agent, "What is the capital of France?").await?;
 // metrics.iterations   — number of ReAct steps
@@ -52,7 +52,7 @@ pub trait Scorer: Send + Sync {
 Example:
 
 ```rust
-use openswarm_core::evaluators::{ContainsScorer, ScoreInput, Scorer};
+use vanswarm_core::evaluators::{ContainsScorer, ScoreInput, Scorer};
 
 let scorer = ContainsScorer::default();
 let input = ScoreInput {
@@ -71,7 +71,7 @@ println!("Score: {} Reason: {}", result.score, result.reason);
 For CI or benchmarks, run a scorer on a list of inputs:
 
 ```rust
-use openswarm_core::evaluators::{batch_score, ContainsScorer, ScoreInput};
+use vanswarm_core::evaluators::{batch_score, ContainsScorer, ScoreInput};
 
 let scorer = ContainsScorer::default();
 let inputs = vec![
@@ -101,7 +101,7 @@ SPL rewards correct answers with **shorter** tool-use paths. You need:
 - **optimal_path_length** L_opt (from your benchmark definition).
 
 ```rust
-use openswarm_core::evaluators::{BenchmarkTask, SplRun, spl};
+use vanswarm_core::evaluators::{BenchmarkTask, SplRun, spl};
 
 let runs = vec![
     SplRun {
@@ -126,7 +126,7 @@ let spl_value = spl(&runs);
 ## 6. Full example: eval loop with RunMetrics and ContainsScorer
 
 ```rust
-use openswarm_core::{
+use vanswarm_core::{
     evaluators::{ContainsScorer, ScoreInput, Scorer, SplRun, spl},
     react::run_agent_with_metrics,
 };
@@ -162,5 +162,5 @@ println!("SPL: {}", spl_value);
 
 ## 7. Next steps
 
-- More scorers and golden datasets: see `openswarm_core::evaluators` and [documentation/architecture/01-core.md](../architecture/01-core.md).
+- More scorers and golden datasets: see `vanswarm_core::evaluators` and [documentation/architecture/01-core.md](../architecture/01-core.md).
 - Traces and cost: [02-building-an-agent](02-building-an-agent.md) (run_agent_traced).

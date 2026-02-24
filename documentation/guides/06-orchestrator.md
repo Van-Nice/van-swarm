@@ -6,7 +6,7 @@ This guide covers **graph-based workflows**: **GraphBuilder**, **ExecutionGraph*
 
 ## 1. Overview
 
-The **openswarm-orchestrator** crate runs workflows defined as a **graph** of nodes. Each node implements **Task**: it receives the current **state**, runs, and returns updated state plus a **NextAction** that tells the runner which nodes to run next (or to pause/end).
+The **vanswarm-orchestrator** crate runs workflows defined as a **graph** of nodes. Each node implements **Task**: it receives the current **state**, runs, and returns updated state plus a **NextAction** that tells the runner which nodes to run next (or to pause/end).
 
 - **GraphBuilder** — add nodes, edges, conditional edges, set start node, then **build()** → **ExecutionGraph**.
 - **ExecutionGraph** — immutable graph (petgraph + slotmap); holds type-erased tasks.
@@ -21,7 +21,7 @@ Each node has a **State** type (shared across the graph) and must return that st
 
 ```rust
 use async_trait::async_trait;
-use openswarm_orchestrator::{FlowRunner, GraphBuilder, NextAction, NodeKey, Task};
+use vanswarm_orchestrator::{FlowRunner, GraphBuilder, NextAction, NodeKey, Task};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Serialize, Deserialize)]
@@ -36,7 +36,7 @@ impl Task for ExtractNode {
     type State = PipelineState;
 
     async fn run(&self, _key: NodeKey, mut state: PipelineState)
-        -> openswarm_core::Result<(PipelineState, NextAction)>
+        -> vanswarm_core::Result<(PipelineState, NextAction)>
     {
         state.message = "extracted".to_string();
         Ok((state, NextAction::Continue))
@@ -65,7 +65,7 @@ impl Task for ExtractNode {
 
 ```rust
 use std::sync::Arc;
-use openswarm_orchestrator::{ExecutionGraph, GraphBuilder, NextAction, Task};
+use vanswarm_orchestrator::{ExecutionGraph, GraphBuilder, NextAction, Task};
 
 let mut builder = GraphBuilder::new();
 let extract_key = builder.add_node(ExtractNode);
@@ -90,7 +90,7 @@ let graph: Arc<ExecutionGraph> = Arc::new(builder.build());
 ## 5. Running the graph
 
 ```rust
-use openswarm_orchestrator::FlowRunner;
+use vanswarm_orchestrator::FlowRunner;
 
 let runner = FlowRunner::new(Arc::clone(&graph));
 let initial_state = serde_json::json!({ "message": "" });
@@ -98,8 +98,8 @@ let result = runner.run(initial_state).await?;
 
 println!("Final state: {:?}", result.state);
 match result.status {
-    openswarm_orchestrator::RunStatus::Completed => {}
-    openswarm_orchestrator::RunStatus::WaitingForInput { prompt, paused_at } => {
+    vanswarm_orchestrator::RunStatus::Completed => {}
+    vanswarm_orchestrator::RunStatus::WaitingForInput { prompt, paused_at } => {
         println!("Waiting for input: {} (paused at {:?})", prompt, paused_at);
         if let Some(checkpoint) = result.checkpoint {
             let user_input = get_input_from_user();
@@ -171,8 +171,8 @@ let resumed = runner.resume(checkpoint, user_response).await?;
 
 ```rust
 use async_trait::async_trait;
-use openswarm_core::Result;
-use openswarm_orchestrator::{FlowRunner, GraphBuilder, NextAction, NodeKey, Task};
+use vanswarm_core::Result;
+use vanswarm_orchestrator::{FlowRunner, GraphBuilder, NextAction, NodeKey, Task};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

@@ -21,7 +21,7 @@ These workflows are derived from:
 
 - **documentation/framework/Rust Agent Framework Technical Specification.md** — Durable execution, graph orchestration, WASM–MCP, memory, convergence (SPL, TQGR).
 - **documentation/framework/AI Agent Framework Strategy & PRD.md** — Architecture, crate layout, platform, MCP, Redis Streams, APM.
-- **documentation/framework/Rust AI Framework Product Strategy.md** — OpenSwarm crates, Workflow vs Agent, ACI, MCP, swarm orchestration, three-tier memory, WASM.
+- **documentation/framework/Rust AI Framework Product Strategy.md** — VanSwarm crates, Workflow vs Agent, ACI, MCP, swarm orchestration, three-tier memory, WASM.
 - **documentation/framework/Anthropic Agent Building Bible.md** — Workflows vs agents, ACI, MCP, programmatic tool calling.
 - **documentation/framework/Building and Managing Agent Swarms.md** — Scaling, protocols (MCP, A2A), Redis, FinOps.
 

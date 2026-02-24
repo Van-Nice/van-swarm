@@ -1,14 +1,14 @@
-# **Technical Product Requirements and Commercialization Strategy for OpenSwarm: A High-Performance Agentic Framework**
+# **Technical Product Requirements and Commercialization Strategy for VanSwarm: A High-Performance Agentic Framework**
 
-The transition from a human-first web to an agentic internet marks a fundamental shift in the architecture of information and value exchange. As autonomous systems increasingly act on behalf of users—shopping, coding, and navigating complex workflows—the underlying infrastructure must evolve from simple "wrapper" scripts to robust, systems-level frameworks.1 While existing ecosystems in Python and TypeScript have paved the way for early exploration, the inherent trade-offs in their runtimes, particularly regarding memory overhead, concurrency limitations, and execution latency, create a ceiling for production-grade agentic swarms. OpenSwarm is engineered to shatter this ceiling by merging the ergonomic, "batteries-included" developer experience of frameworks like Mastra.ai with the uncompromising performance, security, and type safety of the Rust language.2
+The transition from a human-first web to an agentic internet marks a fundamental shift in the architecture of information and value exchange. As autonomous systems increasingly act on behalf of users—shopping, coding, and navigating complex workflows—the underlying infrastructure must evolve from simple "wrapper" scripts to robust, systems-level frameworks.1 While existing ecosystems in Python and TypeScript have paved the way for early exploration, the inherent trade-offs in their runtimes, particularly regarding memory overhead, concurrency limitations, and execution latency, create a ceiling for production-grade agentic swarms. VanSwarm is engineered to shatter this ceiling by merging the ergonomic, "batteries-included" developer experience of frameworks like Mastra.ai with the uncompromising performance, security, and type safety of the Rust language.2
 
 ## **Executive Summary: The Strategic Transition to Systems-Level Agency**
 
 The current landscape of agentic frameworks is dominated by interpreted languages that prioritize rapid prototyping over operational efficiency. Mastra.ai has successfully established a blueprint for TypeScript-based agent development, integrating workflows, retrieval-augmented generation (RAG), and evaluation into a cohesive stack.2 However, as the industry moves toward high-density deployments—where hundreds or thousands of agents must operate concurrently on limited hardware—the "interpretive-glue" model becomes economically and technically unsustainable.
 
-OpenSwarm addresses this by leveraging Rust’s zero-cost abstractions and ownership model. By removing the garbage collection (GC) pauses and Global Interpreter Lock (GIL) constraints found in Node.js and Python, OpenSwarm enables a new class of high-concurrency workloads. The framework is built on four architectural pillars: an augmented framework design inspired by Anthropic’s engineering principles, a graph-based swarm orchestration engine, a three-tier cognitive memory subsystem, and a security-first WebAssembly (WASM) sandbox.5 This report outlines the technical requirements for these components and a commercialization strategy based on the "Vercel Play"—monetizing the friction of production through a managed runtime, agentic observability, and durable state persistence.
+VanSwarm addresses this by leveraging Rust’s zero-cost abstractions and ownership model. By removing the garbage collection (GC) pauses and Global Interpreter Lock (GIL) constraints found in Node.js and Python, VanSwarm enables a new class of high-concurrency workloads. The framework is built on four architectural pillars: an augmented framework design inspired by Anthropic’s engineering principles, a graph-based swarm orchestration engine, a three-tier cognitive memory subsystem, and a security-first WebAssembly (WASM) sandbox.5 This report outlines the technical requirements for these components and a commercialization strategy based on the "Vercel Play"—monetizing the friction of production through a managed runtime, agentic observability, and durable state persistence.
 
-| Feature Category         | OpenSwarm (Proposed)        | Mastra.ai (TS)           | LangGraph (Python)    |
+| Feature Category         | VanSwarm (Proposed)         | Mastra.ai (TS)           | LangGraph (Python)    |
 | :----------------------- | :-------------------------- | :----------------------- | :-------------------- |
 | **Language Runtime**     | Rust (Native/WASM)          | TypeScript (V8/Node)     | Python (CPython)      |
 | **Memory Management**    | Ownership (No GC)           | Garbage Collected        | Garbage Collected     |
@@ -19,18 +19,18 @@ OpenSwarm addresses this by leveraging Rust’s zero-cost abstractions and owner
 | **Tool Calling Pattern** | Programmatic (MCP Code)     | JSON-based RPC           | JSON-based RPC        |
 | **Token Efficiency**     | \~98% Reduction (Code Mode) | Standard (JSON-heavy)    | Standard (JSON-heavy) |
 
-The core value proposition of OpenSwarm is the reduction of the "Unreliability Tax"—the hidden costs associated with model hallucinations, token wastage in verbose JSON schemas, and high operational latency.8 By treating agents not just as language generators but as systems-level actors, OpenSwarm provides the stability and performance required for the next generation of enterprise AI.
+The core value proposition of VanSwarm is the reduction of the "Unreliability Tax"—the hidden costs associated with model hallucinations, token wastage in verbose JSON schemas, and high operational latency.8 By treating agents not just as language generators but as systems-level actors, VanSwarm provides the stability and performance required for the next generation of enterprise AI.
 
 ## **Architecture Diagram Description: Crate-Based Modular Infrastructure**
 
-OpenSwarm is architected as a collection of modular crates, allowing developers to pull in only the components necessary for their specific use case. This modularity ensures a minimal binary size and fast compilation, which is critical for edge deployments and serverless environments.
+VanSwarm is architected as a collection of modular crates, allowing developers to pull in only the components necessary for their specific use case. This modularity ensures a minimal binary size and fast compilation, which is critical for edge deployments and serverless environments.
 
-1. **openswarm-core**: The foundational layer that defines the shared primitives of the framework. It includes the Runnable trait, which forms the basis for all executable components, and the core Agent and Workflow abstractions. This crate is responsible for basic model provider interfaces (e.g., OpenAI, Anthropic, Gemini) and the orchestration of the basic message loop.4
-2. **openswarm-orchestrator**: A sophisticated graph-based execution engine. It provides the GraphBuilder and FlowRunner for managing complex, stateful workflows. This module handles task-centric design, conditional routing, and parallel execution of child tasks using the Tokio runtime.11
-3. **openswarm-memory**: A comprehensive three-tier memory subsystem. It abstracts various storage backends—including vector databases like Qdrant and relational stores like PostgreSQL with pgvector—into a unified API. It manages the extraction, consolidation, and retrieval of episodic, semantic, and procedural memory.10
-4. **openswarm-mcp**: The Model Context Protocol (MCP) integration layer. It allows OpenSwarm agents to connect to MCP servers natively, treating them as discoverable code APIs. This crate implements the "Programmatic Tool Calling" logic that enables significant token reductions.8
-5. **openswarm-runtime**: The security and isolation layer. It wraps the Wasmtime engine to provide a capability-gated sandbox for agent-generated code. It enforces strict limits on CPU usage (via fuel) and memory consumption to ensure multi-tenant safety.15
-6. **openswarm-macros**: Procedural macros used to enhance the developer experience. This includes the \#\[tool\] attribute, which automates the generation of JSON schemas and parameter documentation from Rust function signatures, ensuring a "Poka-yoke" (mistake-proofing) interface.18
+1. **vanswarm-core**: The foundational layer that defines the shared primitives of the framework. It includes the Runnable trait, which forms the basis for all executable components, and the core Agent and Workflow abstractions. This crate is responsible for basic model provider interfaces (e.g., OpenAI, Anthropic, Gemini) and the orchestration of the basic message loop.4
+2. **vanswarm-orchestrator**: A sophisticated graph-based execution engine. It provides the GraphBuilder and FlowRunner for managing complex, stateful workflows. This module handles task-centric design, conditional routing, and parallel execution of child tasks using the Tokio runtime.11
+3. **vanswarm-memory**: A comprehensive three-tier memory subsystem. It abstracts various storage backends—including vector databases like Qdrant and relational stores like PostgreSQL with pgvector—into a unified API. It manages the extraction, consolidation, and retrieval of episodic, semantic, and procedural memory.10
+4. **vanswarm-mcp**: The Model Context Protocol (MCP) integration layer. It allows VanSwarm agents to connect to MCP servers natively, treating them as discoverable code APIs. This crate implements the "Programmatic Tool Calling" logic that enables significant token reductions.8
+5. **vanswarm-runtime**: The security and isolation layer. It wraps the Wasmtime engine to provide a capability-gated sandbox for agent-generated code. It enforces strict limits on CPU usage (via fuel) and memory consumption to ensure multi-tenant safety.15
+6. **vanswarm-macros**: Procedural macros used to enhance the developer experience. This includes the \#\[tool\] attribute, which automates the generation of JSON schemas and parameter documentation from Rust function signatures, ensuring a "Poka-yoke" (mistake-proofing) interface.18
 
 ## **Phase 1: The Augmented Framework Architecture**
 
@@ -40,19 +40,19 @@ Designing an effective agentic framework requires a shift from "chat-focused" de
 
 A fundamental architectural distinction must be drawn between "Workflows" and "Agents" to provide developers with the right tool for the specific task complexity. Workflows are deterministic systems where Large Language Models (LLMs) and tools are orchestrated through predefined code paths.5 These are ideal for well-defined tasks like prompt chaining, routing, and parallelization, where predictability is paramount.
 
-OpenSwarm implements this via the Workflow trait, which defines a state machine where transitions are governed by hard-coded logic. This ensures that the system follows a fixed sequence of steps (e.g., an Evaluator-Optimizer loop), reducing the risk of the model wandering off-track.5 In contrast, the Agent trait represents a probabilistic system where the LLM maintains control over its own processes and tool usage.5 This is implemented as a dynamic reasoning loop, often following the ReAct pattern, where the agent observes its environment, reasons about the next step, and executes an action. By strictly separating these in the type system, OpenSwarm prevents the "hidden complexity" that often plagues less structured frameworks, making it easier to debug and audit the system.5
+VanSwarm implements this via the Workflow trait, which defines a state machine where transitions are governed by hard-coded logic. This ensures that the system follows a fixed sequence of steps (e.g., an Evaluator-Optimizer loop), reducing the risk of the model wandering off-track.5 In contrast, the Agent trait represents a probabilistic system where the LLM maintains control over its own processes and tool usage.5 This is implemented as a dynamic reasoning loop, often following the ReAct pattern, where the agent observes its environment, reasons about the next step, and executes an action. By strictly separating these in the type system, VanSwarm prevents the "hidden complexity" that often plagues less structured frameworks, making it easier to debug and audit the system.5
 
 ### **The ACI (Agent-Computer Interface): Poka-yoke Tool Definition**
 
-The Agent-Computer Interface (ACI) is the set of tools and documentation provided to the model. A poorly defined ACI is the primary source of agent failure in production. OpenSwarm implements a "Poka-yoke" approach, inspired by industrial mistake-proofing, to ensure that tool definitions are unambiguous and error-resistant.5
+The Agent-Computer Interface (ACI) is the set of tools and documentation provided to the model. A poorly defined ACI is the primary source of agent failure in production. VanSwarm implements a "Poka-yoke" approach, inspired by industrial mistake-proofing, to ensure that tool definitions are unambiguous and error-resistant.5
 
-The framework uses the \#\[tool\] macro to bridge the gap between Rust’s type system and the model’s JSON-based tool-calling interface. When a developer annotates a function with \#\[tool\], the macro utilizes the schemars crate to automatically generate a comprehensive JSON schema at compile-time.18 This schema includes type information, parameter descriptions extracted from Rustdoc comments, and required field annotations. By deriving the schema directly from the source code, OpenSwarm eliminates "anti-drift" issues where the tool's documentation no longer matches its implementation.18 Furthermore, the macro generates type-safe wrappers that automatically deserialize the model's output into Rust structs, returning structured errors to the model if the input fails validation. This allow the agent to "self-correct" its tool calls without crashing the main execution flow.18
+The framework uses the \#\[tool\] macro to bridge the gap between Rust’s type system and the model’s JSON-based tool-calling interface. When a developer annotates a function with \#\[tool\], the macro utilizes the schemars crate to automatically generate a comprehensive JSON schema at compile-time.18 This schema includes type information, parameter descriptions extracted from Rustdoc comments, and required field annotations. By deriving the schema directly from the source code, VanSwarm eliminates "anti-drift" issues where the tool's documentation no longer matches its implementation.18 Furthermore, the macro generates type-safe wrappers that automatically deserialize the model's output into Rust structs, returning structured errors to the model if the input fails validation. This allow the agent to "self-correct" its tool calls without crashing the main execution flow.18
 
 ### **Protocol Support: Native MCP and Programmatic Tool Calling**
 
 Traditional tool-calling systems are "chatty," requiring the model to predict a JSON object, the runtime to execute it, and the full result to be appended back to the context window for the next turn. For tasks involving large datasets or multi-step processes, this leads to "context pollution" and excessive token consumption.8
 
-OpenSwarm implements native support for the Model Context Protocol (MCP) using a "Programmatic Tool Calling" (or "Code Mode") approach. Instead of loading all tool definitions as JSON schemas upfront, the model is provided with a simple directory listing or a "discovery tool" that allows it to explore available MCP servers.8 When a complex task is identified, the model generates a block of code (e.g., Python or Rust) that imports the specific tools it needs and executes the entire workflow within the sandbox. This shift allows the system to process 500 rows of SQL data and filter them down to 5 relevant entries _inside the sandbox_, returning only the final result to the model. Research indicates that this approach can reduce token usage by up to 98.7% while significantly improving accuracy for "Real World" data tasks.8
+VanSwarm implements native support for the Model Context Protocol (MCP) using a "Programmatic Tool Calling" (or "Code Mode") approach. Instead of loading all tool definitions as JSON schemas upfront, the model is provided with a simple directory listing or a "discovery tool" that allows it to explore available MCP servers.8 When a complex task is identified, the model generates a block of code (e.g., Python or Rust) that imports the specific tools it needs and executes the entire workflow within the sandbox. This shift allows the system to process 500 rows of SQL data and filter them down to 5 relevant entries _inside the sandbox_, returning only the final result to the model. Research indicates that this approach can reduce token usage by up to 98.7% while significantly improving accuracy for "Real World" data tasks.8
 
 ## **Phase 2: Swarm Orchestration and Infrastructure**
 
@@ -60,19 +60,19 @@ As systems scale from single agents to swarms of 100+ agents, the architectural 
 
 ### **Graph-Based Orchestration Pattern**
 
-OpenSwarm utilizes a graph-based orchestration engine, inspired by patterns in LangGraph but optimized for Rust’s concurrency model. Multi-agent workflows are modeled as directed graphs where nodes represent tasks or agents, and edges define the execution path.11 This design supports both "Orchestrator-Worker" and "Hierarchical Swarm" patterns.
+VanSwarm utilizes a graph-based orchestration engine, inspired by patterns in LangGraph but optimized for Rust’s concurrency model. Multi-agent workflows are modeled as directed graphs where nodes represent tasks or agents, and edges define the execution path.11 This design supports both "Orchestrator-Worker" and "Hierarchical Swarm" patterns.
 
-In the Orchestrator-Worker pattern, a primary agent analyzes a complex query and decomposes it into independent subtasks. These subtasks are then dispatched to specialized worker agents, who operate in parallel. The orchestrator then aggregates the results into a final response.5 OpenSwarm’s FlowRunner manages these executions asynchronously, using Tokio to run multiple branches of the graph simultaneously. Each task implements a Task trait and returns a TaskResult, which dictates whether the graph should Continue, Parallelize, WaitForInput (for human-in-the-loop steps), or End.11 This granular control ensures that workflows are resilient, resumable, and capable of surviving system restarts through built-in session persistence.11
+In the Orchestrator-Worker pattern, a primary agent analyzes a complex query and decomposes it into independent subtasks. These subtasks are then dispatched to specialized worker agents, who operate in parallel. The orchestrator then aggregates the results into a final response.5 VanSwarm’s FlowRunner manages these executions asynchronously, using Tokio to run multiple branches of the graph simultaneously. Each task implements a Task trait and returns a TaskResult, which dictates whether the graph should Continue, Parallelize, WaitForInput (for human-in-the-loop steps), or End.11 This granular control ensures that workflows are resilient, resumable, and capable of surviving system restarts through built-in session persistence.11
 
 ### **The Communication Layer: Redis Streams as the Backbone**
 
-For agent-to-agent (A2A) messaging, OpenSwarm replaces heavy protocols like Kafka with Redis Streams. While Kafka is optimized for massive data throughput, its setup complexity and latency overhead (tens of milliseconds) are often overkill for the low-latency requirements of agentic coordination.28
+For agent-to-agent (A2A) messaging, VanSwarm replaces heavy protocols like Kafka with Redis Streams. While Kafka is optimized for massive data throughput, its setup complexity and latency overhead (tens of milliseconds) are often overkill for the low-latency requirements of agentic coordination.28
 
 Redis Streams offer sub-millisecond latency by operating primarily in-memory while still providing a lightweight, append-only log structure for durability.28 This allows agents to subscribe to specific channels or "topic streams" to receive updates from their peers. Unlike traditional Redis pub/sub, Streams support consumer groups and message acknowledgments, ensuring that if an agent isolate crashes during a complex negotiation, the message can be reprocessed by another instance or resumed upon restart. This backbone is critical for implementing "Swarm" patterns where agents need to dynamically decide who should handle a task through real-time collaboration and handoffs.26
 
 ### **FinOps and Routing: The SupervisorAgent and Model Tiering**
 
-The "Unreliability Tax" refers to the compounded cost and latency of using overpowered models for simple tasks. To mitigate this, OpenSwarm includes a SupervisorAgent module that implements Model Tiering logic. This module acts as a smart router, classifying the complexity of an input before dispatching it to an execution node.30
+The "Unreliability Tax" refers to the compounded cost and latency of using overpowered models for simple tasks. To mitigate this, VanSwarm includes a SupervisorAgent module that implements Model Tiering logic. This module acts as a smart router, classifying the complexity of an input before dispatching it to an execution node.30
 
 The routing logic follows a hierarchical structure:
 
@@ -84,39 +84,39 @@ The SupervisorAgent tracks the "Convergence Score" of these paths, measuring how
 
 ## **Phase 3: Security and Memory (The "Mastra" Features)**
 
-To achieve parity with frameworks like Mastra.ai, OpenSwarm must provide high-level abstractions for memory and state, but it does so through the lens of systems engineering, prioritizing efficiency and security.2
+To achieve parity with frameworks like Mastra.ai, VanSwarm must provide high-level abstractions for memory and state, but it does so through the lens of systems engineering, prioritizing efficiency and security.2
 
 ### **Three-Tier Memory Subsystem**
 
-Effective agentic workflows require a memory architecture that mirrors human cognitive functions, separating short-term context from long-term knowledge. OpenSwarm implements a three-tier memory model:
+Effective agentic workflows require a memory architecture that mirrors human cognitive functions, separating short-term context from long-term knowledge. VanSwarm implements a three-tier memory model:
 
 1. **Episodic Memory (Short-Term/Experience)**: This tier stores specific past interactions, logged with enough context to be useful for session continuity. It allows the agent to recall that "Last Tuesday, the user preferred the Python implementation over Rust," enabling the agent to learn from successes and mistakes within a project lifecycle.13
-2. **Semantic Memory (Long-Term/Facts)**: This is the agent's enduring knowledge base, consisting of persistent facts about the world, the domain, or the user’s preferences. In OpenSwarm, this is implemented as a hybrid vector and full-text search (FTS5) system managed through SQLite or specialized vector stores like Qdrant.7
+2. **Semantic Memory (Long-Term/Facts)**: This is the agent's enduring knowledge base, consisting of persistent facts about the world, the domain, or the user’s preferences. In VanSwarm, this is implemented as a hybrid vector and full-text search (FTS5) system managed through SQLite or specialized vector stores like Qdrant.7
 3. **Procedural Memory (Skills/Routines)**: This tier encodes "how-to" knowledge—learned behaviors, communication styles, and tool-use sequences. It is often implemented as a library of validated "skills" or Pydantic/Rust-defined schemas that guide the agent's execution logic automatically.14
 
-OpenSwarm abstracts these storage layers into a simple Rust API. By implementing a common Memory trait, the framework allows developers to switch between local SQLite for development and high-performance pgvector or MongoDB clusters for production without changing the core agent logic.24
+VanSwarm abstracts these storage layers into a simple Rust API. By implementing a common Memory trait, the framework allows developers to switch between local SQLite for development and high-performance pgvector or MongoDB clusters for production without changing the core agent logic.24
 
 ### **WASM Sandboxing: Solving the Host Security Risk**
 
-Granting agents the ability to execute code or access filesystems creates significant security risks. Vulnerabilities in earlier frameworks allowed agents to potentially access host environment variables or sensitive files.7 OpenSwarm addresses this by integrating a WebAssembly (WASM) sandbox approach, inspired by the ZeroClaw project.15
+Granting agents the ability to execute code or access filesystems creates significant security risks. Vulnerabilities in earlier frameworks allowed agents to potentially access host environment variables or sensitive files.7 VanSwarm addresses this by integrating a WebAssembly (WASM) sandbox approach, inspired by the ZeroClaw project.15
 
-By running tool execution within the Wasmtime runtime, OpenSwarm achieves "Capability-Gated" security. Each agent isolate is granted only the specific permissions it needs (e.g., access to a single subdirectory or a specific network address). The sandbox enforces:
+By running tool execution within the Wasmtime runtime, VanSwarm achieves "Capability-Gated" security. Each agent isolate is granted only the specific permissions it needs (e.g., access to a single subdirectory or a specific network address). The sandbox enforces:
 
 - **Memory Isolation**: Each instance has its own linear memory, preventing cross-tenant data leaks in multi-tenant environments.16
 - **Deterministic Resource Limits**: The runtime uses "fuel" to limit the number of execution steps and "memory limits" to prevent DoS attacks via resource exhaustion.16
 - **Cold Start Efficiency**: WASM modules can be instantiated in sub-10ms, allowing for the "one-isolate-per-request" pattern which virtually eliminates inter-request bugs.7
 
-This architecture allows OpenSwarm to run on $10 hardware with under 5MB of RAM per agent, providing a secure and efficient runtime for production environments where security review is a critical gate.7
+This architecture allows VanSwarm to run on $10 hardware with under 5MB of RAM per agent, providing a secure and efficient runtime for production environments where security review is a critical gate.7
 
 ## **Phase 4: The Monetization Strategy (The "Vercel Play")**
 
-The business model for OpenSwarm focuses on monetizing the "friction of production"—the challenges of deploying, observing, and scaling agents in the real world. By providing a managed platform that handles the complexities of infrastructure, OpenSwarm can capture value throughout the agent lifecycle.
+The business model for VanSwarm focuses on monetizing the "friction of production"—the challenges of deploying, observing, and scaling agents in the real world. By providing a managed platform that handles the complexities of infrastructure, VanSwarm can capture value throughout the agent lifecycle.
 
 ### **Managed Runtime: High-Density Serverless Platform**
 
-The cornerstone of the commercialization strategy is a managed serverless runtime. Leveraging Rust’s efficiency and WASM’s isolation, OpenSwarm Cloud can pack significantly more agent isolates onto standard hardware than competitors.
+The cornerstone of the commercialization strategy is a managed serverless runtime. Leveraging Rust’s efficiency and WASM’s isolation, VanSwarm Cloud can pack significantly more agent isolates onto standard hardware than competitors.
 
-| Metric                | OpenSwarm (Managed WASM)   | Traditional Container (Docker) |
+| Metric                | VanSwarm (Managed WASM)    | Traditional Container (Docker) |
 | :-------------------- | :------------------------- | :----------------------------- |
 | **Idle Memory**       | \~1MB                      | \~200MB+                       |
 | **Peak Memory**       | \<5MB                      | 500MB+                         |
@@ -128,7 +128,7 @@ This density advantage allows for a "freemium" tier that can support thousands o
 
 ### **Agentic APM: Trajectory vs. Outcome Observability**
 
-As agents become more autonomous, traditional metrics like "response accuracy" are insufficient. OpenSwarm Cloud provides an "Agentic APM" (Application Performance Monitoring) dashboard, similar to LangSmith but focused on path efficiency.34
+As agents become more autonomous, traditional metrics like "response accuracy" are insufficient. VanSwarm Cloud provides an "Agentic APM" (Application Performance Monitoring) dashboard, similar to LangSmith but focused on path efficiency.34
 
 The APM tracks two primary categories of metrics:
 
@@ -137,11 +137,11 @@ The APM tracks two primary categories of metrics:
    ![][image1]  
    Where ![][image2] is the minimum number of steps across a batch of similar queries and ![][image3] is the steps taken in a specific run. A high convergence score indicates a robust, efficient agent, while a low score highlights the need for better tool descriptions or router prompts.34
 
-By offering these insights as a managed service, OpenSwarm provides the "Trust Layer" required for enterprises to move agents from experimentation to mission-critical operations.30
+By offering these insights as a managed service, VanSwarm provides the "Trust Layer" required for enterprises to move agents from experimentation to mission-critical operations.30
 
 ### **Durable State: Managed Persistence and Statefulness**
 
-The third monetization pillar is the hosting of "Durable State." In complex multi-agent systems, maintaining state between sessions is a major challenge.49 OpenSwarm Cloud provides a managed persistence layer for Redis Streams, vector memory, and graph-checkpoints.
+The third monetization pillar is the hosting of "Durable State." In complex multi-agent systems, maintaining state between sessions is a major challenge.49 VanSwarm Cloud provides a managed persistence layer for Redis Streams, vector memory, and graph-checkpoints.
 
 This service allows developers to:
 
@@ -151,11 +151,11 @@ This service allows developers to:
 
 ## **Implementation and Monetization Roadmap**
 
-The development and commercialization of OpenSwarm will follow a phased approach to build community trust before scaling the cloud offering.
+The development and commercialization of VanSwarm will follow a phased approach to build community trust before scaling the cloud offering.
 
 ### **Q1-Q2: Framework Foundation and Community**
 
-- **Open Source Launch**: Release openswarm-core, openswarm-orchestrator, and openswarm-macros. Provide templates for "Coding Agents" and "Research Swarms" to demonstrate capability.2
+- **Open Source Launch**: Release vanswarm-core, vanswarm-orchestrator, and vanswarm-macros. Provide templates for "Coding Agents" and "Research Swarms" to demonstrate capability.2
 - **MCP Ecosystem**: Launch a repository of pre-built MCP servers for common developer tools (GitHub, Slack, Linear) to enable immediate utility.27
 - **Rig/ZeroClaw Integration**: Establish first-class support for Rig’s model providers and ZeroClaw’s security patterns.7
 
@@ -171,7 +171,7 @@ The development and commercialization of OpenSwarm will follow a phased approach
 - **FinOps & Tiered Routing**: Add automated cost-governance tools that allow enterprises to set budgets per agent fleet and enforce model tiering policies.30
 - **WASM Component Model**: Mature the plugin system to allow third-party developers to contribute "skills" as compiled WASM modules, creating a marketplace for procedural memory.14
 
-OpenSwarm is more than just a performance-oriented rewrite of existing frameworks; it is a fundamental reimagining of how agentic systems should be built for the production era. By focusing on the intersection of systems engineering, security, and economic efficiency, OpenSwarm provides the infrastructure necessary to turn autonomous agents from clever novelties into reliable digital employees.48
+VanSwarm is more than just a performance-oriented rewrite of existing frameworks; it is a fundamental reimagining of how agentic systems should be built for the production era. By focusing on the intersection of systems engineering, security, and economic efficiency, VanSwarm provides the infrastructure necessary to turn autonomous agents from clever novelties into reliable digital employees.48
 
 #### **Works cited**
 

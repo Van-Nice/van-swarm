@@ -1,6 +1,6 @@
 # Workflow vs Agent — when to use which (§15.9)
 
-Two fundamental execution models exist in OpenSwarm: **Workflows** (deterministic) and **Agents** (probabilistic). Choosing the right one for a task is one of the most impactful architectural decisions you will make.
+Two fundamental execution models exist in VanSwarm: **Workflows** (deterministic) and **Agents** (probabilistic). Choosing the right one for a task is one of the most impactful architectural decisions you will make.
 
 ---
 
@@ -82,7 +82,7 @@ Workflow graph:
 
 The outer Workflow guarantees the sequence (ingest → enrich → store) and handles durability. The inner Agent handles the open-ended enrichment step using whatever tools it needs.
 
-OpenSwarm's `Task` trait makes this pattern natural — any node can internally call `run_agent`:
+VanSwarm's `Task` trait makes this pattern natural — any node can internally call `run_agent`:
 
 ```rust
 struct EnrichNode {

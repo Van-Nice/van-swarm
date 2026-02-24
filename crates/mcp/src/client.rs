@@ -3,8 +3,8 @@
 //! ## Usage
 //!
 //! ```rust,no_run
-//! # use openswarm_mcp::McpClient;
-//! # async fn example() -> openswarm_core::Result<()> {
+//! # use vanswarm_mcp::McpClient;
+//! # async fn example() -> vanswarm_core::Result<()> {
 //! // Connect to an MCP server over stdio.
 //! let mut client = McpClient::stdio("uvx", &["mcp-server-fetch"]).await?;
 //! let tools = client.list_tools().await?;
@@ -46,14 +46,14 @@ impl McpClient {
     ///
     /// # Example
     /// ```rust,no_run
-    /// # async fn ex() -> openswarm_core::Result<()> {
-    /// let mut client = openswarm_mcp::McpClient::stdio("npx", &["-y", "@modelcontextprotocol/server-filesystem", "/"]).await?;
+    /// # async fn ex() -> vanswarm_core::Result<()> {
+    /// let mut client = vanswarm_mcp::McpClient::stdio("npx", &["-y", "@modelcontextprotocol/server-filesystem", "/"]).await?;
     /// # Ok(()) }
     /// ```
     pub async fn stdio(
         command: impl AsRef<str>,
         args: &[impl AsRef<str>],
-    ) -> openswarm_core::Result<Self> {
+    ) -> vanswarm_core::Result<Self> {
         let t = StdioTransport::spawn(command.as_ref(), args).await?;
         Ok(Self { transport: Transport::Stdio(t) })
     }
@@ -73,20 +73,20 @@ impl McpClient {
     /// Complete the MCP handshake.  Must be called before any tool/resource
     /// operations.  Idempotent — calling it twice is harmless.
     #[instrument(skip(self))]
-    pub async fn initialize(&self) -> openswarm_core::Result<InitializeResult> {
+    pub async fn initialize(&self) -> vanswarm_core::Result<InitializeResult> {
         let params = serde_json::to_value(InitializeParams {
             protocol_version: PROTOCOL_VERSION.to_owned(),
             client_info: ClientInfo {
-                name: "openswarm".into(),
+                name: "vanswarm".into(),
                 version: env!("CARGO_PKG_VERSION").into(),
             },
             capabilities: ClientCapabilities::default(),
         })
-        .map_err(|e| openswarm_core::FrameworkError::Serialization(e.into()))?;
+        .map_err(|e| vanswarm_core::FrameworkError::Serialization(e.into()))?;
 
         let raw = self.transport.send("initialize", Some(params)).await?;
         let result: InitializeResult = serde_json::from_value(raw)
-            .map_err(|e| openswarm_core::FrameworkError::Config(format!("initialize parse: {e}")))?;
+            .map_err(|e| vanswarm_core::FrameworkError::Config(format!("initialize parse: {e}")))?;
 
         // Send the required `notifications/initialized` notification.
         self.transport.notify("notifications/initialized", None).await?;
@@ -98,10 +98,10 @@ impl McpClient {
 
     /// List all tools exposed by the server.
     #[instrument(skip(self))]
-    pub async fn list_tools(&self) -> openswarm_core::Result<Vec<McpTool>> {
+    pub async fn list_tools(&self) -> vanswarm_core::Result<Vec<McpTool>> {
         let raw = self.transport.send("tools/list", None).await?;
         let list: ListToolsResult = serde_json::from_value(raw)
-            .map_err(|e| openswarm_core::FrameworkError::Config(format!("tools/list parse: {e}")))?;
+            .map_err(|e| vanswarm_core::FrameworkError::Config(format!("tools/list parse: {e}")))?;
         Ok(list.tools)
     }
 
@@ -113,26 +113,26 @@ impl McpClient {
         &self,
         name: &str,
         arguments: serde_json::Value,
-    ) -> openswarm_core::Result<CallToolResult> {
+    ) -> vanswarm_core::Result<CallToolResult> {
         let params = serde_json::to_value(CallToolParams {
             name: name.to_owned(),
             arguments: Some(arguments),
         })
-        .map_err(|e| openswarm_core::FrameworkError::Serialization(e.into()))?;
+        .map_err(|e| vanswarm_core::FrameworkError::Serialization(e.into()))?;
 
         let raw = self.transport.send("tools/call", Some(params)).await?;
         serde_json::from_value(raw)
-            .map_err(|e| openswarm_core::FrameworkError::Config(format!("tools/call parse: {e}")))
+            .map_err(|e| vanswarm_core::FrameworkError::Config(format!("tools/call parse: {e}")))
     }
 
     // ── Resources ─────────────────────────────────────────────────────────────
 
     /// List all resources exposed by the server.
     #[instrument(skip(self))]
-    pub async fn list_resources(&self) -> openswarm_core::Result<Vec<McpResource>> {
+    pub async fn list_resources(&self) -> vanswarm_core::Result<Vec<McpResource>> {
         let raw = self.transport.send("resources/list", None).await?;
         let list: ListResourcesResult = serde_json::from_value(raw)
-            .map_err(|e| openswarm_core::FrameworkError::Config(format!("resources/list parse: {e}")))?;
+            .map_err(|e| vanswarm_core::FrameworkError::Config(format!("resources/list parse: {e}")))?;
         Ok(list.resources)
     }
 
@@ -141,11 +141,11 @@ impl McpClient {
     pub async fn read_resource(
         &self,
         uri: &str,
-    ) -> openswarm_core::Result<ReadResourceResult> {
+    ) -> vanswarm_core::Result<ReadResourceResult> {
         let params = serde_json::json!({ "uri": uri });
         let raw = self.transport.send("resources/read", Some(params)).await?;
         serde_json::from_value(raw)
-            .map_err(|e| openswarm_core::FrameworkError::Config(format!("resources/read parse: {e}")))
+            .map_err(|e| vanswarm_core::FrameworkError::Config(format!("resources/read parse: {e}")))
     }
 
     /// Fetch one or more resources and return their text concatenated for context injection (§9.6).
@@ -157,7 +157,7 @@ impl McpClient {
     pub async fn fetch_resources_for_context(
         &self,
         uris: &[impl AsRef<str>],
-    ) -> openswarm_core::Result<String> {
+    ) -> vanswarm_core::Result<String> {
         let mut out = String::new();
         for uri in uris {
             let uri = uri.as_ref();

@@ -13,7 +13,7 @@ flowchart LR
         Doc[Rustdoc comments]
     end
 
-    subgraph Macro["openswarm-macros"]
+    subgraph Macro["vanswarm-macros"]
         Schema[JSON schema]
         Wrapper[Type-safe wrapper]
     end
@@ -83,7 +83,7 @@ Keep error payloads small and readable so they fit in context and guide the next
 
 ### Thinking time and XML-style tags (§10.10)
 
-Allow the model to **reason before** each tool call so it chooses tools more reliably. Enable with `AgentConfig::with_chain_of_thought()`; the framework appends an instruction that the model should reason inside `<thinking>…</thinking>` tags. Parsing: use `openswarm_core::extract_xml_blocks(assistant_text, "thinking")` to get a list of thinking segments from the assistant message (e.g. for observability or to strip thinking from the final answer). Other XML-style tags can be parsed the same way for custom protocols.
+Allow the model to **reason before** each tool call so it chooses tools more reliably. Enable with `AgentConfig::with_chain_of_thought()`; the framework appends an instruction that the model should reason inside `<thinking>…</thinking>` tags. Parsing: use `vanswarm_core::extract_xml_blocks(assistant_text, "thinking")` to get a list of thinking segments from the assistant message (e.g. for observability or to strip thinking from the final answer). Other XML-style tags can be parsed the same way for custom protocols.
 
 ## JSON Tool Calling vs Code Mode
 

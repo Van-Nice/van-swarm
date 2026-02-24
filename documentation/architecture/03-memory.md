@@ -1,4 +1,4 @@
-# Memory crate (openswarm-memory)
+# Memory crate (vanswarm-memory)
 
 Three-tier cognitive memory subsystem. Currently only **Tier 1 (Episodic)** is implemented as an in-process stub.
 
@@ -83,4 +83,4 @@ flowchart LR
     Memory <|.. Episodic
 ```
 
-- Depend on `openswarm-memory`; construct `EpisodicMemory::new(max_entries)` and use it as `dyn Memory` where the three-tier design will later plug in Tier 2 and Tier 3 implementations.
+- Depend on `vanswarm-memory`; construct `EpisodicMemory::new(max_entries)` and use it as `dyn Memory` where the three-tier design will later plug in Tier 2 and Tier 3 implementations.

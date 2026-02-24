@@ -1,6 +1,6 @@
-//! # openswarm-macros
+//! # vanswarm-macros
 //!
-//! Procedural macros for the OpenSwarm framework (checklist §10, §3.10).
+//! Procedural macros for the VanSwarm framework (checklist §10, §3.10).
 //!
 //! ## `#[tool]`  (checklist §10.1–10.5, §10.9)
 //! Annotate an async function with `#[tool]` to automatically:
@@ -12,7 +12,7 @@
 //! ## `#[workflow]`  (checklist §3.10–3.12)
 //! Annotate an `async fn` whose first parameter is `ctx: Arc<DurableContext>`.
 //! The macro validates the signature; journal checkpoints are provided by
-//! `ctx.call_tool`, `ctx.sleep`, `ctx.run_once` (see openswarm_core::durable).
+//! `ctx.call_tool`, `ctx.sleep`, `ctx.run_once` (see vanswarm_core::durable).
 //!
 //! Both macros are stub pass-throughs for body transformation; signature
 //! validation and full implementation come in §3 and §10.
@@ -33,7 +33,7 @@ use syn::{parse_macro_input, FnArg, ItemFn, LitStr, Pat, Token};
 /// Optional: `example(description = "...", input = "{...}", output = "...")` —
 /// one or more tool-use examples shown to the model (§10.9).
 ///
-/// The crate using this macro must depend on `openswarm-core` and `schemars`.
+/// The crate using this macro must depend on `vanswarm-core` and `schemars`.
 #[proc_macro_attribute]
 pub fn tool(args: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as ItemFn);
@@ -176,7 +176,7 @@ fn expand_tool(mut item: ItemFn, tool_args: &ToolMacroArgs) -> Result<proc_macro
         let input_lit = &ex.input;
         let output_lit = &ex.output;
         quote::quote! {
-            ::openswarm_core::ToolExample {
+            ::vanswarm_core::ToolExample {
                 description: (#desc).to_string(),
                 input: ::serde_json::from_str(#input_lit).unwrap_or_default(),
                 output: ::serde_json::from_str(#output_lit).unwrap_or_default(),
@@ -193,12 +193,12 @@ fn expand_tool(mut item: ItemFn, tool_args: &ToolMacroArgs) -> Result<proc_macro
         struct #tool_struct_name;
 
         #[::async_trait::async_trait]
-        impl ::openswarm_core::Tool for #tool_struct_name {
-            fn definition(&self) -> ::openswarm_core::ToolDefinition {
+        impl ::vanswarm_core::Tool for #tool_struct_name {
+            fn definition(&self) -> ::vanswarm_core::ToolDefinition {
                 let root = ::schemars::schema_for!(#params_struct_name);
                 let parameters = ::serde_json::to_value(&root.schema)
                     .unwrap_or(::serde_json::json!({"type": "object", "properties": {}}));
-                ::openswarm_core::ToolDefinition {
+                ::vanswarm_core::ToolDefinition {
                     name: #tool_name.to_string(),
                     description: #description.to_string(),
                     parameters,
@@ -206,11 +206,11 @@ fn expand_tool(mut item: ItemFn, tool_args: &ToolMacroArgs) -> Result<proc_macro
                 }
             }
 
-            async fn execute(&self, arguments: ::serde_json::Value) -> ::openswarm_core::Result<String> {
+            async fn execute(&self, arguments: ::serde_json::Value) -> ::vanswarm_core::Result<String> {
                 let params: #params_struct_name = ::serde_json::from_value(arguments)
-                    .map_err(|e| ::openswarm_core::FrameworkError::tool_exec(#tool_name, e.to_string()))?;
+                    .map_err(|e| ::vanswarm_core::FrameworkError::tool_exec(#tool_name, e.to_string()))?;
                 let result = #fn_name(#(#call_args),*).await;
-                result.map_err(|e| ::openswarm_core::FrameworkError::tool_exec(#tool_name, e.to_string()))
+                result.map_err(|e| ::vanswarm_core::FrameworkError::tool_exec(#tool_name, e.to_string()))
             }
         }
     };
@@ -273,7 +273,7 @@ pub fn workflow(_args: TokenStream, input: TokenStream) -> TokenStream {
         if !type_contains_durable_context(ty) {
             return syn::Error::new_spanned(
                 ty,
-                "#[workflow] requires first parameter to be ctx: Arc<DurableContext> (or Arc<openswarm_core::DurableContext>)",
+                "#[workflow] requires first parameter to be ctx: Arc<DurableContext> (or Arc<vanswarm_core::DurableContext>)",
             )
             .to_compile_error()
             .into();

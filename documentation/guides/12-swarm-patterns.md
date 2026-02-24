@@ -1,6 +1,6 @@
 # Swarm & multi-agent patterns (§24)
 
-Multi-agent systems decompose a complex task into parallel or hierarchical sub-tasks, each handled by a specialized agent. OpenSwarm provides the primitives to build every standard swarm pattern.
+Multi-agent systems decompose a complex task into parallel or hierarchical sub-tasks, each handled by a specialized agent. VanSwarm provides the primitives to build every standard swarm pattern.
 
 > **Before using multi-agent:** Be aware of the **Sequential Penalty** (§24.6) — multi-agent coordination has overhead. If the task is strictly sequential, a single well-prompted agent is often cheaper and faster.
 
@@ -85,7 +85,7 @@ Agents read from and write to a **shared knowledge repository** (the "blackboard
      └───────┘ └──────┘ └───────┘
 ```
 
-**Implementation in OpenSwarm:** The `FlowRunner`'s shared state (`S`) is the blackboard. Nodes read from `state`, append results, and pass the enriched state forward. `conditional_edge` allows the controller to route based on what's already on the blackboard.
+**Implementation in VanSwarm:** The `FlowRunner`'s shared state (`S`) is the blackboard. Nodes read from `state`, append results, and pass the enriched state forward. `conditional_edge` allows the controller to route based on what's already on the blackboard.
 
 ```rust
 // Conditional routing: if blackboard has summary, go to store; else go to summarizer
@@ -123,10 +123,10 @@ Multiple independent agent trees run in parallel; a **Root Router** selects the 
    answer
 ```
 
-**Implementation:** Use `KeywordRouter` or `LlmRouter` for the root routing decision. For consensus, use `majority_vote` or `similarity_vote` from `openswarm_orchestrator::patterns`:
+**Implementation:** Use `KeywordRouter` or `LlmRouter` for the root routing decision. For consensus, use `majority_vote` or `similarity_vote` from `vanswarm_orchestrator::patterns`:
 
 ```rust
-use openswarm_orchestrator::patterns::{majority_vote, similarity_vote};
+use vanswarm_orchestrator::patterns::{majority_vote, similarity_vote};
 
 // Collect answers from each tree
 let answers = vec![answer_t1, answer_t2, answer_t3];
@@ -151,7 +151,7 @@ Research shows that agents with more than **~16 tools** in context suffer degrad
 - Use hierarchical routing: Director selects which agent tree (and its tools) to activate.
 
 ```rust
-use openswarm_core::tools::FilteredToolExecutor;
+use vanswarm_core::tools::FilteredToolExecutor;
 
 // Worker A only sees search and read_file
 let executor_a = FilteredToolExecutor::new(
@@ -182,7 +182,7 @@ Multi-agent coordination has real costs:
 
 For safety-critical decisions, run the same task across multiple agents and require agreement before acting.
 
-OpenSwarm provides three utilities in `openswarm_orchestrator::patterns`:
+VanSwarm provides three utilities in `vanswarm_orchestrator::patterns`:
 
 ```rust
 /// Exact string match: return the value held by the majority.
@@ -220,7 +220,7 @@ let aggregate = spl(&runs);
 
 ## Summary
 
-| Pattern             | Best for                               | OpenSwarm primitive                   |
+| Pattern             | Best for                               | VanSwarm primitive                    |
 | ------------------- | -------------------------------------- | ------------------------------------- |
 | Orchestrator-Worker | Decomposable parallel tasks            | `NextAction::Parallel` in FlowRunner  |
 | Hierarchical Swarm  | Deep decomposition, many tools         | Nested `ReActAgent` nodes in Workflow |

@@ -1,4 +1,4 @@
-# Core crate (openswarm-core)
+# Core crate (vanswarm-core)
 
 The core crate provides traits, configuration, messages, model providers, the ReAct agent loop, log-centric durable execution, **supervisor** (Router / Route), **evaluators** (Scorer, SPL, batch evals), and **tools** (built-in tools).
 
@@ -6,7 +6,7 @@ The core crate provides traits, configuration, messages, model providers, the Re
 
 ```mermaid
 flowchart TD
-  openswarm_core["openswarm-core"]
+  vanswarm_core["vanswarm-core"]
   config["config"]
   durable["durable"]
   error["error"]
@@ -17,16 +17,16 @@ flowchart TD
   supervisor["supervisor"]
   traits["traits"]
   tools["tools"]
-  openswarm_core --> config
-  openswarm_core --> durable
-  openswarm_core --> error
-  openswarm_core --> evaluators
-  openswarm_core --> message
-  openswarm_core --> providers
-  openswarm_core --> react
-  openswarm_core --> supervisor
-  openswarm_core --> traits
-  openswarm_core --> tools
+  vanswarm_core --> config
+  vanswarm_core --> durable
+  vanswarm_core --> error
+  vanswarm_core --> evaluators
+  vanswarm_core --> message
+  vanswarm_core --> providers
+  vanswarm_core --> react
+  vanswarm_core --> supervisor
+  vanswarm_core --> traits
+  vanswarm_core --> tools
 ```
 
 - **evaluators** — Scorer trait, ScoreInput/ScoreResult, batch_score, SPL (SplRun, spl), BenchmarkTask, NonEmptyScorer, ContainsScorer.

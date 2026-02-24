@@ -1,12 +1,12 @@
-//! # openswarm-core
+//! # vanswarm-core
 //!
-//! Core traits, model providers, and ReAct loop for the OpenSwarm agent
+//! Core traits, model providers, and ReAct loop for the VanSwarm agent
 //! framework.
 //!
 //! ## Quick start
 //!
 //! ```rust,no_run
-//! use openswarm_core::{
+//! use vanswarm_core::{
 //!     config::{AgentConfig, ModelConfig, ProviderCredentials},
 //!     providers::AnthropicProvider,
 //!     react::{run_agent, ReActAgent},
@@ -15,7 +15,7 @@
 //! use std::sync::Arc;
 //!
 //! #[tokio::main]
-//! async fn main() -> openswarm_core::Result<()> {
+//! async fn main() -> vanswarm_core::Result<()> {
 //!     let provider = AnthropicProvider::from_env()?;
 //!     let executor = LocalToolRegistry::new();
 //!     let config = AgentConfig::new("assistant", ModelConfig::new("claude-opus-4-6"))
@@ -39,7 +39,7 @@
 //! | `providers`   | `ModelProvider` + OpenAI / Anthropic / Gemini|
 //! | `react`       | `ReActAgent` and `run_agent` loop           |
 
-extern crate self as openswarm_core;
+extern crate self as vanswarm_core;
 
 pub mod config;
 pub mod durable;

@@ -7,7 +7,7 @@
 //! ## Usage
 //!
 //! ```rust,no_run
-//! use openswarm_core::{
+//! use vanswarm_core::{
 //!     guardrails::{GuardedModelProvider, KeywordGuardRail, PromptInjectionGuardRail},
 //!     providers::AnthropicProvider,
 //! };
@@ -71,7 +71,7 @@ pub trait GuardRail: Send + Sync {
 /// Matching is case-insensitive and applies to the full response text.
 ///
 /// ```rust
-/// use openswarm_core::guardrails::KeywordGuardRail;
+/// use vanswarm_core::guardrails::KeywordGuardRail;
 /// let guard = KeywordGuardRail::new(vec!["password", "secret"]);
 /// // Guard blocks output containing banned keywords.
 /// ```

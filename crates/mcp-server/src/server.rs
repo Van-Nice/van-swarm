@@ -1,11 +1,11 @@
-//! OpenSwarm MCP server — tool handlers.
+//! VanSwarm MCP server — tool handlers.
 //!
-//! Exposes the OpenSwarm agent framework as MCP tools so any MCP-capable
+//! Exposes the VanSwarm agent framework as MCP tools so any MCP-capable
 //! client (Cursor, Claude Desktop, etc.) can:
 //!
-//! * Run a full ReAct reasoning loop via `openswarm_run_agent`.
-//! * Store and search episodic memory via `openswarm_memory_*` tools.
-//! * Inspect framework status via `openswarm_framework_info`.
+//! * Run a full ReAct reasoning loop via `vanswarm_run_agent`.
+//! * Store and search episodic memory via `vanswarm_memory_*` tools.
+//! * Inspect framework status via `vanswarm_framework_info`.
 //!
 //! The server auto-detects the LLM provider at startup by checking:
 //!   `ANTHROPIC_API_KEY` → AnthropicProvider (default model: claude-opus-4-6)
@@ -27,19 +27,19 @@ use rmcp::{
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use openswarm_core::{
+use vanswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::ModelProvider,
     react::{run_agent, ReActAgent},
     LocalToolRegistry, TimeTool,
 };
-use openswarm_memory::{EpisodicMemory, Memory, MemoryEntry};
+use vanswarm_memory::{EpisodicMemory, Memory, MemoryEntry};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Parameter structs (schemars 1.0 JsonSchema required by rmcp #[tool] macro)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Parameters for `openswarm_run_agent`.
+/// Parameters for `vanswarm_run_agent`.
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct RunAgentParams {
     /// The user prompt or task description for the agent to solve.
@@ -61,14 +61,14 @@ pub struct RunAgentParams {
     pub max_iterations: Option<u32>,
 }
 
-/// Parameters for `openswarm_memory_store`.
+/// Parameters for `vanswarm_memory_store`.
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct MemoryStoreParams {
     /// The fact, observation, or event to remember.
     pub content: String,
 }
 
-/// Parameters for `openswarm_memory_search`.
+/// Parameters for `vanswarm_memory_search`.
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct MemorySearchParams {
     /// Full-text search query (case-insensitive substring match).
@@ -79,7 +79,7 @@ pub struct MemorySearchParams {
     pub limit: Option<u32>,
 }
 
-/// Parameters for `openswarm_memory_recent`.
+/// Parameters for `vanswarm_memory_recent`.
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct MemoryRecentParams {
     /// Maximum number of entries to return, newest first. Default: 10.
@@ -87,7 +87,7 @@ pub struct MemoryRecentParams {
     pub limit: Option<u32>,
 }
 
-/// Empty parameter struct for `openswarm_framework_info`.
+/// Empty parameter struct for `vanswarm_framework_info`.
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct NoParams {}
 
@@ -95,7 +95,7 @@ pub struct NoParams {}
 // FrameworkTools — shared state + tool router
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Composite MCP server exposing OpenSwarm agent framework capabilities.
+/// Composite MCP server exposing VanSwarm agent framework capabilities.
 ///
 /// All fields are `Clone` + `Send + Sync` so the struct can be shared across
 /// concurrent MCP requests via `Arc`-wrapped state.
@@ -133,13 +133,13 @@ impl FrameworkTools {
     // Agent tool
     // ──────────────────────────────────────────────────────────────────────
 
-    /// Run a OpenSwarm ReAct agent on the given prompt.
+    /// Run a VanSwarm ReAct agent on the given prompt.
     ///
     /// The agent reasons step-by-step (Thought → Action → Observation) and may
     /// call built-in tools (`time`) until it produces a final answer or hits
     /// `max_iterations`. Returns the final answer as plain text.
-    #[tool(description = "Run a OpenSwarm ReAct agent. The agent reasons step-by-step, calling tools as needed, until it produces a final answer. Built-in tool: `time` (current UTC time). Ideal for multi-step reasoning, research, planning, and Q&A. Returns the final answer as plain text.")]
-    pub async fn openswarm_run_agent(
+    #[tool(description = "Run a VanSwarm ReAct agent. The agent reasons step-by-step, calling tools as needed, until it produces a final answer. Built-in tool: `time` (current UTC time). Ideal for multi-step reasoning, research, planning, and Q&A. Returns the final answer as plain text.")]
+    pub async fn vanswarm_run_agent(
         &self,
         Parameters(params): Parameters<RunAgentParams>,
     ) -> Result<CallToolResult, McpError> {
@@ -192,7 +192,7 @@ impl FrameworkTools {
     /// cap). Use to share context between multiple `run_agent` calls.
     /// Returns the UUID of the stored entry.
     #[tool(description = "Store a fact, observation, or event in the agent's episodic memory. Memory persists for the server's lifetime (FIFO, 1 000-entry cap). Use to share context across run_agent calls. Returns the stored entry's UUID.")]
-    pub async fn openswarm_memory_store(
+    pub async fn vanswarm_memory_store(
         &self,
         Parameters(params): Parameters<MemoryStoreParams>,
     ) -> Result<CallToolResult, McpError> {
@@ -211,7 +211,7 @@ impl FrameworkTools {
     /// Performs a case-insensitive substring match against all stored entries.
     /// Returns matching entries formatted as `[id] timestamp — content`.
     #[tool(description = "Full-text search in episodic memory. Case-insensitive substring match. Returns matching entries as `[id] timestamp — content` lines, newest first.")]
-    pub async fn openswarm_memory_search(
+    pub async fn vanswarm_memory_search(
         &self,
         Parameters(params): Parameters<MemorySearchParams>,
     ) -> Result<CallToolResult, McpError> {
@@ -246,7 +246,7 @@ impl FrameworkTools {
     ///
     /// Entries are returned newest first, formatted as `[id] timestamp — content`.
     #[tool(description = "Return the most recent entries in episodic memory, newest first. Formatted as `[id] timestamp — content` lines.")]
-    pub async fn openswarm_memory_recent(
+    pub async fn vanswarm_memory_recent(
         &self,
         Parameters(params): Parameters<MemoryRecentParams>,
     ) -> Result<CallToolResult, McpError> {
@@ -279,9 +279,9 @@ impl FrameworkTools {
     // Info
     // ──────────────────────────────────────────────────────────────────────
 
-    /// Return OpenSwarm framework version, provider status, and capabilities.
+    /// Return VanSwarm framework version, provider status, and capabilities.
     #[tool(description = "Return framework version, configured LLM provider, default model, and available capabilities. Use to check server health and configuration.")]
-    pub async fn openswarm_framework_info(
+    pub async fn vanswarm_framework_info(
         &self,
         _params: Parameters<NoParams>,
     ) -> Result<CallToolResult, McpError> {
@@ -295,7 +295,7 @@ impl FrameworkTools {
         };
 
         let info = format!(
-            "OpenSwarm Agent Framework\n\
+            "VanSwarm Agent Framework\n\
              Version:        {version}\n\
              LLM provider:   {provider_status}\n\
              Built-in tools: time (UTC clock)\n\
@@ -333,23 +333,23 @@ impl ServerHandler for FrameworkTools {
             protocol_version: ProtocolVersion::LATEST,
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation {
-                name: "openswarm-mcp-server".into(),
+                name: "vanswarm-mcp-server".into(),
                 version: env!("CARGO_PKG_VERSION").into(),
                 ..Default::default()
             },
             instructions: Some(
                 format!(
-                    "OpenSwarm Agent Framework MCP server. \
+                    "VanSwarm Agent Framework MCP server. \
                      {provider_note}\
                      Tools — \
-                     openswarm_run_agent: Run a full ReAct reasoning loop (multi-step, \
+                     vanswarm_run_agent: Run a full ReAct reasoning loop (multi-step, \
                        tool-calling, reflection). Parameters: prompt (required), \
                        system_prompt, model, max_iterations. \
-                     openswarm_memory_store: Store a fact in ephemeral episodic memory \
+                     vanswarm_memory_store: Store a fact in ephemeral episodic memory \
                        (persists for server lifetime, 1 000-entry FIFO). \
-                     openswarm_memory_search: Full-text keyword search in episodic memory. \
-                     openswarm_memory_recent: List the most recent memory entries. \
-                     openswarm_framework_info: Framework version and provider status. \
+                     vanswarm_memory_search: Full-text keyword search in episodic memory. \
+                     vanswarm_memory_recent: List the most recent memory entries. \
+                     vanswarm_framework_info: Framework version and provider status. \
                      Note: run_agent dispatches concurrently — multiple calls are safe.",
                     provider_note = provider_note,
                 )

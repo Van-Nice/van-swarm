@@ -17,12 +17,12 @@ This doc lists capabilities or behaviors that would have made the rust-mcp serve
 
 ```mermaid
 flowchart LR
-    core[openswarm-core]
-    orchestrator[openswarm-orchestrator]
-    memory[openswarm-memory]
-    mcp[openswarm-mcp]
-    runtime[openswarm-runtime]
-    macros[openswarm-macros]
+    core[vanswarm-core]
+    orchestrator[vanswarm-orchestrator]
+    memory[vanswarm-memory]
+    mcp[vanswarm-mcp]
+    runtime[vanswarm-runtime]
+    macros[vanswarm-macros]
     orchestrator --> core
     memory --> core
     mcp --> core
@@ -34,7 +34,7 @@ flowchart LR
 
 ## 2. File / module structure diagram for a crate
 
-**What would help:** A diagram that shows **public modules and re-exports** for a crate (e.g. `openswarm-core`), without diving into every symbol. For example:
+**What would help:** A diagram that shows **public modules and re-exports** for a crate (e.g. `vanswarm-core`), without diving into every symbol. For example:
 
 - `lib.rs` → `config`, `message`, `traits`, `react`, `durable`, `providers`, `error`
 - `traits` → `agent`, `runnable`, `tool`, `workflow`

@@ -6,7 +6,7 @@ This guide covers **ReActAgent**, configuration, model providers, and the main e
 
 ## 1. The ReAct loop
 
-OpenSwarm agents use the **ReAct** pattern: the model receives conversation history and tool definitions, then either:
+VanSwarm agents use the **ReAct** pattern: the model receives conversation history and tool definitions, then either:
 
 - Returns a **final answer** (text), or
 - Issues **tool calls**; the runner executes them, appends results to the conversation, and calls the model again.
@@ -25,7 +25,7 @@ You need three things:
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::{
+use vanswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::AnthropicProvider,
     react::ReActAgent,
@@ -56,7 +56,7 @@ let agent = ReActAgent::new(config, Arc::new(provider), Arc::new(executor));
 **ModelConfig:**
 
 ```rust
-use openswarm_core::config::ModelConfig;
+use vanswarm_core::config::ModelConfig;
 
 // Minimal: model id only
 let model = ModelConfig::new("claude-sonnet-4-20250514");
@@ -74,7 +74,7 @@ let model = ModelConfig::new("gpt-4o")
 ### run_agent — final answer only
 
 ```rust
-use openswarm_core::react::run_agent;
+use vanswarm_core::react::run_agent;
 
 let answer: String = run_agent(&agent, "Summarize the Rust ownership rules in 3 bullets.").await?;
 println!("{}", answer);
@@ -83,7 +83,7 @@ println!("{}", answer);
 ### run_agent_with_metrics — answer + RunMetrics (for SPL / evals)
 
 ```rust
-use openswarm_core::react::run_agent_with_metrics;
+use vanswarm_core::react::run_agent_with_metrics;
 
 let (answer, metrics) = run_agent_with_metrics(&agent, "What is the current year?").await?;
 println!("Answer: {}", answer);
@@ -96,7 +96,7 @@ Use `metrics.tool_call_count` as L_exec when computing **SPL** (Success weighted
 ### run_agent_traced — full APM trace
 
 ```rust
-use openswarm_core::react::run_agent_traced;
+use vanswarm_core::react::run_agent_traced;
 
 let (answer, trace) = run_agent_traced(&agent, "Explain async Rust in one paragraph.").await?;
 println!("{}", answer);
@@ -112,7 +112,7 @@ You can persist `trace` with a `TraceStore` (e.g. `InMemoryTraceStore`, `FileTra
 If you enable chain-of-thought, the model may emit `<thinking>…</thinking>` in its reply. Parse it with:
 
 ```rust
-use openswarm_core::message::extract_xml_blocks;
+use vanswarm_core::message::extract_xml_blocks;
 
 let assistant_text = "..."; // from the final message
 let thoughts = extract_xml_blocks(assistant_text, "thinking");
@@ -128,7 +128,7 @@ for t in &thoughts {
 To route by complexity and choose a cheaper or more capable model:
 
 ```rust
-use openswarm_core::supervisor::{Router, Route, AlwaysTier1};
+use vanswarm_core::supervisor::{Router, Route, AlwaysTier1};
 
 // Stub: always Tier1 (e.g. fast/cheap model)
 let router: AlwaysTier1 = AlwaysTier1;
@@ -148,7 +148,7 @@ You can implement `Router` yourself (e.g. keyword-based or LLM-based) and build 
 
 ```rust
 use std::sync::Arc;
-use openswarm_core::{
+use vanswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::{AnthropicProvider, OpenAiProvider},
     react::{run_agent_with_metrics, ReActAgent},
@@ -156,9 +156,9 @@ use openswarm_core::{
 };
 
 #[tokio::main]
-async fn main() -> openswarm_core::Result<()> {
+async fn main() -> vanswarm_core::Result<()> {
     let use_openai = std::env::var("USE_OPENAI").is_ok();
-    let provider: Arc<dyn openswarm_core::providers::ModelProvider> = if use_openai {
+    let provider: Arc<dyn vanswarm_core::providers::ModelProvider> = if use_openai {
         Arc::new(OpenAiProvider::from_env()?)
     } else {
         Arc::new(AnthropicProvider::from_env()?)

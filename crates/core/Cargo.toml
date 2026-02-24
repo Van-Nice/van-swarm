@@ -1,6 +1,6 @@
 [package]
-name        = "openswarm-core"
-description = "Core traits, model providers, and ReAct loop for the OpenSwarm agent framework"
+name        = "vanswarm-core"
+description = "Core traits, model providers, and ReAct loop for the VanSwarm agent framework"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -30,5 +30,5 @@ path = "examples/basic_agent.rs"
 tokio              = { workspace = true, features = ["test-util"] }
 tracing-subscriber.workspace = true
 tempfile           = "3"
-openswarm-macros.workspace = true
+vanswarm-macros.workspace = true
 proptest           = "1"

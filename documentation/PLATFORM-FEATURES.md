@@ -1,24 +1,24 @@
-# OpenSwarm Platform — Complete Feature List
+# VanSwarm Platform — Complete Feature List
 
-This document lists **100% of implemented features** in the OpenSwarm agent framework, by crate and by domain. It reflects the current codebase and the completed items in the build checklist.
+This document lists **100% of implemented features** in the VanSwarm agent framework, by crate and by domain. It reflects the current codebase and the completed items in the build checklist.
 
 ---
 
 ## Workspace & crates
 
-| Crate                      | Purpose                                                                                                                            |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **openswarm-core**         | Traits, config, messages, providers, ReAct loop, durable execution, evaluators, supervisor, tools, guardrails, patterns, telemetry |
-| **openswarm-orchestrator** | Graph-based workflow engine (DAG/cycles), FlowRunner, Task, NextAction                                                             |
-| **openswarm-memory**       | Three-tier memory (Episodic, MidTerm, Semantic), MemoryManager                                                                     |
-| **openswarm-mcp**          | MCP client, server, McpToolExecutor, transports                                                                                    |
-| **openswarm-mcp-server**   | Production stdio MCP server binary (run_agent, memory, framework_info)                                                             |
-| **openswarm-runtime**      | WASM sandbox (Wasmtime), optional MCP bridge, optional Rhai scripting                                                              |
-| **openswarm-macros**       | `#[tool]`, `#[workflow]` procedural macros                                                                                         |
+| Crate                     | Purpose                                                                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **vanswarm-core**         | Traits, config, messages, providers, ReAct loop, durable execution, evaluators, supervisor, tools, guardrails, patterns, telemetry |
+| **vanswarm-orchestrator** | Graph-based workflow engine (DAG/cycles), FlowRunner, Task, NextAction                                                             |
+| **vanswarm-memory**       | Three-tier memory (Episodic, MidTerm, Semantic), MemoryManager                                                                     |
+| **vanswarm-mcp**          | MCP client, server, McpToolExecutor, transports                                                                                    |
+| **vanswarm-mcp-server**   | Production stdio MCP server binary (run_agent, memory, framework_info)                                                             |
+| **vanswarm-runtime**      | WASM sandbox (Wasmtime), optional MCP bridge, optional Rhai scripting                                                              |
+| **vanswarm-macros**       | `#[tool]`, `#[workflow]` procedural macros                                                                                         |
 
 ---
 
-## 1. Core runtime (openswarm-core)
+## 1. Core runtime (vanswarm-core)
 
 ### 1.1 Traits & base
 
@@ -158,7 +158,7 @@ This document lists **100% of implemented features** in the OpenSwarm agent fram
 
 ---
 
-## 2. Orchestrator (openswarm-orchestrator)
+## 2. Orchestrator (vanswarm-orchestrator)
 
 - **NodeKey** — generational key (slotmap) for graph nodes
 - **Task** — trait: State, run(key, state) -> (State, NextAction), name()
@@ -186,7 +186,7 @@ This document lists **100% of implemented features** in the OpenSwarm agent fram
 
 ---
 
-## 3. Memory (openswarm-memory)
+## 3. Memory (vanswarm-memory)
 
 ### 3.1 Common
 
@@ -223,7 +223,7 @@ This document lists **100% of implemented features** in the OpenSwarm agent fram
 
 ---
 
-## 4. MCP (openswarm-mcp)
+## 4. MCP (vanswarm-mcp)
 
 - **McpClient** — connect to MCP server
   - **stdio(cmd, args)** — spawn subprocess transport
@@ -245,23 +245,23 @@ This document lists **100% of implemented features** in the OpenSwarm agent fram
 
 ---
 
-## 5. MCP server binary (openswarm-mcp-server)
+## 5. MCP server binary (vanswarm-mcp-server)
 
 - Stdio MCP server using **rmcp** (same SDK as rust-mcp)
 - **Provider auto-detection** — ANTHROPIC_API_KEY → Anthropic (claude-opus-4-6), OPENAI_API_KEY → OpenAI (gpt-4o), GEMINI_API_KEY → Gemini (gemini-2.0-flash)
 - **RUSTMASTRA_MODEL** — override default model
 - **Tools exposed:**
-  - **openswarm_run_agent** — full ReAct loop (prompt, system_prompt, model, max_iterations), built-in time tool, auto-detected provider
-  - **openswarm_memory_store** — store episodic entry (content)
-  - **openswarm_memory_search** — search episodic memory (query, limit)
-  - **openswarm_memory_recent** — recent episodic entries (limit)
-  - **openswarm_framework_info** — framework name/version and provider info
-- Ships as **openswarm-mcp-server** binary (~6.1 MB release)
+  - **vanswarm_run_agent** — full ReAct loop (prompt, system_prompt, model, max_iterations), built-in time tool, auto-detected provider
+  - **vanswarm_memory_store** — store episodic entry (content)
+  - **vanswarm_memory_search** — search episodic memory (query, limit)
+  - **vanswarm_memory_recent** — recent episodic entries (limit)
+  - **vanswarm_framework_info** — framework name/version and provider info
+- Ships as **vanswarm-mcp-server** binary (~6.1 MB release)
 - Cursor IDE: add to ~/.cursor/mcp.json
 
 ---
 
-## 6. Runtime (openswarm-runtime)
+## 6. Runtime (vanswarm-runtime)
 
 - **SandboxConfig** — max_memory_bytes, max_fuel, allow_mcp, optional mcp_client (mcp-bridge feature)
 - **Sandbox** — new(config), compile(wasm_bytes), load_aot(aot_bytes), run_compiled(module, params)
@@ -274,7 +274,7 @@ This document lists **100% of implemented features** in the OpenSwarm agent fram
 
 ---
 
-## 7. Macros (openswarm-macros)
+## 7. Macros (vanswarm-macros)
 
 - **#[tool]** — on async fn: derive JSON schema (schemars), description from Rustdoc, type-safe wrapper, validation errors to model
   - **#[tool(example(description, input, output))]** — one or more tool-use examples for the model

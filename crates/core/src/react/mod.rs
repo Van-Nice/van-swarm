@@ -33,7 +33,7 @@ use crate::{
 /// A concrete `Agent` that implements the ReAct loop.
 ///
 /// ```rust,no_run
-/// use openswarm_core::{
+/// use vanswarm_core::{
 ///     config::{AgentConfig, ModelConfig, ProviderCredentials},
 ///     providers::AnthropicProvider,
 ///     react::ReActAgent,
@@ -162,8 +162,8 @@ impl Agent for ReActAgent {
 ///
 /// # Example
 /// ```rust,no_run
-/// use openswarm_core::react::{run_agent, ReActAgent};
-/// # async fn example(agent: ReActAgent) -> openswarm_core::Result<()> {
+/// use vanswarm_core::react::{run_agent, ReActAgent};
+/// # async fn example(agent: ReActAgent) -> vanswarm_core::Result<()> {
 /// let answer = run_agent(&agent, "What is the capital of France?").await?;
 /// println!("{answer}");
 /// # Ok(())
@@ -283,10 +283,10 @@ pub async fn run_agent_with_metrics(
 ///
 /// # Example
 /// ```rust,no_run
-/// use openswarm_core::react::run_agent_traced;
-/// use openswarm_core::telemetry::InMemoryTraceStore;
-/// # use openswarm_core::react::ReActAgent;
-/// # async fn example(agent: ReActAgent) -> openswarm_core::Result<()> {
+/// use vanswarm_core::react::run_agent_traced;
+/// use vanswarm_core::telemetry::InMemoryTraceStore;
+/// # use vanswarm_core::react::ReActAgent;
+/// # async fn example(agent: ReActAgent) -> vanswarm_core::Result<()> {
 /// let (answer, trace) = run_agent_traced(&agent, "What is Rust?").await?;
 /// println!("{}", trace.summary());
 /// # Ok(())

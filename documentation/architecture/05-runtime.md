@@ -1,4 +1,4 @@
-# Runtime crate (openswarm-runtime)
+# Runtime crate (vanswarm-runtime)
 
 Wasmtime-based WASM sandbox for secure, isolated tool execution. Each invocation gets a fresh Store; fuel and memory are capped.
 
@@ -140,7 +140,7 @@ Target: **&lt;10 ms** for a single WASM tool call (framework goal). Measure wi
 - **Cold (compile + run):** first-time `compile(wasm_bytes)` then `run_compiled` — includes JIT.
 - **AOT (load + run):** `load_aot(aot_bytes)` then `run_compiled` — no JIT; typically sub-ms after load.
 
-Run: `cargo bench -p openswarm-runtime --features wasm`.
+Run: `cargo bench -p vanswarm-runtime --features wasm`.
 
 ## Guest/host contract and WIT (§5.11, §6.1)
 
@@ -148,7 +148,7 @@ The current **guest/host contract** is the `run_json` convention (see crate root
 
 **WIT (Wasm Interface Type)** will formalise the guest/host contract when the WASM-to-MCP bridge is implemented (§6). The intended interface is defined in `crates/runtime/wit/mcp.wit`:
 
-- **`openswarm:runtime/mcp`** — interface that the guest can import when `allow_mcp` is true.
+- **`vanswarm:runtime/mcp`** — interface that the guest can import when `allow_mcp` is true.
 - **`call-tool(name-ptr, name-len, params-ptr, params-len)`** — returns `result<(ptr, len), string>` so the guest can invoke MCP tools via the host.
 
 **§6 implemented:** With the `mcp-bridge` feature and `SandboxConfig::mcp_client` set, the host binds `mcp/call_tool` to the given [`McpClient`]. The guest passes (name_ptr, name_len, params_ptr, params_len); the host reads name/params from linear memory, calls the MCP client, writes the result JSON via the guest’s `alloc`, and returns (ptr|len). The sandboxed agent can only invoke tools exposed by that MCP server (§6.9). See test `test_guest_calls_mcp_tool_via_bridge`.

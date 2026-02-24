@@ -9,12 +9,12 @@ The workspace has six member crates. Dependencies between them look like this:
 ```mermaid
 flowchart LR
     subgraph workspace["rust-agent-framework"]
-        core["openswarm-core"]
-        orchestrator["openswarm-orchestrator"]
-        memory["openswarm-memory"]
-        mcp["openswarm-mcp"]
-        runtime["openswarm-runtime"]
-        macros["openswarm-macros"]
+        core["vanswarm-core"]
+        orchestrator["vanswarm-orchestrator"]
+        memory["vanswarm-memory"]
+        mcp["vanswarm-mcp"]
+        runtime["vanswarm-runtime"]
+        macros["vanswarm-macros"]
     end
 
     orchestrator --> core

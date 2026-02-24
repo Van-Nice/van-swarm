@@ -4,8 +4,8 @@
 
 Define an **agent orchestration** model for managing **many agents** inside a single project, and extend the CLI so that:
 
-1. **`openswarm new <project>`** creates a **project** (a crate or workspace) that is structured to host multiple agents and an optional orchestrator.
-2. **`openswarm add agent <name>`** (run inside a project) scaffolds a **new agent** in that project and wires it into the project’s registry or runner.
+1. **`vanswarm new <project>`** creates a **project** (a crate or workspace) that is structured to host multiple agents and an optional orchestrator.
+2. **`vanswarm add agent <name>`** (run inside a project) scaffolds a **new agent** in that project and wires it into the project’s registry or runner.
 
 Users get a clear path: create one project → add N agents → run the whole system (single agent, router, or graph).
 
@@ -17,8 +17,8 @@ Users get a clear path: create one project → add N agents → run the whole sy
 
 - **Many agents:** A project can define several ReAct agents (e.g. `researcher`, `writer`, `critic`), each with its own config, tools, and optionally model tier.
 - **Management:** A single place (registry, config file, or graph) lists agents and how they are invoked. The framework already provides:
-  - **openswarm-orchestrator:** Graph-based workflows; nodes can be tasks that call one or more agents.
-  - **openswarm-core Router/Supervisor:** Route input to a tier (Tier1/2/3) or to different agents by complexity.
+  - **vanswarm-orchestrator:** Graph-based workflows; nodes can be tasks that call one or more agents.
+  - **vanswarm-core Router/Supervisor:** Route input to a tier (Tier1/2/3) or to different agents by complexity.
 - **Orchestration framework** (this proposal) = **conventions + project layout + optional runner** so that “a project with many agents” has a standard structure and can be driven by the CLI or by code that discovers and runs agents.
 
 ### 1.2 Project layout (multi-agent)
@@ -37,7 +37,7 @@ Proposed layout:
 ```
 <project>/
 ├── Cargo.toml
-├── openswarm.toml          # Project manifest: list of agents, default runner mode
+├── vanswarm.toml          # Project manifest: list of agents, default runner mode
 ├── .env.example
 ├── README.md
 └── src/
@@ -53,7 +53,7 @@ Proposed layout:
     └── runner.rs            # Optional: router or graph that dispatches to agents
 ```
 
-- **`openswarm.toml`** (or `.openswarm.toml`): lists agents and runner mode, e.g.:
+- **`vanswarm.toml`** (or `.vanswarm.toml`): lists agents and runner mode, e.g.:
 
 ```toml
 [project]
@@ -77,9 +77,9 @@ mode = "single"
 
 ### 1.3 How this uses existing crates
 
-- **openswarm-core:** ReActAgent, run_agent, Router, AgentConfig, tools.
-- **openswarm-orchestrator:** FlowRunner, Task, GraphBuilder — graph nodes can hold an agent and call `run_agent` in their `Task::run`.
-- **openswarm-memory / openswarm-mcp:** Optional per-agent or shared; project template can add them.
+- **vanswarm-core:** ReActAgent, run_agent, Router, AgentConfig, tools.
+- **vanswarm-orchestrator:** FlowRunner, Task, GraphBuilder — graph nodes can hold an agent and call `run_agent` in their `Task::run`.
+- **vanswarm-memory / vanswarm-mcp:** Optional per-agent or shared; project template can add them.
 
 No new framework crate is required; this is a **project structure and CLI convention** that sits on top of existing crates.
 
@@ -98,16 +98,16 @@ The following tactics are drawn from research and practice for building and mana
 
 #### Swarm architecture patterns
 
-| Pattern                 | Description                                                                                                                                                                                                                          | Mapping to runner / project layout                                                                                                                                                                                                                                                  |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Orchestrator–Worker** | A central coordinator distributes work to specialized agents, managing task allocation and conflict resolution. Critical for isolating failures and maintaining consistency.                                                         | **Runner mode `graph`**: FlowRunner as coordinator; nodes are tasks that call `run_agent` with a specific agent from the registry. **Runner mode `router`**: Router selects one agent per request; single “worker” per turn.                                                        |
-| **Blackboard**          | Specialized agents (knowledge sources) collaborate by reading from and writing to a **shared knowledge repository** (the blackboard). Ideal for complex, self-organizing problem-solving where predefined workflows are unavailable. | **Shared memory**: Use **openswarm-memory** (e.g. EpisodicMemory or SemanticMemory) as the blackboard; each agent reads/writes via the same `Memory` impl. Project layout: one `config.rs` or `blackboard.rs` holding the shared memory handle; agents receive it in their builder. |
-| **Hierarchical Swarm**  | Agents are organized in **layers**: “Director” agents oversee “Worker” agents, breaking large projects (e.g. 50+ tasks) into executable subtasks.                                                                                    | **Runner mode `graph`**: Director node(s) run first (e.g. planner agent); subsequent nodes run worker agents with task descriptions. Alternatively, **router** where the first “director” agent’s output is used to choose the next agent.                                          |
-| **Forest Swarm**        | **Dynamic routing** that selects the most suitable **agent or tree of agents** for a given task, optimizing for expertise and computational efficiency.                                                                              | **Runner mode `router`** with **LlmRouter** or **KeywordRouter**: route input to the best-matching agent. Optional: graph that branches by condition (conditional edges) to different agent trees.                                                                                  |
+| Pattern                 | Description                                                                                                                                                                                                                          | Mapping to runner / project layout                                                                                                                                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Orchestrator–Worker** | A central coordinator distributes work to specialized agents, managing task allocation and conflict resolution. Critical for isolating failures and maintaining consistency.                                                         | **Runner mode `graph`**: FlowRunner as coordinator; nodes are tasks that call `run_agent` with a specific agent from the registry. **Runner mode `router`**: Router selects one agent per request; single “worker” per turn.                                                       |
+| **Blackboard**          | Specialized agents (knowledge sources) collaborate by reading from and writing to a **shared knowledge repository** (the blackboard). Ideal for complex, self-organizing problem-solving where predefined workflows are unavailable. | **Shared memory**: Use **vanswarm-memory** (e.g. EpisodicMemory or SemanticMemory) as the blackboard; each agent reads/writes via the same `Memory` impl. Project layout: one `config.rs` or `blackboard.rs` holding the shared memory handle; agents receive it in their builder. |
+| **Hierarchical Swarm**  | Agents are organized in **layers**: “Director” agents oversee “Worker” agents, breaking large projects (e.g. 50+ tasks) into executable subtasks.                                                                                    | **Runner mode `graph`**: Director node(s) run first (e.g. planner agent); subsequent nodes run worker agents with task descriptions. Alternatively, **router** where the first “director” agent’s output is used to choose the next agent.                                         |
+| **Forest Swarm**        | **Dynamic routing** that selects the most suitable **agent or tree of agents** for a given task, optimizing for expertise and computational efficiency.                                                                              | **Runner mode `router`** with **LlmRouter** or **KeywordRouter**: route input to the best-matching agent. Optional: graph that branches by condition (conditional edges) to different agent trees.                                                                                 |
 
 #### Consensus and voting
 
-For consensus-building across multiple agent answers, systems may use **majority voting** or **similarity-based** selection: e.g. choose the answer that has highest cumulative similarity to all other answers. The framework’s **openswarm-orchestrator** provides `majority_vote`, `majority_vote_owned`, `similarity_vote`, and `similarity_vote_owned` for this (see `orchestrator::patterns`). A project can run N agents in parallel on the same prompt and then pass their outputs to these functions to pick a final answer.
+For consensus-building across multiple agent answers, systems may use **majority voting** or **similarity-based** selection: e.g. choose the answer that has highest cumulative similarity to all other answers. The framework’s **vanswarm-orchestrator** provides `majority_vote`, `majority_vote_owned`, `similarity_vote`, and `similarity_vote_owned` for this (see `orchestrator::patterns`). A project can run N agents in parallel on the same prompt and then pass their outputs to these functions to pick a final answer.
 
 #### Cost and supervision
 
@@ -123,11 +123,11 @@ These tactics should be reflected in the **README** and **runner templates** for
 ### 2.1 Command
 
 ```bash
-openswarm new <PROJECT_NAME> [OPTIONS]
+vanswarm new <PROJECT_NAME> [OPTIONS]
 ```
 
 - **PROJECT_NAME** — Name of the project (directory and crate name). Creates a **multi-agent-ready** project (see layout above), not a single-agent binary.
-- **Output:** `<project>/` with Cargo.toml, `openswarm.toml`, `src/main.rs`, `src/lib.rs`, `src/config.rs`, `src/agents/mod.rs`, one default agent (e.g. `default` or `assistant`), optional `src/runner.rs`, .env.example, README.
+- **Output:** `<project>/` with Cargo.toml, `vanswarm.toml`, `src/main.rs`, `src/lib.rs`, `src/config.rs`, `src/agents/mod.rs`, one default agent (e.g. `default` or `assistant`), optional `src/runner.rs`, .env.example, README.
 
 ### 2.2 Flags (aligned with existing CLI proposal)
 
@@ -137,8 +137,8 @@ openswarm new <PROJECT_NAME> [OPTIONS]
 | `--provider <PROVIDER>`   |       | `anthropic`        | Default provider for the first agent.                            |
 | `--model <ID>`            |       | (provider default) | Default model for the first agent.                               |
 | `--with-tools`            |       | _off_              | Add shared `src/tools/` and a sample tool.                       |
-| `--with-mcp`              |       | _off_              | Add openswarm-mcp and MCP snippet.                               |
-| `--with-memory`           |       | _off_              | Add openswarm-memory and EpisodicMemory snippet.                 |
+| `--with-mcp`              |       | _off_              | Add vanswarm-mcp and MCP snippet.                                |
+| `--with-memory`           |       | _off_              | Add vanswarm-memory and EpisodicMemory snippet.                  |
 | `--runner <MODE>`         |       | `single`           | Runner mode: `single`, `router`, or `graph` (graph may be stub). |
 | `--framework-path <PATH>` |       | `path`             | `path` or `git` for framework deps.                              |
 | `--no-readme`             |       | _off_              | Skip README.                                                     |
@@ -148,15 +148,15 @@ openswarm new <PROJECT_NAME> [OPTIONS]
 
 ### 2.3 Generated project contents (minimal)
 
-- **Cargo.toml:** openswarm-core, tokio; optional mcp, memory, orchestrator depending on flags.
-- **openswarm.toml:** One agent entry (e.g. `assistant`) and `runner.mode = "single"`.
+- **Cargo.toml:** vanswarm-core, tokio; optional mcp, memory, orchestrator depending on flags.
+- **vanswarm.toml:** One agent entry (e.g. `assistant`) and `runner.mode = "single"`.
 - **src/main.rs:** Parse CLI (e.g. `--agent <name>`), load agent by name from registry, run_agent.
 - **src/lib.rs:** Re-export `agents::registry()`, `config`, and runner if present.
 - **src/config.rs:** Shared provider/model defaults (from env or config).
 - **src/agents/mod.rs:** `registry()` returns a map of name → builder (closure or fn that returns `ReActAgent`); one default agent.
 - **src/agents/assistant.rs** (or default): Single ReAct agent builder.
 
-This gives a single default agent at first; users add more with `openswarm add agent <name>`.
+This gives a single default agent at first; users add more with `vanswarm add agent <name>`.
 
 ---
 
@@ -165,11 +165,11 @@ This gives a single default agent at first; users add more with `openswarm add a
 ### 3.1 Command
 
 ```bash
-openswarm add agent <AGENT_NAME> [OPTIONS]
+vanswarm add agent <AGENT_NAME> [OPTIONS]
 ```
 
-- **AGENT_NAME** — Name of the new agent (snake_case, e.g. `researcher`, `code_reviewer`). Used as the module name and key in `openswarm.toml`.
-- **Context:** Must be run from **inside a project** that already has the multi-agent layout (i.e. contains `openswarm.toml` and `src/agents/mod.rs`). The CLI detects the project root by walking up to find `openswarm.toml` (or a fallback like `Cargo.toml` with a `[package.metadata.openswarm]` section).
+- **AGENT_NAME** — Name of the new agent (snake_case, e.g. `researcher`, `code_reviewer`). Used as the module name and key in `vanswarm.toml`.
+- **Context:** Must be run from **inside a project** that already has the multi-agent layout (i.e. contains `vanswarm.toml` and `src/agents/mod.rs`). The CLI detects the project root by walking up to find `vanswarm.toml` (or a fallback like `Cargo.toml` with a `[package.metadata.vanswarm]` section).
 
 ### 3.2 Flags
 
@@ -186,7 +186,7 @@ openswarm add agent <AGENT_NAME> [OPTIONS]
 
 1. **Create** `src/agents/<name>.rs` — module that exports a single function, e.g. `pub fn build(config: &AppConfig) -> ReActAgent` (or returns the components needed to construct the agent).
 2. **Update** `src/agents/mod.rs` — add `pub mod <name>;` and register the agent in the registry map (e.g. `registry.insert("<name>", <name>::build);`).
-3. **Update** `openswarm.toml` — append an `[agents.<name>]` section with provider, model, and optional system_prompt.
+3. **Update** `vanswarm.toml` — append an `[agents.<name>]` section with provider, model, and optional system_prompt.
 
 No overwrite of existing files without a `--force` flag; if `src/agents/<name>.rs` already exists, the command errors and suggests a different name or `--force`.
 
@@ -194,13 +194,13 @@ No overwrite of existing files without a `--force` flag; if `src/agents/<name>.r
 
 ```bash
 # Create project with one default agent
-openswarm new my_swarm --runner single
+vanswarm new my_swarm --runner single
 
 cd my_swarm
 
 # Add two more agents
-openswarm add agent researcher --provider anthropic --model claude-sonnet-4-20250514
-openswarm add agent writer --provider openai --model gpt-4o --with-tools
+vanswarm add agent researcher --provider anthropic --model claude-sonnet-4-20250514
+vanswarm add agent writer --provider openai --model gpt-4o --with-tools
 
 # Run a specific agent
 cargo run -- --agent researcher "Summarize the latest news on Rust 2.0"
@@ -211,7 +211,7 @@ cargo run -- "Summarize the latest news on Rust 2.0"
 
 ---
 
-## Part 4 — Project manifest (openswarm.toml)
+## Part 4 — Project manifest (vanswarm.toml)
 
 ### 4.1 Schema (proposed)
 
@@ -244,19 +244,19 @@ provider = "openai"
 model = "gpt-4o"
 ```
 
-- **Project discovery:** CLI looks for `openswarm.toml` in the current directory, then parent directories. If not found but `Cargo.toml` exists and has `[package.metadata.openswarm]`, the CLI can use that as the manifest (with a different schema if needed).
+- **Project discovery:** CLI looks for `vanswarm.toml` in the current directory, then parent directories. If not found but `Cargo.toml` exists and has `[package.metadata.vanswarm]`, the CLI can use that as the manifest (with a different schema if needed).
 
 ### 4.2 Alternative: manifest in Cargo.toml
 
 Instead of a separate file, agents could be listed under package metadata:
 
 ```toml
-[package.metadata.openswarm]
+[package.metadata.vanswarm]
 runner = "single"
 agents = ["assistant", "researcher", "writer"]
 ```
 
-Agent details (provider, model) would then live in code (e.g. in each `agents/<name>.rs`). This keeps one less file but makes “add agent” a pure code generator (no manifest merge). The proposal above prefers a dedicated **openswarm.toml** so the CLI can add/update entries without parsing Rust.
+Agent details (provider, model) would then live in code (e.g. in each `agents/<name>.rs`). This keeps one less file but makes “add agent” a pure code generator (no manifest merge). The proposal above prefers a dedicated **vanswarm.toml** so the CLI can add/update entries without parsing Rust.
 
 ---
 
@@ -264,50 +264,50 @@ Agent details (provider, model) would then live in code (e.g. in each `agents/<n
 
 ### Phase 1 (minimal)
 
-- **`openswarm new <project>`** — Generate the multi-agent layout with one default agent, `openswarm.toml`, and a `main` that runs a single agent by name (e.g. `--agent assistant`). Reuse or extend the existing `new` implementation in crates/cli.
-- **`openswarm add agent <name>`** — Create `src/agents/<name>.rs`, update `src/agents/mod.rs`, and append to `openswarm.toml`. Project detection: require `openswarm.toml` in cwd or parent.
+- **`vanswarm new <project>`** — Generate the multi-agent layout with one default agent, `vanswarm.toml`, and a `main` that runs a single agent by name (e.g. `--agent assistant`). Reuse or extend the existing `new` implementation in crates/cli.
+- **`vanswarm add agent <name>`** — Create `src/agents/<name>.rs`, update `src/agents/mod.rs`, and append to `vanswarm.toml`. Project detection: require `vanswarm.toml` in cwd or parent.
 
 ### Phase 2
 
 - **Runner mode `router`:** Template for `runner.rs` that uses a Router (e.g. KeywordRouter) to select an agent from the registry by input. `main` calls the runner instead of dispatching by `--agent` only.
-- **`openswarm list agents`** — List agents from `openswarm.toml` (or from registry in code).
+- **`vanswarm list agents`** — List agents from `vanswarm.toml` (or from registry in code).
 
 ### Phase 3
 
 - **Runner mode `graph`:** Stub or example that builds a small ExecutionGraph and invokes agents in nodes. Optional graph definition in config.
-- **`openswarm add workflow`** (future) — Scaffold a graph workflow that uses existing agents as nodes.
+- **`vanswarm add workflow`** (future) — Scaffold a graph workflow that uses existing agents as nodes.
 
 ---
 
 ## Part 6 — Relation to existing pieces
 
-| Existing                    | Role in this proposal                                                                                                                                                    |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **openswarm new** (current) | Becomes “new project” with multi-agent layout; existing single-agent `new` can remain as `openswarm new --single-agent` or be deprecated in favor of the project layout. |
-| **openswarm-orchestrator**  | Used when runner mode is `graph`; nodes in the graph can call `run_agent` with the appropriate agent from the registry.                                                  |
-| **Router / Supervisor**     | Used when runner mode is `router`; Router::route(input) returns a tier or agent name, then the runner looks up the agent and runs it.                                    |
-| **openswarm.toml**          | New artifact: project manifest for agent list and runner mode. CLI reads/writes it for `add agent` and `list agents`.                                                    |
+| Existing                   | Role in this proposal                                                                                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **vanswarm new** (current) | Becomes “new project” with multi-agent layout; existing single-agent `new` can remain as `vanswarm new --single-agent` or be deprecated in favor of the project layout. |
+| **vanswarm-orchestrator**  | Used when runner mode is `graph`; nodes in the graph can call `run_agent` with the appropriate agent from the registry.                                                 |
+| **Router / Supervisor**    | Used when runner mode is `router`; Router::route(input) returns a tier or agent name, then the runner looks up the agent and runs it.                                   |
+| **vanswarm.toml**          | New artifact: project manifest for agent list and runner mode. CLI reads/writes it for `add agent` and `list agents`.                                                   |
 
 ---
 
 ## Part 7 — Acceptance criteria
 
 - [ ] **Proposal** (this document) is agreed and committed.
-- [ ] **`openswarm new <project>`** generates the multi-agent layout (openswarm.toml, src/agents/, one default agent, main that supports `--agent <name>`).
-- [ ] **`openswarm add agent <name>`** when run inside a project: creates `src/agents/<name>.rs`, updates `src/agents/mod.rs`, updates `openswarm.toml`; fails clearly if not in a project or if agent name exists.
-- [ ] **Project detection** is defined (openswarm.toml in cwd or ancestor) and documented.
+- [ ] **`vanswarm new <project>`** generates the multi-agent layout (vanswarm.toml, src/agents/, one default agent, main that supports `--agent <name>`).
+- [ ] **`vanswarm add agent <name>`** when run inside a project: creates `src/agents/<name>.rs`, updates `src/agents/mod.rs`, updates `vanswarm.toml`; fails clearly if not in a project or if agent name exists.
+- [ ] **Project detection** is defined (vanswarm.toml in cwd or ancestor) and documented.
 - [ ] **README** in generated project explains how to add agents and run with `--agent`.
-- [ ] Optional: **`openswarm list agents`** prints agents from openswarm.toml.
+- [ ] Optional: **`vanswarm list agents`** prints agents from vanswarm.toml.
 
 ---
 
 ## Summary
 
-- **Orchestration:** A project is the unit that “manages many agents”; it has a manifest (`openswarm.toml`), an agent registry in code, and an optional runner (single, router, or graph) using existing framework crates.
+- **Orchestration:** A project is the unit that “manages many agents”; it has a manifest (`vanswarm.toml`), an agent registry in code, and an optional runner (single, router, or graph) using existing framework crates.
 - **Swarm tactics:** The proposal aligns runner modes and project layout with established swarm patterns (Orchestrator–Worker, Blackboard, Hierarchical Swarm, Forest Swarm) and scaling principles (Alignment, Sequential Penalty, Tool-Coordination Trade-off, Validation Bottleneck), plus consensus (voting) and cost/supervision. See §1.4.
 - **CLI:**
-  - **`openswarm new <project>`** — create a new multi-agent project.
-  - **`openswarm add agent <name>`** — add an agent to the current project.
+  - **`vanswarm new <project>`** — create a new multi-agent project.
+  - **`vanswarm add agent <name>`** — add an agent to the current project.
 - **Future:** `list agents`, runner modes `router`/`graph`, and optional `add workflow` for graph-based orchestration.
 
 ---

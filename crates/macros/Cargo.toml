@@ -1,6 +1,6 @@
 [package]
-name        = "openswarm-macros"
-description = "Procedural macros (#[tool], #[workflow]) for OpenSwarm"
+name        = "vanswarm-macros"
+description = "Procedural macros (#[tool], #[workflow]) for VanSwarm"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -18,4 +18,4 @@ syn         = { version = "2", features = ["full"] }
 schemars    = { workspace = true }
 
 [dev-dependencies]
-openswarm-core.workspace = true
+vanswarm-core.workspace = true
