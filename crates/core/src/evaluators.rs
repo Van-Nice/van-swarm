@@ -799,3 +799,262 @@ mod tests {
         assert!((super::spl(&runs3) - 0.5).abs() < 1e-9);
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Golden dataset (§12.12) — eval-driven development
+// ─────────────────────────────────────────────────────────────────────────────
+
+use serde::{Deserialize, Serialize};
+
+/// A single test case in a golden dataset.
+///
+/// A *golden case* pairs an `input` (the question / prompt) with an
+/// `expected_output` (the ideal answer) so scorers can measure correctness.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GoldenCase {
+    /// Unique identifier (used for filtering and reporting).
+    pub id: String,
+    /// The prompt / question to send to the agent.
+    pub input: String,
+    /// The ideal expected answer (used by containment / similarity scorers).
+    pub expected_output: String,
+    /// Optional tags for filtering (e.g. `["regression", "hallucination"]`).
+    #[serde(default)]
+    pub tags: Vec<String>,
+}
+
+/// A named, persistent collection of [`GoldenCase`]s (§12.12).
+///
+/// Use [`GoldenDataset::load_ndjson`] to read a file produced by trace recording,
+/// or build one programmatically with [`GoldenDataset::add`].
+///
+/// # File format
+///
+/// One [`GoldenCase`] JSON object per line (newline-delimited JSON / NDJSON).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct GoldenDataset {
+    /// Human-readable name (e.g. `"customer-support-v1"`).
+    pub name: String,
+    /// All test cases in insertion order.
+    pub cases: Vec<GoldenCase>,
+}
+
+impl GoldenDataset {
+    pub fn new(name: impl Into<String>) -> Self {
+        Self { name: name.into(), cases: Vec::new() }
+    }
+
+    /// Append a case; returns `&mut Self` for chaining.
+    pub fn add(&mut self, case: GoldenCase) -> &mut Self {
+        self.cases.push(case);
+        self
+    }
+
+    /// Load from an NDJSON file (one `GoldenCase` per line).
+    ///
+    /// Missing file → empty dataset (not an error).
+    pub fn load_ndjson(path: &std::path::Path) -> crate::Result<Self> {
+        let text = match std::fs::read_to_string(path) {
+            Ok(t) => t,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Self::default()),
+            Err(e) => return Err(e.into()),
+        };
+        let mut cases = Vec::new();
+        for line in text.lines() {
+            let line = line.trim();
+            if !line.is_empty() {
+                cases.push(serde_json::from_str::<GoldenCase>(line)?);
+            }
+        }
+        Ok(Self {
+            name: path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("dataset")
+                .to_string(),
+            cases,
+        })
+    }
+
+    /// Persist the dataset to an NDJSON file (overwrites if it exists).
+    pub fn save_ndjson(&self, path: &std::path::Path) -> crate::Result<()> {
+        let mut lines = String::new();
+        for case in &self.cases {
+            let line = serde_json::to_string(case)?;
+            lines.push_str(&line);
+            lines.push('\n');
+        }
+        std::fs::write(path, lines)?;
+        Ok(())
+    }
+
+    /// Return a new dataset containing only cases that have `tag` in their tag list.
+    pub fn filter_by_tag(&self, tag: &str) -> Self {
+        Self {
+            name: format!("{}:{tag}", self.name),
+            cases: self
+                .cases
+                .iter()
+                .filter(|c| c.tags.iter().any(|t| t == tag))
+                .cloned()
+                .collect(),
+        }
+    }
+
+    /// Number of cases.
+    pub fn len(&self) -> usize {
+        self.cases.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cases.is_empty()
+    }
+}
+
+/// Summary statistics for a [`GoldenDatasetEval`] run.
+#[derive(Debug, Clone)]
+pub struct GoldenDatasetSummary {
+    pub total: usize,
+    pub mean_score: f64,
+    pub min_score: f64,
+    pub max_score: f64,
+    /// Fraction of cases with score ≥ `pass_threshold` (set at eval time).
+    pub pass_rate: f64,
+}
+
+/// Runs a [`GoldenDataset`] through a [`Scorer`] and reports results (§12.12).
+///
+/// # Usage
+///
+/// ```rust,no_run
+/// use rustmastra_core::evaluators::{GoldenCase, GoldenDataset, GoldenDatasetEval, NonEmptyScorer};
+/// use std::sync::Arc;
+///
+/// async fn example() {
+///     let mut dataset = GoldenDataset::new("test");
+///     dataset.add(GoldenCase { id: "1".into(), input: "Q".into(), expected_output: "A".into(), tags: vec![] });
+///     let eval = GoldenDatasetEval::new(dataset, Arc::new(NonEmptyScorer), 0.5);
+///     let (results, summary) = eval.run_all().await.unwrap();
+///     println!("Pass rate: {:.0}%", summary.pass_rate * 100.0);
+/// }
+/// ```
+pub struct GoldenDatasetEval {
+    pub dataset: GoldenDataset,
+    pub scorer: Arc<dyn Scorer>,
+    /// Minimum score to count a case as "passed" (used for `pass_rate`).
+    pub pass_threshold: f64,
+}
+
+impl GoldenDatasetEval {
+    pub fn new(dataset: GoldenDataset, scorer: Arc<dyn Scorer>, pass_threshold: f64) -> Self {
+        Self { dataset, scorer, pass_threshold: pass_threshold.clamp(0.0, 1.0) }
+    }
+
+    /// Run all cases through the scorer.
+    ///
+    /// Returns `(case, result)` pairs in order, plus a summary.
+    pub async fn run_all(
+        &self,
+    ) -> crate::Result<(Vec<(GoldenCase, ScoreResult)>, GoldenDatasetSummary)> {
+        let mut results: Vec<(GoldenCase, ScoreResult)> = Vec::with_capacity(self.dataset.len());
+        for case in &self.dataset.cases {
+            let input = ScoreInput {
+                messages: vec![],
+                final_answer: case.expected_output.clone(), // scorer rates the "ideal" answer
+                expected: Some(case.input.clone()),
+            };
+            let score_result = self.scorer.score(&input).await?;
+            results.push((case.clone(), score_result));
+        }
+
+        let summary = Self::summarize(&results, self.pass_threshold);
+        Ok((results, summary))
+    }
+
+    /// Compute summary statistics from scored results.
+    pub fn summarize(
+        results: &[(GoldenCase, ScoreResult)],
+        pass_threshold: f64,
+    ) -> GoldenDatasetSummary {
+        if results.is_empty() {
+            return GoldenDatasetSummary {
+                total: 0,
+                mean_score: 0.0,
+                min_score: 0.0,
+                max_score: 0.0,
+                pass_rate: 0.0,
+            };
+        }
+        let scores: Vec<f64> = results.iter().map(|(_, r)| r.score).collect();
+        let total = scores.len();
+        let mean_score = scores.iter().sum::<f64>() / total as f64;
+        let min_score = scores.iter().cloned().fold(f64::INFINITY, f64::min);
+        let max_score = scores.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+        let pass_rate =
+            scores.iter().filter(|&&s| s >= pass_threshold).count() as f64 / total as f64;
+        GoldenDatasetSummary { total, mean_score, min_score, max_score, pass_rate }
+    }
+}
+
+#[cfg(test)]
+mod golden_tests {
+    use super::*;
+    use std::sync::Arc;
+
+    fn make_dataset() -> GoldenDataset {
+        let mut ds = GoldenDataset::new("test");
+        ds.add(GoldenCase {
+            id: "c1".into(),
+            input: "What is 2+2?".into(),
+            expected_output: "4".into(),
+            tags: vec!["math".into()],
+        });
+        ds.add(GoldenCase {
+            id: "c2".into(),
+            input: "Capital of France?".into(),
+            expected_output: "Paris".into(),
+            tags: vec!["geo".into()],
+        });
+        ds
+    }
+
+    #[test]
+    fn golden_dataset_filter_by_tag() {
+        let ds = make_dataset();
+        let math = ds.filter_by_tag("math");
+        assert_eq!(math.cases.len(), 1);
+        assert_eq!(math.cases[0].id, "c1");
+    }
+
+    #[test]
+    fn golden_dataset_ndjson_roundtrip() {
+        let ds = make_dataset();
+        let dir = std::env::temp_dir();
+        let path = dir.join("golden_test.ndjson");
+        ds.save_ndjson(&path).unwrap();
+        let loaded = GoldenDataset::load_ndjson(&path).unwrap();
+        assert_eq!(loaded.cases.len(), 2);
+        assert_eq!(loaded.cases[0].id, "c1");
+        assert_eq!(loaded.cases[1].expected_output, "Paris");
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[tokio::test]
+    async fn golden_dataset_eval_run_all() {
+        let ds = make_dataset();
+        let eval = GoldenDatasetEval::new(ds, Arc::new(NonEmptyScorer), 0.5);
+        let (results, summary) = eval.run_all().await.unwrap();
+        assert_eq!(results.len(), 2);
+        assert_eq!(summary.total, 2);
+        // NonEmptyScorer returns 1.0 for non-empty expected_output.
+        assert!((summary.mean_score - 1.0).abs() < 1e-9);
+        assert!((summary.pass_rate - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn summarize_empty() {
+        let s = GoldenDatasetEval::summarize(&[], 0.5);
+        assert_eq!(s.total, 0);
+        assert_eq!(s.pass_rate, 0.0);
+    }
+}

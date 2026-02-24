@@ -47,6 +47,7 @@ pub mod error;
 pub mod evaluators;
 pub mod guardrails;
 pub mod message;
+pub mod patterns;
 pub mod providers;
 pub mod react;
 pub mod supervisor;
@@ -72,12 +73,16 @@ pub use config::{AgentConfig, ModelConfig, ProviderCredentials};
 pub use durable::{DurableContext, FileJournal, InMemoryJournal, JournalBackend, JournalEntry, JournalKind};
 pub use evaluators::{
     batch_score, BenchmarkTask, BiasScorer, CompletenessScorer, ContainsScorer,
-    FaithfulnessScorer, LlmJudgeScorer, NonEmptyScorer, RelevancyScorer,
+    FaithfulnessScorer, GoldenCase, GoldenDataset, GoldenDatasetEval, GoldenDatasetSummary,
+    LlmJudgeScorer, NonEmptyScorer, RelevancyScorer,
     SampledScorer, ScoreInput, ScoreResult, Scorer, SplRun, spl,
     ToolAccuracyScorer, TrajectoryScorer,
 };
 pub use guardrails::{GuardRail, GuardedModelProvider, KeywordGuardRail, PromptInjectionGuardRail};
-pub use supervisor::{AlwaysTier1, Route, Router, TqgrDecision, TqgrTracker};
+pub use patterns::{EvalOptResult, EvaluatorOptimizerLoop, PlanAndExecute, PlanAndExecuteResult, PlanStep};
+pub use supervisor::{
+    AlwaysTier1, KeywordRouter, LlmRouter, Route, Router, TqgrDecision, TqgrTracker,
+};
 pub use telemetry::{
     AgentSpanKind, ContextMeter, FileTraceStore, InMemoryTraceStore, ModelPricing,
     RunTrace, RunTraceBuilder, SamplingFilter, SpanEvent, TraceStore, default_pricing,

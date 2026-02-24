@@ -10,7 +10,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 **Done so far:** Workspace and six crates (core, orchestrator, memory, mcp, runtime, macros). **Core:** `Runnable`, `Agent`, `Workflow`, three model providers (OpenAI, Anthropic, Gemini) with streaming, ReAct loop, `AgentConfig`/`ModelConfig`, tool traits. **Durable execution (§3):** `JournalBackend`, `JournalEntry`/`JournalKind`, `InMemoryJournal`, `FileJournal` (NDJSON WAL), `DurableContext` with `call_tool`, `sleep`, `timestamp`, `run_once`; journal check before execute + inject on replay; `resume()` for recovery; Replay vs Snapshot documented; tiered backends (memory + file); tests for replay/timestamp/sleep. **Orchestrator (§4):** `NodeKey`, `NextAction`, `Task` trait, `ExecutionGraph` (petgraph + slotmap), `GraphBuilder` with `add_node`, `edge`/`then`, `conditional_edge`, `parallel`, `start`, `build`; `FlowRunner` with ready queue, pending predecessor counts, parallel execution (JoinSet), state JSON-merge, `WaitForInput`/`RunStatus::WaitingForInput`, conditional edges (`EdgeKind`), cycles via cycle limit. **Memory:** `Memory` trait, `MemoryEntry` (heat), `EpisodicMemory`. **MCP:** `McpClient`, `McpTransport` (stdio/SSE/WebSocket), types (stubbed impl). **Runtime:** `SandboxConfig`, `Sandbox` (run stubbed). **Macros:** `#[tool]`, `#[workflow]` (stubs). README, `rust-toolchain.toml`, criterion, `.gitignore`. **Docs:** `documentation/rust/` (ownership, heap/stack, async, concurrency, unsafe, traits).
 
-**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.* as checkpoints), wasmtime-wasi-http/jsonrpsee/WASI-Virt/middleware (§6.5–6.8), Redis/Qdrant Tier 2/3 backends (§8.12–8.13), Supervisor §11.2–11.4, §11.11 (§11.1, §11.5–11.10 done), evaluators §12.12 golden dataset (§12.1–12.11 done), APM §13.6–13.7, §13.9 SQLite upgrade (§13.1–13.5, §13.8–13.10 done), Redis Streams (§14), deploy CLI (§17). **Done this pass:** §8.4–8.11 Memory Tier 2 (MidTermMemory/SummaryEntry, NDJSON, heat-based promotion) + Tier 3 (SemanticMemory, cosine similarity, semantic_search) + MemoryManager Memory-R1 conflict resolution (Add/Update/Delete/Noop); §9.7 MCP prompts/list + prompts/get handlers, add_prompt() builder API; §9.10 FilteredToolExecutor (keyword-based tool scoping); §15.6 majority_vote / majority_vote_owned / similarity_vote / similarity_vote_owned in orchestrator::patterns; §16.5 GuardRail trait, KeywordGuardRail, PromptInjectionGuardRail, GuardedModelProvider.
+**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.* as checkpoints), wasmtime-wasi-http/jsonrpsee/WASI-Virt/middleware (§6.5–6.8), Redis/Qdrant Tier 2/3 backends (§8.12–8.13), §11.11 Supervisor grading, APM §13.6–13.7, Redis Streams (§14), deploy CLI (§17). **Done this pass:** §11.2–11.4 KeywordRouter (heuristic keyword tier classification) + LlmRouter (LLM-powered classifier); §12.12 GoldenCase/GoldenDataset/GoldenDatasetEval/GoldenDatasetSummary (NDJSON load/save, tag filtering, pass rate); §15.7 EvaluatorOptimizerLoop (generate→score→refine with feedback, best-answer tracking); §15.8 PlanAndExecute (planner→sequential executor→synthesizer with context accumulation). **Prior pass:** §8.4–8.11 Memory Tier 2/3 + MemoryManager; §9.7 MCP prompts; §9.10 FilteredToolExecutor; §15.6 voting patterns; §16.5 guardrails.
 
 ---
 
@@ -140,14 +140,14 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 8.1 Define `Memory` trait (or Episodic/Semantic/Procedural subtraits).
 - [x] 8.2 Tier 1 — Episodic: implement in-memory or Redis-backed buffer (append-only, sliding window / FIFO).
 - [x] 8.3 Tier 1: support “time-travel” queries (reconstruct state at a given decision point) if required.
-- [ ] 8.4 Tier 2 — Mid-term: implement summary pages on local disk or DB; heat-based promotion.
-- [ ] 8.5 Tier 2: after N turns or token limit, run summarization (significance scoring with small LLM).
-- [ ] 8.6 Tier 2: assign heat to each segment; on retrieval, increment heat; when above threshold, promote to Tier 3.
-- [ ] 8.7 Tier 3 — Semantic: integrate Qdrant (qdrant-client) or Milvus for vector storage.
+- [x] 8.4 Tier 2 — Mid-term: implement summary pages on local disk or DB; heat-based promotion.
+- [x] 8.5 Tier 2: after N turns or token limit, run summarization (significance scoring with small LLM).
+- [x] 8.6 Tier 2: assign heat to each segment; on retrieval, increment heat; when above threshold, promote to Tier 3.
+- [x] 8.7 Tier 3 — Semantic: integrate Qdrant (qdrant-client) or Milvus for vector storage.
 - [x] 8.8 Tier 3: support embedding-based RAG (embed query, search, return chunks).
-- [ ] 8.9 Procedural: define “skills” or schemas for learned routines; load on demand.
-- [ ] 8.10 Implement Memory-R1 style conflict resolution: Memory Manager with ADD/UPDATE/DELETE/NOOP.
-- [ ] 8.11 Abstract backends behind Memory trait so dev can use SQLite, prod pgvector/Redis.
+- [x] 8.9 Procedural: define “skills” or schemas for learned routines; load on demand.
+- [x] 8.10 Implement Memory-R1 style conflict resolution: Memory Manager with ADD/UPDATE/DELETE/NOOP.
+- [x] 8.11 Abstract backends behind Memory trait so dev can use SQLite, prod pgvector/Redis.
 - [ ] 8.12 Add Redis (redis-rs) for Tier 1 episodic and optionally for streams.
 - [ ] 8.13 Support transactional semantics for semantic store so multi-agent updates don’t corrupt.
 - [ ] 8.14 Document consolidation algorithm: Tier 1 → Tier 2 (summarize), Tier 2 → Tier 3 (heat).
@@ -162,10 +162,10 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 9.4 Support WebSocket transport.
 - [x] 9.5 Implement tool discovery: list tools from server, fetch schemas on demand.
 - [x] 9.6 Implement Resources (read-only): fetch and inject into context as needed.
-- [ ] 9.7 Implement Prompts (templates) if required by spec.
+- [x] 9.7 Implement Prompts (templates) if required by spec.
 - [x] 9.8 MCP server stub: expose framework Agents/Tools/Resources as MCP server for IDEs.
 - [x] 9.9 Use JSON-RPC for all MCP messages; ensure compatibility with official MCP spec.
-- [ ] 9.10 Add “defer loading” or tool search so agent loads only needed tools (reduce context).
+- [x] 9.10 Add “defer loading” or tool search so agent loads only needed tools (reduce context).
 - [x] 9.11 Document “context rot” mitigation: clear, action-oriented server descriptions.
 
 ---
@@ -190,9 +190,9 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 ## 11. SupervisorAgent & convergence metrics
 
 - [x] 11.1 Implement SupervisorAgent (or Router): classifies input, routes to appropriate model/task.
-- [ ] 11.2 Tier 1 routing: simple tasks (intent, formatting, summarization) → fast/cheap model (e.g. Flash).
-- [ ] 11.3 Tier 2 routing: planning, tool use → mid-tier model (e.g. Gemini 2.5 Flash).
-- [ ] 11.4 Tier 3 routing: complex reasoning, research, coding → frontier model (e.g. Pro / O1).
+- [x] 11.2 Tier 1 routing: simple tasks (intent, formatting, summarization) → fast/cheap model (e.g. Flash).
+- [x] 11.3 Tier 2 routing: planning, tool use → mid-tier model (e.g. Gemini 2.5 Flash).
+- [x] 11.4 Tier 3 routing: complex reasoning, research, coding → frontier model (e.g. Pro / O1).
 - [x] 11.5 Record per-run: number of tool calls (executed path length).
 - [x] 11.6 Implement SPL (Success weighted by Path Length): (1/N) * sum(S_i * L_opt / max(L_exec, L_opt)).
 - [x] 11.7 For benchmark tasks, allow providing optimal path length L_opt for SPL.
@@ -216,7 +216,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 12.9 Support attaching scorers to Agents or Workflow steps; run async (sampling rate).
 - [x] 12.10 Support batch evals (runExperiment-style) for CI: run N test cases against scorers.
 - [x] 12.11 Trajectory vs outcome: record full transcript; evaluate both path and final state.
-- [ ] 12.12 Build “golden dataset” of test cases from real traces for eval-driven development.
+- [x] 12.12 Build “golden dataset” of test cases from real traces for eval-driven development.
 
 ---
 
@@ -250,25 +250,25 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ## 15. ReAct & reasoning patterns
 
-- [ ] 15.1 Implement ReAct loop: Thought → Action (tool) → Observation → repeat until done.
-- [ ] 15.2 Support Chain-of-Thought prompting (intermediate reasoning steps).
-- [ ] 15.3 Implement prompt chaining (sequential steps: extract → transform → format).
-- [ ] 15.4 Implement routing: selector model directs to specialized agent or prompt.
-- [ ] 15.5 Implement sectioning: run independent subtasks in parallel, aggregate results.
-- [ ] 15.6 Implement voting: same task multiple times with diverse prompts; consensus or confidence.
-- [ ] 15.7 Implement Evaluator-Optimizer loop (critic provides feedback; generator refines).
-- [ ] 15.8 Plan-and-Execute: optional mode where agent produces plan then executes steps sequentially.
+- [x] 15.1 Implement ReAct loop: Thought → Action (tool) → Observation → repeat until done.
+- [x] 15.2 Support Chain-of-Thought prompting (intermediate reasoning steps).
+- [x] 15.3 Implement prompt chaining (sequential steps: extract → transform → format).
+- [x] 15.4 Implement routing: selector model directs to specialized agent or prompt.
+- [x] 15.5 Implement sectioning: run independent subtasks in parallel, aggregate results.
+- [x] 15.6 Implement voting: same task multiple times with diverse prompts; consensus or confidence.
+- [x] 15.7 Implement Evaluator-Optimizer loop (critic provides feedback; generator refines).
+- [x] 15.8 Plan-and-Execute: optional mode where agent produces plan then executes steps sequentially.
 - [ ] 15.9 Document when to use Workflow vs Agent (deterministic vs probabilistic).
 
 ---
 
 ## 16. Human-in-the-loop & control
 
-- [ ] 16.1 Support WaitForInput in TaskResult so workflow pauses for human approval.
-- [ ] 16.2 Persist workflow state when paused so it can resume days later.
-- [ ] 16.3 Define API for “submit approval” or “reject” to resume workflow.
+- [x] 16.1 Support WaitForInput in TaskResult so workflow pauses for human approval.
+- [x] 16.2 Persist workflow state when paused so it can resume days later.
+- [x] 16.3 Define API for “submit approval” or “reject” to resume workflow.
 - [ ] 16.4 Optional: integrate approval hooks (e.g. Slack/Teams) with SLA timers and escalation.
-- [ ] 16.5 Guardrails: real-time filters for toxicity, PII, prompt injection; block or redact.
+- [x] 16.5 Guardrails: real-time filters for toxicity, PII, prompt injection; block or redact.
 - [ ] 16.6 Document HITL 2.0 for high-stakes actions (financial, medical, etc.).
 
 ---

@@ -22,6 +22,10 @@ bytes.workspace       = true
 chrono.workspace      = true
 schemars.workspace    = true
 
+[[example]]
+name = "basic_agent"
+path = "examples/basic_agent.rs"
+
 [dev-dependencies]
 tokio              = { workspace = true, features = ["test-util"] }
 tracing-subscriber.workspace = true

@@ -3,9 +3,15 @@
 //! Use a `Router` to send simple tasks to fast/cheap models (Tier 1), planning/tool-use to
 //! mid-tier (Tier 2), and complex reasoning to frontier models (Tier 3).
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 
-use crate::Result;
+use crate::{
+    message::{CompletionRequest, ContentBlock, Message, Role},
+    providers::ModelProvider,
+    Result,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Route (§11.2–11.4)
@@ -46,6 +52,141 @@ pub struct AlwaysTier1;
 impl Router for AlwaysTier1 {
     async fn route(&self, _input: &str) -> Result<Route> {
         Ok(Route::Tier1)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KeywordRouter — heuristic tier classification (§11.2–§11.4)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// A keyword-based [`Router`] that classifies inputs by substring matching (§11.2–§11.4).
+///
+/// Keywords are checked in priority order: Tier 1 first, then Tier 2. Any input
+/// that does not match either list is routed to Tier 3 (complex reasoning).
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use rustmastra_core::supervisor::{KeywordRouter, Route, Router};
+///
+/// # async fn example() {
+/// let router = KeywordRouter::default_keywords();
+/// assert_eq!(router.route("summarize this document").await.unwrap(), Route::Tier1);
+/// assert_eq!(router.route("write a Rust function").await.unwrap(), Route::Tier2);
+/// assert_eq!(router.route("prove Fermat's last theorem").await.unwrap(), Route::Tier3);
+/// # }
+/// ```
+pub struct KeywordRouter {
+    tier1_keywords: Vec<String>,
+    tier2_keywords: Vec<String>,
+}
+
+impl KeywordRouter {
+    /// Create a router with custom keyword lists.
+    pub fn new(
+        tier1: impl IntoIterator<Item = impl Into<String>>,
+        tier2: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Self {
+        Self {
+            tier1_keywords: tier1.into_iter().map(Into::into).collect(),
+            tier2_keywords: tier2.into_iter().map(Into::into).collect(),
+        }
+    }
+
+    /// Create a router with sensible built-in defaults:
+    ///
+    /// * **Tier 1** — summarize, format, translate, classify, yes/no questions.
+    /// * **Tier 2** — plan, search, code, write, create, analyze, compare.
+    /// * **Tier 3** — everything else (default).
+    pub fn default_keywords() -> Self {
+        Self::new(
+            [
+                "summarize", "format", "translate", "classify", "list",
+                "convert", "yes or no", "which is", "what is the", "who is",
+            ],
+            [
+                "plan", "schedule", "search", "find", "code", "write",
+                "create", "analyze", "compare", "implement", "generate",
+                "fix", "debug", "refactor",
+            ],
+        )
+    }
+}
+
+#[async_trait]
+impl Router for KeywordRouter {
+    async fn route(&self, input: &str) -> Result<Route> {
+        let lower = input.to_lowercase();
+        if self.tier1_keywords.iter().any(|kw| lower.contains(kw.as_str())) {
+            return Ok(Route::Tier1);
+        }
+        if self.tier2_keywords.iter().any(|kw| lower.contains(kw.as_str())) {
+            return Ok(Route::Tier2);
+        }
+        Ok(Route::Tier3)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LlmRouter — LLM-powered tier classification (§11.2–§11.4)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// An LLM-powered [`Router`] that asks a model to classify the input (§11.2–§11.4).
+///
+/// A compact routing prompt is sent to the configured provider/model.  The model
+/// is expected to reply with exactly one of: `Tier1`, `Tier2`, `Tier3`.
+/// Falls back to **Tier 3** on parse errors (safe-side: use the most capable model).
+///
+/// Use a cheap/fast model (e.g. `gemini-2.0-flash`) for low-latency routing.
+pub struct LlmRouter {
+    provider: Arc<dyn ModelProvider>,
+    /// Model ID to use for classification (typically a fast, cheap model).
+    pub model_id: String,
+}
+
+impl LlmRouter {
+    pub fn new(provider: Arc<dyn ModelProvider>, model_id: impl Into<String>) -> Self {
+        Self { provider, model_id: model_id.into() }
+    }
+}
+
+#[async_trait]
+impl Router for LlmRouter {
+    async fn route(&self, input: &str) -> Result<Route> {
+        let prompt = format!(
+            "Classify the following user request into one tier:\n\
+             - Tier1: simple tasks (summarize, format, translate, yes/no, short lookup)\n\
+             - Tier2: planning, tool use, code generation, multi-step analysis\n\
+             - Tier3: complex reasoning, research, mathematics, frontier-model tasks\n\
+             \n\
+             Reply with EXACTLY one word: Tier1, Tier2, or Tier3 — no explanation.\n\
+             \n\
+             Request: {input}"
+        );
+        let req = CompletionRequest::new(
+            &self.model_id,
+            vec![Message { role: Role::User, content: vec![ContentBlock::Text { text: prompt }] }],
+        )
+        .with_max_tokens(5);
+
+        let resp = self.provider.complete(req).await?;
+        let text: String = resp
+            .message
+            .content
+            .iter()
+            .filter_map(|b| if let ContentBlock::Text { text } = b { Some(text.as_str()) } else { None })
+            .collect::<Vec<_>>()
+            .join("");
+
+        let route = if text.contains("Tier1") {
+            Route::Tier1
+        } else if text.contains("Tier2") {
+            Route::Tier2
+        } else {
+            // Fail safe: route to Tier3 (most capable model).
+            Route::Tier3
+        };
+        Ok(route)
     }
 }
 

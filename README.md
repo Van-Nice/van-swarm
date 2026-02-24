@@ -83,7 +83,7 @@ let executor = LocalToolRegistry::new()
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-cargo run --example basic_agent
+cargo run -p rustmastra-core --example basic_agent
 ```
 
 ## Checklist progress
@@ -99,6 +99,10 @@ cargo run --example basic_agent
 - [ ] §9  Model Context Protocol client/server
 - [ ] §10 `#[tool]` macro + ACI
 - [ ] §11–§25 Supervisor, observability, platform, enterprise …
+
+## User guides
+
+Step-by-step guides and examples live in **documentation/guides/**: quick start, building agents, tools, MCP, durable workflows, orchestrator, memory, evaluation, and runtime. Start with [documentation/guides/README.md](documentation/guides/README.md) for export readiness and the full index.
 
 ## Architecture
 
