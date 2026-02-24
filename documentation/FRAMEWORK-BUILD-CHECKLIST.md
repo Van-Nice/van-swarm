@@ -10,7 +10,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 **Done so far:** Workspace and six crates (core, orchestrator, memory, mcp, runtime, macros). **Core:** `Runnable`, `Agent`, `Workflow`, three model providers (OpenAI, Anthropic, Gemini) with streaming, ReAct loop, `AgentConfig`/`ModelConfig`, tool traits. **Durable execution (§3):** `JournalBackend`, `JournalEntry`/`JournalKind`, `InMemoryJournal`, `FileJournal` (NDJSON WAL), `DurableContext` with `call_tool`, `sleep`, `timestamp`, `run_once`; journal check before execute + inject on replay; `resume()` for recovery; Replay vs Snapshot documented; tiered backends (memory + file); tests for replay/timestamp/sleep. **Orchestrator (§4):** `NodeKey`, `NextAction`, `Task` trait, `ExecutionGraph` (petgraph + slotmap), `GraphBuilder` with `add_node`, `edge`/`then`, `conditional_edge`, `parallel`, `start`, `build`; `FlowRunner` with ready queue, pending predecessor counts, parallel execution (JoinSet), state JSON-merge, `WaitForInput`/`RunStatus::WaitingForInput`, conditional edges (`EdgeKind`), cycles via cycle limit. **Memory:** `Memory` trait, `MemoryEntry` (heat), `EpisodicMemory`. **MCP:** `McpClient`, `McpTransport` (stdio/SSE/WebSocket), types (stubbed impl). **Runtime:** `SandboxConfig`, `Sandbox` (run stubbed). **Macros:** `#[tool]`, `#[workflow]` (stubs). README, `rust-toolchain.toml`, criterion, `.gitignore`. **Docs:** `documentation/rust/` (ownership, heap/stack, async, concurrency, unsafe, traits).
 
-**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.* as checkpoints), wasmtime-wasi-http/jsonrpsee/WASI-Virt/middleware (§6.5–6.8), Tier 2/3 memory and Redis/Qdrant (§8), MCP Prompts (§9.7), Supervisor §11.2–11.4, §11.8+ (§11.1, §11.5–11.7 done), evaluators §12.3+ (§12.1–12.2, §12.10 done), APM §13.1–13.10 (§13.11 doc done), Redis Streams (§14), deploy CLI (§17). **Done this pass:** §11.1 Router + Route + AlwaysTier1; §13.11 Agentic APM doc (07-observability-apm).
+**Not yet:** Full per-await state-machine codegen (optional; §3 uses ctx.* as checkpoints), wasmtime-wasi-http/jsonrpsee/WASI-Virt/middleware (§6.5–6.8), Redis/Qdrant Tier 2/3 backends (§8.12–8.13), Supervisor §11.2–11.4, §11.11 (§11.1, §11.5–11.10 done), evaluators §12.12 golden dataset (§12.1–12.11 done), APM §13.6–13.7, §13.9 SQLite upgrade (§13.1–13.5, §13.8–13.10 done), Redis Streams (§14), deploy CLI (§17). **Done this pass:** §8.4–8.11 Memory Tier 2 (MidTermMemory/SummaryEntry, NDJSON, heat-based promotion) + Tier 3 (SemanticMemory, cosine similarity, semantic_search) + MemoryManager Memory-R1 conflict resolution (Add/Update/Delete/Noop); §9.7 MCP prompts/list + prompts/get handlers, add_prompt() builder API; §9.10 FilteredToolExecutor (keyword-based tool scoping); §15.6 majority_vote / majority_vote_owned / similarity_vote / similarity_vote_owned in orchestrator::patterns; §16.5 GuardRail trait, KeywordGuardRail, PromptInjectionGuardRail, GuardedModelProvider.
 
 ---
 
@@ -196,9 +196,9 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 11.5 Record per-run: number of tool calls (executed path length).
 - [x] 11.6 Implement SPL (Success weighted by Path Length): (1/N) * sum(S_i * L_opt / max(L_exec, L_opt)).
 - [x] 11.7 For benchmark tasks, allow providing optimal path length L_opt for SPL.
-- [ ] 11.8 Implement TQGR (Trajectory-Quality Growth Rate) for convergence detection.
-- [ ] 11.9 Patience parameter: if TQGR below epsilon for 2–3 turns, force Final Answer or failure.
-- [ ] 11.10 Expose convergence score in API for APM and tuning.
+- [x] 11.8 Implement TQGR (Trajectory-Quality Growth Rate) for convergence detection.
+- [x] 11.9 Patience parameter: if TQGR below epsilon for 2–3 turns, force Final Answer or failure.
+- [x] 11.10 Expose convergence score in API for APM and tuning.
 - [ ] 11.11 Grade Supervisor on aggregate SPL across diverse tasks; document for tuning.
 
 ---
@@ -207,31 +207,31 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 - [x] 12.1 Define Scorer trait: preprocess → analyze → generateScore → generateReason (e.g. 0–1 score).
 - [x] 12.2 Implement deterministic/heuristic scorers (e.g. code compiles, API 200 OK).
-- [ ] 12.3 Implement LLM-as-a-Judge scorer for open-ended quality (factuality, tone, relevance).
-- [ ] 12.4 Completeness scorer: output covers key elements from input.
-- [ ] 12.5 Answer relevancy scorer.
-- [ ] 12.6 Bias & toxicity scorers (guardrails).
-- [ ] 12.7 Faithfulness / hallucination scorer (vs. given context).
-- [ ] 12.8 Tool call accuracy scorer: right tool and right parameters.
-- [ ] 12.9 Support attaching scorers to Agents or Workflow steps; run async (sampling rate).
+- [x] 12.3 Implement LLM-as-a-Judge scorer for open-ended quality (factuality, tone, relevance).
+- [x] 12.4 Completeness scorer: output covers key elements from input.
+- [x] 12.5 Answer relevancy scorer.
+- [x] 12.6 Bias & toxicity scorers (guardrails).
+- [x] 12.7 Faithfulness / hallucination scorer (vs. given context).
+- [x] 12.8 Tool call accuracy scorer: right tool and right parameters.
+- [x] 12.9 Support attaching scorers to Agents or Workflow steps; run async (sampling rate).
 - [x] 12.10 Support batch evals (runExperiment-style) for CI: run N test cases against scorers.
-- [ ] 12.11 Trajectory vs outcome: record full transcript; evaluate both path and final state.
+- [x] 12.11 Trajectory vs outcome: record full transcript; evaluate both path and final state.
 - [ ] 12.12 Build “golden dataset” of test cases from real traces for eval-driven development.
 
 ---
 
 ## 13. Observability & APM
 
-- [ ] 13.1 Trace every step: thought, tool call, observation, duration.
-- [ ] 13.2 Traceability of reasoning: why agent chose a tool or path in the graph.
-- [ ] 13.3 Cost-per-step: map token consumption and infra to individual nodes.
-- [ ] 13.4 Time-to-First-Token (TTFT) metric for interactive agents.
-- [ ] 13.5 Context utilization: track context window usage across turns; alert on overflow.
+- [x] 13.1 Trace every step: thought, tool call, observation, duration.
+- [x] 13.2 Traceability of reasoning: why agent chose a tool or path in the graph.
+- [x] 13.3 Cost-per-step: map token consumption and infra to individual nodes.
+- [x] 13.4 Time-to-First-Token (TTFT) metric for interactive agents.
+- [x] 13.5 Context utilization: track context window usage across turns; alert on overflow.
 - [ ] 13.6 Trajectory viewer: visualize path through graph and tool calls.
 - [ ] 13.7 Convergence score dashboard (per run and aggregate).
-- [ ] 13.8 Export traces to OpenTelemetry (OTEL) for existing stacks.
-- [ ] 13.9 Store traces in DB (e.g. mastra_scorers / telemetry table) for querying.
-- [ ] 13.10 Support sampling rate for live evaluations (e.g. 10% of traffic).
+- [x] 13.8 Export traces to OpenTelemetry (OTEL) for existing stacks.
+- [x] 13.9 Store traces in DB (e.g. mastra_scorers / telemetry table) for querying.
+- [x] 13.10 Support sampling rate for live evaluations (e.g. 10% of traffic).
 - [x] 13.11 Document “Agentic APM” as different from traditional APM (path efficiency, token cost).
 
 ---

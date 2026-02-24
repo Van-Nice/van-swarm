@@ -69,7 +69,7 @@ classDiagram
 
 - **Memory** — common interface for all tiers: store, recent, search, delete. Allows swapping backends (e.g. in-memory for dev, Redis for production).
 - **MemoryEntry** — id, content, created_at, heat (retrieval count for future heat-based promotion), optional embedding (for Tier 3).
-- **EpisodicMemory** — in-memory `VecDeque`: FIFO, max capacity; when full, oldest entry is dropped. Search is simple substring match (full-text/semantic reserved for future tiers).
+- **EpisodicMemory** — in-memory `VecDeque`: FIFO, max capacity; when full, oldest entry is dropped. Search is simple substring match (full-text/semantic reserved for future tiers). **Time-travel** (§8.3): `entries_before(id)` returns entries in order as they were before the given entry; `recent_ordered(limit)` returns the most recent `limit` entries in chronological order (oldest first).
 
 ## Usage (conceptual)
 

@@ -70,12 +70,14 @@
 //! ```
 
 pub mod graph;
+pub mod patterns;
 pub mod runner;
 pub mod task;
 
 // ── Re-exports ────────────────────────────────────────────────────────────────
 
 pub use graph::{EdgeKind, ExecutionGraph, GraphBuilder, Predicate};
+pub use patterns::{majority_vote, majority_vote_owned, similarity_vote, similarity_vote_owned};
 pub use runner::{FlowRunner, GraphCheckpoint, RunResult, RunStatus, RunnerConfig};
 pub use task::{ErasedTask, TaskAdapter};
 

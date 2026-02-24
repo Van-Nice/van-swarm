@@ -24,11 +24,11 @@ flowchart LR
     macros --> core
 ```
 
-- **core** — No internal crate dependencies. Defines traits, config, messages, model providers, ReAct loop, and durable execution.
+- **core** — No internal crate dependencies. Defines traits, config, messages, model providers, ReAct loop, durable execution, **supervisor** (Router / Route), **evaluators** (Scorer, SPL, batch evals), **tools** (built-in: time, read_file, search), and RunMetrics.
 - **orchestrator** — Depends on core. Graph-based workflow engine (petgraph + slotmap).
 - **memory** — Depends on core. Three-tier memory trait and Tier 1 (episodic) stub.
 - **mcp** — Depends on core. MCP client, server, and tool executor.
-- **runtime** — Depends on core. WASM sandbox (Wasmtime) for tool isolation.
+- **runtime** — Depends on core and mcp. WASM sandbox (Wasmtime) for tool isolation; optional MCP bridge and Rhai scripting.
 - **macros** — Depends on core. Procedural macros: `#[tool]`, `#[workflow]`.
 
 ## High-level architecture
@@ -37,9 +37,16 @@ flowchart LR
 flowchart TB
     subgraph agents["Agents & tools"]
         ReAct[ReActAgent]
-        run_agent[run_agent loop]
+        run_agent[run_agent / run_agent_with_metrics]
         ToolExec[ToolExecutor]
-        Tools[Tools / LocalToolRegistry]
+        Tools[Tools / LocalToolRegistry / builtin]
+        Router[Router / Route]
+    end
+
+    subgraph eval["Evaluators & supervisor"]
+        Scorer[Scorer]
+        SPL[spl / SplRun]
+        RunMetrics[RunMetrics]
     end
 
     subgraph orchestration["Orchestration"]
@@ -62,8 +69,12 @@ flowchart TB
 
     ReAct --> run_agent
     run_agent --> ToolExec
+    run_agent --> RunMetrics
     ToolExec --> Tools
     ReAct --> ModelProvider[ModelProvider]
+    Router --> ReAct
+    Scorer --> RunMetrics
+    SPL --> RunMetrics
 
     Runner --> Graph
     Graph --> Task
@@ -89,3 +100,4 @@ flowchart TB
 | [04-mcp.md](04-mcp.md) | McpClient, McpServer, McpToolExecutor, transports |
 | [05-runtime.md](05-runtime.md) | WASM sandbox, SandboxConfig, run_json protocol |
 | [06-macros.md](06-macros.md) | `#[tool]` and `#[workflow]` macros |
+| [07-observability-apm.md](07-observability-apm.md) | Agentic APM vs traditional APM (§13.11) |

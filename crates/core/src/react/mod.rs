@@ -10,15 +10,16 @@
 //! * `run_agent()` is the outer loop: it calls `step()`, dispatches tool
 //!   calls, feeds results back, and repeats until `FinalAnswer` or error.
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use async_trait::async_trait;
 use tracing::{debug, info, instrument, warn};
 
 use crate::{
     config::AgentConfig,
-    message::{CompletionRequest, StopReason},
+    message::{CompletionRequest, ContentBlock, StopReason},
     providers::ModelProvider,
+    telemetry::RunTraceBuilder,
     traits::{
         agent::{extract_tool_calls, Agent, AgentAction, AgentContext, RunMetrics},
         tool::ToolExecutor,
@@ -264,6 +265,152 @@ pub async fn run_agent_with_metrics(
                     tool_call_count: ctx.tool_call_count,
                 };
                 return Ok((question, metrics));
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// run_agent_traced – run with full APM trace (§13.1–13.5)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Run the agent and return the final answer plus a full [`crate::telemetry::RunTrace`].
+///
+/// The trace records every thought, tool call, observation, and final answer with
+/// per-step timing and token attribution.  Persist it with a
+/// [`crate::telemetry::TraceStore`] or export via OpenTelemetry (§13.8).
+///
+/// # Example
+/// ```rust,no_run
+/// use rustmastra_core::react::run_agent_traced;
+/// use rustmastra_core::telemetry::InMemoryTraceStore;
+/// # use rustmastra_core::react::ReActAgent;
+/// # async fn example(agent: ReActAgent) -> rustmastra_core::Result<()> {
+/// let (answer, trace) = run_agent_traced(&agent, "What is Rust?").await?;
+/// println!("{}", trace.summary());
+/// # Ok(())
+/// # }
+/// ```
+#[instrument(skip(agent, user_input), fields(agent = %agent.name()))]
+pub async fn run_agent_traced(
+    agent: &impl Agent,
+    user_input: impl Into<String>,
+) -> crate::Result<(String, crate::telemetry::RunTrace)> {
+    let system_prompt = if let Some(ra) = agent_as_react(agent) {
+        ra.effective_system_prompt()
+    } else {
+        agent.config().system_prompt.clone()
+    };
+
+    let model_id = agent.config().model.model_id.clone();
+    // Use 0 for max_context_tokens when unknown; utilization tracking is
+    // disabled but all other APM fields remain accurate.
+    let mut builder = RunTraceBuilder::new(agent.name(), &model_id, 0);
+
+    let mut ctx = AgentContext::new(user_input.into(), system_prompt);
+    ctx.max_iterations = agent.config().max_iterations;
+
+    info!(agent = %agent.name(), "Starting traced agent run");
+
+    loop {
+        if ctx.is_exhausted() {
+            return Err(crate::FrameworkError::MaxIterationsReached(ctx.max_iterations));
+        }
+
+        // Snapshot usage before step so we can compute the per-step delta.
+        let usage_before = ctx.token_usage.clone();
+        let t_step = std::time::Instant::now();
+        let action = agent.step(&mut ctx).await?;
+        let step_duration = t_step.elapsed();
+        let step_usage = ctx.token_usage.delta(&usage_before);
+
+        ctx.iteration += 1;
+
+        match action {
+            AgentAction::FinalAnswer { content } => {
+                builder.record_final_answer(&content, step_duration, step_usage);
+                let trace = builder.build(ctx.tool_call_count, ctx.iteration);
+                info!(
+                    agent = %agent.name(),
+                    run_id = %trace.run_id,
+                    iterations = trace.iterations,
+                    tool_calls = trace.tool_call_count,
+                    input_tokens = trace.total_input_tokens,
+                    output_tokens = trace.total_output_tokens,
+                    duration_ms = trace.total_duration_ms,
+                    cost_usd = trace.estimated_cost_usd.unwrap_or(0.0),
+                    "Traced agent run complete"
+                );
+                return Ok((content, trace));
+            }
+
+            AgentAction::CallTools { assistant_message, calls } => {
+                // Record the model's reasoning as a Thought span.
+                let thought = assistant_message.text_content();
+                builder.record_thought(&thought, step_duration, step_usage);
+
+                ctx.push_assistant(assistant_message);
+                ctx.tool_call_count += calls.len();
+
+                let executor = agent
+                    .tool_executor()
+                    .ok_or_else(|| crate::FrameworkError::agent(agent.name(), "no tool executor"))?;
+
+                let tool_start_ms = builder.elapsed_ms();
+                let t_tools = std::time::Instant::now();
+
+                let tool_futures: Vec<_> = calls
+                    .iter()
+                    .map(|call| {
+                        let exec = Arc::clone(executor);
+                        let name = call.name.clone();
+                        let id = call.id.clone();
+                        let args = call.arguments.clone();
+                        async move { exec.execute(&name, &id, args).await }
+                    })
+                    .collect();
+
+                let results = futures::future::join_all(tool_futures).await;
+                let tool_total_ms = t_tools.elapsed().as_millis() as u64;
+                // Evenly split total tool time across individual calls (approximate).
+                let n = calls.len().max(1) as u64;
+                let per_ms = tool_total_ms / n;
+                let per_dur = Duration::from_millis(per_ms);
+
+                for (i, (call, result_block)) in calls.iter().zip(results.iter()).enumerate() {
+                    let call_started = tool_start_ms + per_ms * i as u64;
+                    let args_summary = serde_json::to_string(&call.arguments).unwrap_or_default();
+
+                    builder.record_tool_call(&call.name, &args_summary, call_started, per_dur);
+
+                    // Extract the observation content from the result block.
+                    let obs = match result_block {
+                        ContentBlock::ToolResult { content, .. } => content.as_str(),
+                        ContentBlock::Text { text } => text.as_str(),
+                        _ => "",
+                    };
+                    builder.record_observation(
+                        &call.name,
+                        obs,
+                        call_started + per_ms,
+                        Duration::from_millis(0),
+                    );
+
+                    ctx.push_tool_result(result_block.clone());
+                }
+
+                debug!(
+                    agent = %agent.name(),
+                    tools_called = calls.len(),
+                    "Tool calls complete, continuing loop"
+                );
+            }
+
+            AgentAction::NeedsClarification { question } => {
+                builder.record_final_answer(&question, step_duration, step_usage);
+                let trace = builder.build(ctx.tool_call_count, ctx.iteration);
+                info!(agent = %agent.name(), "Agent requested human clarification (traced)");
+                return Ok((question, trace));
             }
         }
     }

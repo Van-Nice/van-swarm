@@ -45,10 +45,12 @@ pub mod config;
 pub mod durable;
 pub mod error;
 pub mod evaluators;
+pub mod guardrails;
 pub mod message;
 pub mod providers;
 pub mod react;
 pub mod supervisor;
+pub mod telemetry;
 pub mod traits;
 pub mod tools;
 
@@ -60,16 +62,23 @@ pub use message::{
     Role, StopReason, StreamChunk, ToolDefinition, ToolExample, TokenUsage,
 };
 pub use traits::{
-    Agent, AgentAction, AgentContext, LocalToolRegistry, RunMetrics, Runnable, Tool, ToolCall,
-    ToolExecutor, Workflow, WorkflowStatus, WorkflowStep,
+    Agent, AgentAction, AgentContext, FilteredToolExecutor, LocalToolRegistry, RunMetrics,
+    Runnable, Tool, ToolCall, ToolExecutor, Workflow, WorkflowStatus, WorkflowStep,
 };
 pub use tools::builtin::{ReadFileTool, SearchTool, TimeTool};
 pub use providers::{ModelProvider, AnthropicProvider, GeminiProvider, OpenAiProvider};
-pub use react::{run_agent, run_agent_with_metrics, ReActAgent};
+pub use react::{run_agent, run_agent_traced, run_agent_with_metrics, ReActAgent};
 pub use config::{AgentConfig, ModelConfig, ProviderCredentials};
 pub use durable::{DurableContext, FileJournal, InMemoryJournal, JournalBackend, JournalEntry, JournalKind};
 pub use evaluators::{
-    batch_score, BenchmarkTask, ContainsScorer, NonEmptyScorer, ScoreInput, ScoreResult, Scorer,
-    SplRun, spl,
+    batch_score, BenchmarkTask, BiasScorer, CompletenessScorer, ContainsScorer,
+    FaithfulnessScorer, LlmJudgeScorer, NonEmptyScorer, RelevancyScorer,
+    SampledScorer, ScoreInput, ScoreResult, Scorer, SplRun, spl,
+    ToolAccuracyScorer, TrajectoryScorer,
 };
-pub use supervisor::{AlwaysTier1, Route, Router};
+pub use guardrails::{GuardRail, GuardedModelProvider, KeywordGuardRail, PromptInjectionGuardRail};
+pub use supervisor::{AlwaysTier1, Route, Router, TqgrDecision, TqgrTracker};
+pub use telemetry::{
+    AgentSpanKind, ContextMeter, FileTraceStore, InMemoryTraceStore, ModelPricing,
+    RunTrace, RunTraceBuilder, SamplingFilter, SpanEvent, TraceStore, default_pricing,
+};

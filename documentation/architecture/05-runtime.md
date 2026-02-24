@@ -48,7 +48,7 @@ classDiagram
 |-------|---------|
 | `max_memory_bytes` | Cap on linear memory (e.g. 5 MiB). |
 | `max_fuel` | Instruction fuel; exhaustion traps (stops runaway loops). |
-| `allow_mcp` | When true, linker may expose MCP bridge (future); default false = no host imports. |
+| `allow_mcp` | When true, linker may expose MCP bridge so sandboxed WASM can call host MCP tools; default false = no host imports. See also [04-wasm-mcp-bridge](../../framework/workflows/04-wasm-mcp-bridge.md). |
 
 ## run_json calling convention
 

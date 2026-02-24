@@ -132,6 +132,78 @@ impl ToolExecutor for LocalToolRegistry {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FilteredToolExecutor — keyword-based tool subset (§9.10 deferred loading)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Wraps any [`ToolExecutor`] and exposes only the tools whose names contain
+/// at least one of the allow-listed keywords (§9.10 deferred / context-scoped
+/// tool loading).
+///
+/// This is useful for multi-agent supervisors that route tasks to specialised
+/// sub-agents and want to restrict the visible tool surface per agent.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use rustmastra_core::{LocalToolRegistry, traits::tool::FilteredToolExecutor};
+/// use std::sync::Arc;
+///
+/// let registry = LocalToolRegistry::new();
+/// // Only expose tools whose names contain "file" or "read".
+/// let filtered = FilteredToolExecutor::new(Arc::new(registry), vec!["file", "read"]);
+/// ```
+pub struct FilteredToolExecutor<E: ToolExecutor> {
+    inner: std::sync::Arc<E>,
+    /// Only tools whose names contain at least one of these keywords are visible.
+    allow_keywords: Vec<String>,
+}
+
+impl<E: ToolExecutor + 'static> FilteredToolExecutor<E> {
+    /// Create a new filtered executor.
+    ///
+    /// * `inner` — the underlying executor holding all tools.
+    /// * `allow_keywords` — case-insensitive substrings; a tool is included if
+    ///   its name contains *any* of the keywords.
+    pub fn new(inner: std::sync::Arc<E>, allow_keywords: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        Self {
+            inner,
+            allow_keywords: allow_keywords.into_iter().map(Into::into).collect(),
+        }
+    }
+
+    fn is_allowed(&self, tool_name: &str) -> bool {
+        let name_lower = tool_name.to_lowercase();
+        self.allow_keywords.iter().any(|kw| name_lower.contains(kw.to_lowercase().as_str()))
+    }
+}
+
+#[async_trait]
+impl<E: ToolExecutor + 'static> ToolExecutor for FilteredToolExecutor<E> {
+    fn tool_definitions(&self) -> Vec<ToolDefinition> {
+        self.inner
+            .tool_definitions()
+            .into_iter()
+            .filter(|td| self.is_allowed(&td.name))
+            .collect()
+    }
+
+    async fn execute(
+        &self,
+        tool_name: &str,
+        tool_use_id: &str,
+        arguments: serde_json::Value,
+    ) -> ContentBlock {
+        if !self.is_allowed(tool_name) {
+            return ContentBlock::tool_error(
+                tool_use_id,
+                format!("Tool '{tool_name}' is not available in this context"),
+            );
+        }
+        self.inner.execute(tool_name, tool_use_id, arguments).await
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -33,8 +33,7 @@ flowchart LR
     C -.-> D
 ```
 
-- **Current behaviour**: Pass-through; the attribute does not change the function body.
-- **Planned** (checklist §10): Derive JSON schema from parameter types (e.g. via schemars), extract description from Rustdoc, generate type-safe wrapper that deserializes model output and returns structured errors so the agent can self-correct.
+- **Current behaviour**: Derives JSON schema from parameter types (schemars), extracts description from Rustdoc, generates a type-safe wrapper. Optional **tool-use examples** (§10.9): `#[tool(example(description = "...", input = r#"{}"#, output = r#""""#))]` — one or more `example(...)` blocks are included in the tool definition for the model.
 
 ## #[workflow]
 

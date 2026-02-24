@@ -255,6 +255,20 @@ impl TokenUsage {
     pub fn total(&self) -> u32 {
         self.input_tokens + self.output_tokens
     }
+
+    /// Compute the incremental usage between `self` (current) and `prev` (before a step).
+    ///
+    /// Used by `run_agent_traced` to attribute tokens to individual spans.
+    pub fn delta(&self, prev: &TokenUsage) -> TokenUsage {
+        TokenUsage {
+            input_tokens: self.input_tokens.saturating_sub(prev.input_tokens),
+            output_tokens: self.output_tokens.saturating_sub(prev.output_tokens),
+            cache_read_tokens: self.cache_read_tokens.saturating_sub(prev.cache_read_tokens),
+            cache_creation_tokens: self
+                .cache_creation_tokens
+                .saturating_sub(prev.cache_creation_tokens),
+        }
+    }
 }
 
 impl std::ops::Add for TokenUsage {

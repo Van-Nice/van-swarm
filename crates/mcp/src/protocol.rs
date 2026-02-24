@@ -197,6 +197,23 @@ pub struct EmbeddedResource {
 // Prompts
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Result of a `prompts/list` request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListPromptsResult {
+    pub prompts: Vec<McpPrompt>,
+    #[serde(rename = "nextCursor", skip_serializing_if = "Option::is_none")]
+    pub next_cursor: Option<String>,
+}
+
+/// Params for a `prompts/get` request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetPromptParams {
+    pub name: String,
+    /// Optional argument values to interpolate into the prompt template.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub arguments: Option<std::collections::HashMap<String, String>>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpPrompt {
     pub name: String,
