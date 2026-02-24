@@ -35,7 +35,7 @@ Many Rust projects use the standard texts from https://choosealicense.com or cop
 In root **Cargo.toml** you have:
 
 ```toml
-repository = "https://github.com/your-org/rust-agent-framework"
+repository = "https://github.com/Van-Nice/van-swarm"
 ```
 
 Before or right after creating the **public** GitHub repo:

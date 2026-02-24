@@ -28,4 +28,4 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ## Questions
 
-Open a [Discussion](https://github.com/your-org/rust-agent-framework/discussions) or an [Issue](https://github.com/your-org/rust-agent-framework/issues) (for bugs or feature requests).
+Open a [Discussion](https://github.com/Van-Nice/van-swarm/discussions) or an [Issue](https://github.com/Van-Nice/van-swarm/issues) (for bugs or feature requests).
