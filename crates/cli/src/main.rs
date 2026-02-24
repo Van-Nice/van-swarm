@@ -243,7 +243,7 @@ fn cargo_toml(
 ) -> String {
     let core_dep = match framework_path {
         FrameworkPath::Path => r#"vanswarm-core = { path = "../crates/core" }"#.to_string(),
-        FrameworkPath::Git => r#"vanswarm-core = { git = "https://github.com/Van-Nice/van-swarm", branch = "main" }"#.to_string(),
+        FrameworkPath::Git => r#"vanswarm-core = { git = "https://github.com/Van-Nice/van-swarm", branch = "master" }"#.to_string(),
     };
     let mut deps = format!(
         r#"[package]
@@ -262,7 +262,7 @@ tokio = {{ version = "1", features = ["full"] }}
     if with_mcp {
         let mcp = match framework_path {
             FrameworkPath::Path => r#"vanswarm-mcp = { path = "../crates/mcp" }"#,
-            FrameworkPath::Git => r#"vanswarm-mcp = { git = "https://github.com/Van-Nice/van-swarm", branch = "main" }"#,
+            FrameworkPath::Git => r#"vanswarm-mcp = { git = "https://github.com/Van-Nice/van-swarm", branch = "master" }"#,
         };
         deps.push_str("\n");
         deps.push_str(mcp);
@@ -271,7 +271,7 @@ tokio = {{ version = "1", features = ["full"] }}
     if with_memory {
         let mem = match framework_path {
             FrameworkPath::Path => r#"vanswarm-memory = { path = "../crates/memory" }"#,
-            FrameworkPath::Git => r#"vanswarm-memory = { git = "https://github.com/Van-Nice/van-swarm", branch = "main" }"#,
+            FrameworkPath::Git => r#"vanswarm-memory = { git = "https://github.com/Van-Nice/van-swarm", branch = "master" }"#,
         };
         deps.push_str("\n");
         deps.push_str(mem);

@@ -131,7 +131,7 @@ vanswarm-memory = { path = "../../crates/memory" }
 When `--framework-path git` (for use outside the repo):
 
 ```toml
-vanswarm-core = { git = "https://github.com/Van-Nice/van-swarm", branch = "main" }
+vanswarm-core = { git = "https://github.com/Van-Nice/van-swarm", branch = "master" }
 # optional: rev = "abc123"
 ```
 

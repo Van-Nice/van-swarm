@@ -38,7 +38,7 @@ tokio = { version = "1", features = ["full"] }
 [dependencies]
 vanswarm-core = { path = "../rust-agent-framework/crates/core" }
 # Or:
-# vanswarm-core = { git = "https://github.com/Van-Nice/van-swarm", branch = "main" }
+# vanswarm-core = { git = "https://github.com/Van-Nice/van-swarm", branch = "master" }
 tokio = { version = "1", features = ["full"] }
 ```
 
