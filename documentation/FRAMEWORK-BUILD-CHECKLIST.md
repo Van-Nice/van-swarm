@@ -199,7 +199,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 11.8 Implement TQGR (Trajectory-Quality Growth Rate) for convergence detection.
 - [x] 11.9 Patience parameter: if TQGR below epsilon for 2–3 turns, force Final Answer or failure.
 - [x] 11.10 Expose convergence score in API for APM and tuning.
-- [ ] 11.11 Grade Supervisor on aggregate SPL across diverse tasks; document for tuning.
+- [x] 11.11 Grade Supervisor on aggregate SPL across diverse tasks; document for tuning.
 
 ---
 
@@ -258,7 +258,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 15.6 Implement voting: same task multiple times with diverse prompts; consensus or confidence.
 - [x] 15.7 Implement Evaluator-Optimizer loop (critic provides feedback; generator refines).
 - [x] 15.8 Plan-and-Execute: optional mode where agent produces plan then executes steps sequentially.
-- [ ] 15.9 Document when to use Workflow vs Agent (deterministic vs probabilistic).
+- [x] 15.9 Document when to use Workflow vs Agent (deterministic vs probabilistic).
 
 ---
 
@@ -344,11 +344,11 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 22.3 Integration test: workflow with cycle (e.g. evaluator-optimizer) and durable replay.
 - [x] 22.4 Integration test: MCP client discovers and calls tool.
 - [ ] 22.5 Integration test: Rhai script in sandbox calls MCP tools; gas limit enforced.
-- [ ] 22.6 Integration test: memory Tier 1 → Tier 2 summarization and Tier 2 → Tier 3 heat promotion.
+- [x] 22.6 Integration test: memory Tier 1 → Tier 2 summarization and Tier 2 → Tier 3 heat promotion.
 - [ ] 22.7 Benchmark: cold start &lt;10ms for WASM tool; document results.
 - [ ] 22.8 Benchmark: memory footprint &lt;5MB per agent isolate; document results.
 - [ ] 22.9 Regression suite: run evals on every PR for capability and regression.
-- [ ] 22.10 Fuzz or property tests for journal replay (determinism).
+- [x] 22.10 Fuzz or property tests for journal replay (determinism).
 
 ---
 
@@ -365,25 +365,25 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 ## 24. Swarm & multi-agent patterns
 
-- [ ] 24.1 Document Orchestrator-Worker pattern with FlowRunner and TaskResult.
-- [ ] 24.2 Document Hierarchical Swarm (Director agents, Worker agents).
-- [ ] 24.3 Document Blackboard pattern (shared knowledge repo) if supported.
-- [ ] 24.4 Document Forest Swarm (dynamic routing to best agent tree) if supported.
-- [ ] 24.5 Respect Tool-Coordination Trade-off: document when &gt;16 tools may hurt.
-- [ ] 24.6 Respect Sequential Penalty: avoid multi-agent for strictly sequential reasoning when overhead hurts.
-- [ ] 24.7 Optional: majority voting / similarity-based consensus for multi-agent answers.
+- [x] 24.1 Document Orchestrator-Worker pattern with FlowRunner and TaskResult.
+- [x] 24.2 Document Hierarchical Swarm (Director agents, Worker agents).
+- [x] 24.3 Document Blackboard pattern (shared knowledge repo) if supported.
+- [x] 24.4 Document Forest Swarm (dynamic routing to best agent tree) if supported.
+- [x] 24.5 Respect Tool-Coordination Trade-off: document when &gt;16 tools may hurt.
+- [x] 24.6 Respect Sequential Penalty: avoid multi-agent for strictly sequential reasoning when overhead hurts.
+- [x] 24.7 Optional: majority voting / similarity-based consensus for multi-agent answers.
 
 ---
 
 ## 25. Prompting & ACI best practices
 
-- [ ] 25.1 Use XML tags in prompts for structured output (e.g. &lt;thinking&gt;, &lt;tool_call&gt;).
-- [ ] 25.2 Prescriptive prompts: tell model what to do, not only what not to do.
-- [ ] 25.3 Effort control: system-level setting for proactivity (avoid “be thorough” in prompt).
-- [ ] 25.4 Soft tool language: “Use [tool] when it would enhance understanding” vs “You must use”.
-- [ ] 25.5 Match prompt style to desired output style (e.g. less markdown in prompt if less in output).
-- [ ] 25.6 Define “done” and starting state clearly in long-running task prompts.
-- [ ] 25.7 Context caching: cache stable prefixes (system instructions, summaries) for cost/latency.
+- [x] 25.1 Use XML tags in prompts for structured output (e.g. &lt;thinking&gt;, &lt;tool_call&gt;).
+- [x] 25.2 Prescriptive prompts: tell model what to do, not only what not to do.
+- [x] 25.3 Effort control: system-level setting for proactivity (avoid “be thorough” in prompt).
+- [x] 25.4 Soft tool language: “Use [tool] when it would enhance understanding” vs “You must use”.
+- [x] 25.5 Match prompt style to desired output style (e.g. less markdown in prompt if less in output).
+- [x] 25.6 Define “done” and starting state clearly in long-running task prompts.
+- [x] 25.7 Context caching: cache stable prefixes (system instructions, summaries) for cost/latency.
 
 ---
 

@@ -42,6 +42,9 @@ This directory contains **how-to guides and examples** for using the RustMastra 
 | 08 | [Evaluation](08-evaluation.md) | Scorer, SPL, batch_score, RunMetrics. |
 | 09 | [Runtime (WASM)](09-runtime-wasm.md) | Sandbox, run_json, optional MCP bridge. |
 | 10 | [Examples reference](10-examples-reference.md) | Runnable examples and copy-paste snippets. |
+| 11 | [Workflow vs Agent](11-workflow-vs-agent.md) | When to use deterministic workflows vs probabilistic agents. |
+| 12 | [Swarm patterns](12-swarm-patterns.md) | Orchestrator-Worker, Hierarchical Swarm, Blackboard, Forest Swarm, consensus. |
+| 13 | [Prompting best practices](13-prompting-best-practices.md) | XML tags, prescriptive prompts, effort control, context caching. |
 
 ---
 

@@ -31,3 +31,4 @@ tokio              = { workspace = true, features = ["test-util"] }
 tracing-subscriber.workspace = true
 tempfile           = "3"
 rustmastra-macros.workspace = true
+proptest           = "1"
