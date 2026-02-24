@@ -10,10 +10,11 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | **vanswarm-core**         | Traits, config, messages, providers, ReAct loop, durable execution, evaluators, supervisor, tools, guardrails, patterns, telemetry |
 | **vanswarm-orchestrator** | Graph-based workflow engine (DAG/cycles), FlowRunner, Task, NextAction                                                             |
-| **vanswarm-memory**       | Three-tier memory (Episodic, MidTerm, Semantic), MemoryManager                                                                     |
-| **vanswarm-mcp**          | MCP client, server, McpToolExecutor, transports                                                                                    |
-| **vanswarm-mcp-server**   | Production stdio MCP server binary (run_agent, memory, framework_info)                                                             |
-| **vanswarm-runtime**      | WASM sandbox (Wasmtime), optional MCP bridge, optional Rhai scripting                                                              |
+| **vanswarm-memory**       | Three-tier memory (Episodic, MidTerm, Semantic), MemoryManager, optional libsql episodic backend                                  |
+| **vanswarm-mcp**          | MCP client, server, McpToolExecutor, transports                                                                                   |
+| **vanswarm-mcp-server**   | Production stdio MCP server binary (run_agent, memory, framework_info); LM Studio fallback; optional libsql persistent memory     |
+| **vanswarm-cli**          | CLI: `vanswarm init` (MCP config, .cursor/rules, libsql data dir), `vanswarm new` (scaffold agent)                                 |
+| **vanswarm-runtime**      | WASM sandbox (Wasmtime), optional MCP bridge, optional Rhai scripting                                                             |
 | **vanswarm-macros**       | `#[tool]`, `#[workflow]` procedural macros                                                                                         |
 
 ---
@@ -56,6 +57,7 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 - **OpenAiProvider** — OpenAI chat completion, tool calls, streaming
 - **AnthropicProvider** — Anthropic Messages API, tool calls, streaming
 - **GeminiProvider** — Google Gemini, tool calls, streaming
+- **LmStudioProvider** — local OpenAI-compatible API (default base URL http://127.0.0.1:1234/v1), LM_STUDIO_BASE_URL, LM_STUDIO_MODEL
 - Credentials via env (e.g. OPENAI_API_KEY) or ProviderCredentials
 
 ### 1.5 ReAct agent
@@ -196,6 +198,7 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 ### 3.2 Tier 1 — Episodic
 
 - **EpisodicMemory** — in-memory VecDeque, FIFO, max capacity, substring search
+- **LibSqlEpisodicMemory** — file-backed episodic store (optional **libsql** feature), FIFO eviction, same Memory trait
 - **entries_before(id)** — time-travel: entries before given id (chronological)
 - **recent_ordered(limit)** — most recent N entries in chronological order
 
@@ -249,8 +252,9 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 ## 5. MCP server binary (vanswarm-mcp-server)
 
 - Stdio MCP server using **rmcp** (same SDK as rust-mcp)
-- **Provider auto-detection** — ANTHROPIC_API_KEY → Anthropic (claude-opus-4-6), OPENAI_API_KEY → OpenAI (gpt-4o), GEMINI_API_KEY → Gemini (gemini-2.0-flash)
-- **RUSTMASTRA_MODEL** — override default model
+- **Provider auto-detection** — ANTHROPIC_API_KEY → Anthropic (claude-opus-4-6), OPENAI_API_KEY → OpenAI (gpt-4o), GEMINI_API_KEY → Gemini (gemini-2.0-flash); **no key** → **LM Studio** at http://127.0.0.1:1234/v1 (OpenAI-compatible)
+- **RUSTMASTRA_MODEL** / **LM_STUDIO_MODEL** — override default model; **LM_STUDIO_BASE_URL** — override LM Studio base URL
+- **Persistent memory** — set **VANSWARM_DB_PATH** to a file path (e.g. `.vanswarm/data/vanswarm.db`); build with **libsql** feature to persist episodic memory in local libsql (otherwise in-memory FIFO, 1 000 entries)
 - **Tools exposed:**
   - **vanswarm_run_agent** — full ReAct loop (prompt, system_prompt, model, max_iterations), built-in time tool, auto-detected provider
   - **vanswarm_memory_store** — store episodic entry (content)
@@ -258,11 +262,25 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
   - **vanswarm_memory_recent** — recent episodic entries (limit)
   - **vanswarm_framework_info** — framework name/version and provider info
 - Ships as **vanswarm-mcp-server** binary (~6.1 MB release)
-- Cursor IDE: add to ~/.cursor/mcp.json
+- Cursor IDE: add to ~/.cursor/mcp.json or run **vanswarm init** in project
 
 ---
 
-## 6. Runtime (vanswarm-runtime)
+## 6. CLI (vanswarm-cli)
+
+- **vanswarm init [PATH]** — initialize current or given directory as a VanSwarm project
+  - Creates **.vanswarm/data/** (unless **--no-libsql**)
+  - Creates **.cursor/mcp.json** (or **--mcp-only** for MCP config only)
+  - Creates **vanswarm.toml** (project manifest)
+  - Adds **.cursor/rules/** with Rust rules (rust-basics, rust-cargo-workflow, rust-refactor, rust-architecture, rust-mcp-routing), same set as rust-mcp; **--no-cursor-rules** to skip
+  - Updates **.gitignore** (.vanswarm/, .cursor/mcp.json optional)
+  - Flags: **--mcp-only**, **--overwrite**, **--no-libsql**, **--no-cursor-rules**, **-v/--verbose**
+- **vanswarm new NAME [PATH]** — scaffold a new agent project (Cargo package, ReAct agent, tools, provider wiring)
+- Ships as **vanswarm** binary
+
+---
+
+## 7. Runtime (vanswarm-runtime)
 
 - **SandboxConfig** — max_memory_bytes, max_fuel, allow_mcp, optional mcp_client (mcp-bridge feature)
 - **Sandbox** — new(config), compile(wasm_bytes), load_aot(aot_bytes), run_compiled(module, params)
@@ -275,7 +293,7 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 
 ---
 
-## 7. Macros (vanswarm-macros)
+## 8. Macros (vanswarm-macros)
 
 - **#[tool]** — on async fn: derive JSON schema (schemars), description from Rustdoc, type-safe wrapper, validation errors to model
   - **#[tool(example(description, input, output))]** — one or more tool-use examples for the model
@@ -283,9 +301,9 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 
 ---
 
-## 8. Project & repository
+## 9. Project & repository
 
-- Workspace Cargo.toml with members: core, orchestrator, memory, mcp, mcp-server, runtime, macros
+- Workspace Cargo.toml with members: cli, core, examples, orchestrator, memory, mcp, mcp-server, runtime, macros
 - Workspace-wide dependencies (tokio, serde, reqwest, etc.) and rust-version 1.82
 - rust-toolchain / rustfmt / clippy config
 - README with architecture and crate map
@@ -296,7 +314,7 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 
 ---
 
-## 9. Testing & quality (implemented)
+## 10. Testing & quality (implemented)
 
 - Unit tests: Task, state accumulation, graph transitions
 - Integration: full ReAct loop with mock LLM and one tool
@@ -308,17 +326,18 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 
 ---
 
-## 10. Documentation (in repo)
+## 11. Documentation (in repo)
 
 - **documentation/HOW-IT-WORKS.md** — high-level how everything works
 - **documentation/architecture/** — 00-overview, 01-core, 02-orchestrator, 03-memory, 04-mcp, 05-runtime, 06-macros, 07-observability-apm
 - **documentation/guides/** — quick start, building an agent, tools, MCP, durable workflows, orchestrator, memory, evaluation, runtime, examples reference
 - **documentation/FRAMEWORK-BUILD-CHECKLIST.md** — 220+ item checklist with progress
 - **documentation/PLATFORM-FEATURES.md** — this file (100% feature list)
+- **documentation/proposals/** — MCP-SERVER-LIBSQL-AND-INIT-COMMAND.md, MCP-SERVER-ADDITIONS-AND-IMPROVEMENTS.md, etc.
 
 ---
 
-## 11. Swarm & multi-agent (documented)
+## 12. Swarm & multi-agent (documented)
 
 - Orchestrator-Worker pattern (FlowRunner, TaskResult)
 - Hierarchical Swarm (Director/Worker)
@@ -330,7 +349,7 @@ This document lists **100% of implemented features** in the VanSwarm agent frame
 
 ---
 
-## 12. Prompting & ACI best practices (documented)
+## 13. Prompting & ACI best practices (documented)
 
 - XML tags in prompts (e.g. &lt;thinking&gt;, &lt;tool_call&gt;)
 - Prescriptive prompts; effort control; soft tool language

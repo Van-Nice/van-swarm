@@ -437,6 +437,14 @@ impl ModelProvider for GeminiProvider {
             })?;
 
         let status = resp.status();
+        if status == reqwest::StatusCode::UNAUTHORIZED
+            || status == reqwest::StatusCode::FORBIDDEN
+        {
+            return Err(crate::FrameworkError::AuthenticationFailed("gemini".into()));
+        }
+        if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+            return Err(crate::FrameworkError::RateLimitExceeded("gemini".into()));
+        }
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
             return Err(crate::FrameworkError::provider(

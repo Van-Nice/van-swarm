@@ -145,6 +145,10 @@ impl Agent for ReActAgent {
     fn tool_executor(&self) -> Option<&Arc<dyn ToolExecutor>> {
         Some(&self.executor)
     }
+
+    fn system_prompt(&self) -> Option<String> {
+        self.effective_system_prompt()
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -183,13 +187,7 @@ pub async fn run_agent_with_metrics(
     agent: &impl Agent,
     user_input: impl Into<String>,
 ) -> crate::Result<(String, RunMetrics)> {
-    let system_prompt = if let Some(ra) = agent_as_react(agent) {
-        ra.effective_system_prompt()
-    } else {
-        agent.config().system_prompt.clone()
-    };
-
-    let mut ctx = AgentContext::new(user_input.into(), system_prompt);
+    let mut ctx = AgentContext::new(user_input.into(), agent.system_prompt());
     ctx.max_iterations = agent.config().max_iterations;
 
     info!(agent = %agent.name(), "Starting agent run");
@@ -297,18 +295,12 @@ pub async fn run_agent_traced(
     agent: &impl Agent,
     user_input: impl Into<String>,
 ) -> crate::Result<(String, crate::telemetry::RunTrace)> {
-    let system_prompt = if let Some(ra) = agent_as_react(agent) {
-        ra.effective_system_prompt()
-    } else {
-        agent.config().system_prompt.clone()
-    };
-
     let model_id = agent.config().model.model_id.clone();
     // Use 0 for max_context_tokens when unknown; utilization tracking is
     // disabled but all other APM fields remain accurate.
     let mut builder = RunTraceBuilder::new(agent.name(), &model_id, 0);
 
-    let mut ctx = AgentContext::new(user_input.into(), system_prompt);
+    let mut ctx = AgentContext::new(user_input.into(), agent.system_prompt());
     ctx.max_iterations = agent.config().max_iterations;
 
     info!(agent = %agent.name(), "Starting traced agent run");
@@ -417,17 +409,3 @@ pub async fn run_agent_traced(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal: downcast helper for system prompt injection
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Try to get a reference to the concrete `ReActAgent` for accessing
-/// its `effective_system_prompt()`.  Falls back gracefully if the
-/// runtime agent is not a `ReActAgent`.
-fn agent_as_react<A: Agent>(_agent: &A) -> Option<&ReActAgent> {
-    // Use `Any` downcasting only if we add `+ Any` to the `Agent` bound,
-    // which we deliberately avoid to keep object safety.
-    // For now, system-prompt injection is done in `ReActAgent::step()` itself
-    // by reading `config.system_prompt`.
-    None
-}

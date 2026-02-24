@@ -37,8 +37,12 @@
 //!
 //! **Persistent memory:** Set `VANSWARM_DB_PATH` to a file path (e.g. `.vanswarm/data/vanswarm.db`)
 //! to persist episodic memory in a local libsql database. Build with `--features libsql` to enable.
+//!
+//! **Documentation resources:** Set `VANSWARM_DOCS_ROOT` to the documentation directory to enable
+//! `resources/list` and `resources/read` for VanSwarm docs. Falls back to `documentation/` in the
+//! current working directory when the env var is not set.
 
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use anyhow::Result;
 use rmcp::{transport::stdio, ServiceExt};
@@ -59,7 +63,9 @@ mod server;
 /// Priority: Anthropic → OpenAI → Gemini. If no cloud API key is set, falls back
 /// to **LM Studio** at http://127.0.0.1:1234/v1 (OpenAI-compatible).
 /// The model can be overridden globally with `RUSTMASTRA_MODEL` (or `LM_STUDIO_MODEL` for local).
-fn detect_provider() -> Option<(Arc<dyn ModelProvider>, String, String)> {
+///
+/// This function always succeeds — LM Studio is the unconditional fallback.
+fn detect_provider() -> (Arc<dyn ModelProvider>, String, String) {
     let model_override = std::env::var("RUSTMASTRA_MODEL").ok();
     let lm_studio_model = std::env::var("LM_STUDIO_MODEL").ok();
 
@@ -68,7 +74,7 @@ fn detect_provider() -> Option<(Arc<dyn ModelProvider>, String, String)> {
             Ok(p) => {
                 let model = model_override.unwrap_or_else(|| "claude-opus-4-6".to_string());
                 tracing::info!(provider = "anthropic", model, "LLM provider ready");
-                return Some((Arc::new(p), model, "anthropic".to_string()));
+                return (Arc::new(p), model, "anthropic".to_string());
             }
             Err(e) => tracing::warn!("ANTHROPIC_API_KEY set but provider init failed: {}", e),
         }
@@ -79,7 +85,7 @@ fn detect_provider() -> Option<(Arc<dyn ModelProvider>, String, String)> {
             Ok(p) => {
                 let model = model_override.unwrap_or_else(|| "gpt-4o".to_string());
                 tracing::info!(provider = "openai", model, "LLM provider ready");
-                return Some((Arc::new(p), model, "openai".to_string()));
+                return (Arc::new(p), model, "openai".to_string());
             }
             Err(e) => tracing::warn!("OPENAI_API_KEY set but provider init failed: {}", e),
         }
@@ -90,7 +96,7 @@ fn detect_provider() -> Option<(Arc<dyn ModelProvider>, String, String)> {
             Ok(p) => {
                 let model = model_override.unwrap_or_else(|| "gemini-2.0-flash".to_string());
                 tracing::info!(provider = "gemini", model, "LLM provider ready");
-                return Some((Arc::new(p), model, "gemini".to_string()));
+                return (Arc::new(p), model, "gemini".to_string());
             }
             Err(e) => tracing::warn!("GEMINI_API_KEY set but provider init failed: {}", e),
         }
@@ -107,7 +113,44 @@ fn detect_provider() -> Option<(Arc<dyn ModelProvider>, String, String)> {
         base_url = %provider.base_url(),
         "LLM provider ready (local)"
     );
-    Some((Arc::new(provider), model, "lm-studio".to_string()))
+    (Arc::new(provider), model, "lm-studio".to_string())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Docs root detection (for resources/list and resources/read)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Detect the docs root directory.
+///
+/// Priority:
+/// 1. `VANSWARM_DOCS_ROOT` env var (explicit absolute or relative path).
+/// 2. `documentation/` relative to the current working directory (dev default).
+///
+/// Returns `None` with a warning if neither path exists.
+fn detect_docs_root() -> Option<PathBuf> {
+    // Explicit override always wins.
+    if let Ok(path) = std::env::var("VANSWARM_DOCS_ROOT") {
+        let p = PathBuf::from(&path);
+        if p.is_dir() {
+            tracing::info!(path = %p.display(), "docs: using VANSWARM_DOCS_ROOT");
+            return Some(p);
+        }
+        tracing::warn!(
+            path = %p.display(),
+            "VANSWARM_DOCS_ROOT set but directory does not exist; docs disabled"
+        );
+        return None;
+    }
+
+    // Dev fallback: look for documentation/ in cwd.
+    let fallback = PathBuf::from("documentation");
+    if fallback.is_dir() {
+        tracing::info!(path = %fallback.display(), "docs: using ./documentation (fallback)");
+        return Some(fallback);
+    }
+
+    tracing::debug!("docs: not configured (set VANSWARM_DOCS_ROOT to enable resources)");
+    None
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -158,20 +201,17 @@ async fn main() -> Result<()> {
         "vanswarm-mcp-server starting"
     );
 
-    let (provider, default_model, provider_name) = match detect_provider() {
-        Some((p, m, n)) => (Some(p), m, n),
-        None => {
-            tracing::warn!(
-                "No LLM provider available. Memory and info tools will work, \
-                 but run_agent will fail. Start LM Studio (http://127.0.0.1:1234) \
-                 or set ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY."
-            );
-            (None, "none".to_string(), "none".to_string())
-        }
-    };
+    let (provider, default_model, provider_name) = detect_provider();
+    let docs_root = detect_docs_root();
 
     let memory = create_memory().await;
-    let tools = server::FrameworkTools::new(provider, default_model, provider_name, memory);
+    let tools = server::FrameworkTools::new(
+        Some(provider),
+        default_model,
+        provider_name,
+        memory,
+        docs_root,
+    );
 
     let service = tools
         .serve(stdio())

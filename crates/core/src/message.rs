@@ -283,6 +283,15 @@ impl std::ops::Add for TokenUsage {
     }
 }
 
+impl std::ops::AddAssign for TokenUsage {
+    fn add_assign(&mut self, rhs: Self) {
+        self.input_tokens += rhs.input_tokens;
+        self.output_tokens += rhs.output_tokens;
+        self.cache_read_tokens += rhs.cache_read_tokens;
+        self.cache_creation_tokens += rhs.cache_creation_tokens;
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Stop reason
 // ─────────────────────────────────────────────────────────────────────────────

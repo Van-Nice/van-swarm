@@ -88,7 +88,7 @@ impl AgentContext {
 
     /// Accumulate token usage from a completed LLM call.
     pub fn record_usage(&mut self, usage: TokenUsage) {
-        self.token_usage = self.token_usage.clone() + usage;
+        self.token_usage += usage;
     }
 
     /// True if we've hit the iteration limit.
@@ -180,6 +180,15 @@ pub trait Agent: Send + Sync {
 
     /// Return a reference to the tool executor this agent uses.
     fn tool_executor(&self) -> Option<&Arc<dyn ToolExecutor>>;
+
+    /// Return the effective system prompt to seed `AgentContext` with.
+    ///
+    /// The default implementation returns `config().system_prompt` unchanged.
+    /// `ReActAgent` overrides this to prepend the chain-of-thought prefix when
+    /// `config.enable_chain_of_thought` is set.
+    fn system_prompt(&self) -> Option<String> {
+        self.config().system_prompt.clone()
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

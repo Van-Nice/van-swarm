@@ -18,6 +18,9 @@
 //!
 //! In-memory pipe for unit tests.  Pair one `ChannelTransport` with a
 //! corresponding `McpServer::serve_channel()` call.
+//!
+//! **Note:** `ChannelTransport` serialises concurrent requests through a single
+//! Mutex-protected receiver.  It is designed for sequential test scenarios only.
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicI64, Ordering};
@@ -266,7 +269,6 @@ impl ChannelTransport {
         let transport = Self {
             request_tx: req_tx,
             response_rx: Arc::new(Mutex::new(resp_rx)),
-            pending: Arc::new(Mutex::new(HashMap::new())),
             next_id: AtomicI64::new(1),
         };
 
