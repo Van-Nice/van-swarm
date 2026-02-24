@@ -3094,6 +3094,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "vanswarm-examples"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "vanswarm-core",
+]
+
+[[package]]
 name = "vanswarm-macros"
 version = "0.1.0"
 dependencies = [
