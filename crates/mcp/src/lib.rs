@@ -6,9 +6,29 @@
 //! resources.  This crate provides:
 //!
 //! * **[`McpClient`]** — connects to any MCP server via stdio, HTTP, or an
-//!   in-memory channel.
+//!   in-memory channel. Use [`list_tools`](McpClient::list_tools) and
+//!   [`call_tool`](McpClient::call_tool) for tool discovery and execution.
+//! * **[`McpToolExecutor`]** — implements `ToolExecutor` so a RustMastra agent
+//!   can use any MCP server's tools (e.g. [rust-mcp](https://github.com/your-org/rust-mcp)).
 //! * **[`McpServer`]** — exposes `rustmastra_core` tools as an MCP server;
 //!   can serve over stdio (for IDE integration) or in-memory (for tests).
+//!
+//! ## Using the rust-mcp server
+//!
+//! To connect to the [rust-mcp](https://github.com/your-org/rust-mcp) server (Rust
+//! development tools: cargo, rust-analyzer, refactor, etc.):
+//!
+//! ```rust,no_run
+//! # async fn example() -> rustmastra_core::Result<()> {
+//! let bin = std::env::var("RUST_MCP_BIN").unwrap_or_else(|_| "../rust-mcp/target/release/rust-mcp".into());
+//! let client = std::sync::Arc::new(rustmastra_mcp::McpClient::stdio(&bin, &["--client=cursor"]).await?);
+//! client.initialize().await?;
+//! let tools = client.list_tools().await?;
+//! // Use with an agent: let executor = McpToolExecutor::new(client); executor.refresh_tools().await?;
+//! # Ok(()) }
+//! ```
+//!
+//! Run the example: `cargo run -p rustmastra-mcp --example rust_mcp_client`
 //!
 //! ## Quick start — connect to an existing server
 //!
@@ -36,6 +56,7 @@
 //! ```
 
 pub mod client;
+pub mod executor;
 mod tests;
 pub mod jsonrpc;
 pub mod protocol;
@@ -45,6 +66,7 @@ pub mod transport;
 // ── Re-exports ────────────────────────────────────────────────────────────────
 
 pub use client::McpClient;
+pub use executor::McpToolExecutor;
 pub use protocol::{
     CallToolResult, EmbeddedResource, InitializeResult, ListResourcesResult, ListToolsResult,
     McpPrompt, McpResource, McpTool, PromptArgument, ReadResourceResult, ServerCapabilities,

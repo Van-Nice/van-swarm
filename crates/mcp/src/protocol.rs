@@ -47,6 +47,7 @@ pub struct InitializeResult {
     pub protocol_version: String,
     #[serde(rename = "serverInfo")]
     pub server_info: ServerInfo,
+    #[serde(default)]
     pub capabilities: ServerCapabilities,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub instructions: Option<String>,
@@ -70,20 +71,21 @@ pub struct ServerCapabilities {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolsCapability {
-    #[serde(rename = "listChanged")]
+    #[serde(rename = "listChanged", default)]
     pub list_changed: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourcesCapability {
-    #[serde(rename = "listChanged")]
+    #[serde(rename = "listChanged", default)]
     pub list_changed: bool,
+    #[serde(default)]
     pub subscribe: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PromptsCapability {
-    #[serde(rename = "listChanged")]
+    #[serde(rename = "listChanged", default)]
     pub list_changed: bool,
 }
 
