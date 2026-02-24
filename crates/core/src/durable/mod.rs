@@ -25,6 +25,23 @@
 //! * keeps storage portable (NDJSON → S3 / any KV store),
 //! * allows reconstructing any historical state for debugging.
 //!
+//! ## Yield points and checkpoints (checklist §3.11–3.12)
+//! Each call to `ctx.call_tool`, `ctx.sleep`, `ctx.timestamp`, or `ctx.run_once`
+//! is a **logical yield point**: the workflow yields to the journal. On replay,
+//! execution continues from the next sequence number without re-executing the
+//! side effect. Thus every such call is associated with a journal checkpoint
+//! (one `JournalEntry` per call). The workflow function is re-run from the
+//! beginning on restart; the journal replays cached results until the workflow
+//! catches up. A full state-machine transform (yield at every `.await`) is
+//! optional and not required for correctness.
+//!
+//! ## Determinism (checklist §2.14)
+//! The **replay** path (when a journal entry exists for the current seq) does
+//! not call `std::time::Instant`, `SystemTime`, or `tokio::time::sleep` — it
+//! returns the cached result immediately. Only the **live** path uses wall-clock
+//! for recording `duration_ms` and `recorded_at`; those values are not used for
+//! control flow during replay, so durable execution remains deterministic.
+//!
 //! ## Storage tiers  (checklist §3.15 / §18.7)
 //! | Tier | Implementation          | Use case             |
 //! |------|-------------------------|----------------------|

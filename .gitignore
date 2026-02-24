@@ -147,3 +147,4 @@ out/
 *.seed
 *.pid.lock
 .grpc/
+rust-mcp.code-workspace

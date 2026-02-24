@@ -2,6 +2,23 @@
 //!
 //! Graph-based workflow orchestration engine for the RustMastra agent framework.
 //!
+//! ## Alignment Principle (checklist §4.16)
+//!
+//! The **centralized orchestrator** acts as the **validation bottleneck** for
+//! all workflow execution. Every node runs only when the `FlowRunner` schedules
+//! it; state flows through a single accumulated JSON value; and human-in-the-loop
+//! (`WaitForInput`) is the only way to pause. This gives you:
+//!
+//! - **Single point of control:** No node can run unless the orchestrator
+//!   enqueues it, so you can enforce policies (rate limits, auth, audit) in one place.
+//! - **Observability:** The graph topology and `RunResult` (state + status) describe
+//!   exactly what happened and where the flow stopped.
+//! - **Recoverability:** When integrated with a durable journal (§4.14), the
+//!   orchestrator can persist state at pause and resume later from the same point.
+//!
+//! Keep business logic inside `Task` implementations and use the orchestrator
+//! to sequence and validate, not to duplicate domain rules.
+//!
 //! ## Key types
 //!
 //! | Type | Purpose |
@@ -59,7 +76,7 @@ pub mod task;
 // ── Re-exports ────────────────────────────────────────────────────────────────
 
 pub use graph::{EdgeKind, ExecutionGraph, GraphBuilder, Predicate};
-pub use runner::{FlowRunner, RunResult, RunStatus, RunnerConfig};
+pub use runner::{FlowRunner, GraphCheckpoint, RunResult, RunStatus, RunnerConfig};
 pub use task::{ErasedTask, TaskAdapter};
 
 // ─────────────────────────────────────────────────────────────────────────────

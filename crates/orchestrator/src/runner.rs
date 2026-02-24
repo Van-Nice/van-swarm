@@ -49,6 +49,33 @@ pub struct RunResult {
     /// Accumulated JSON state at the time the run stopped.
     pub state: serde_json::Value,
     pub status: RunStatus,
+    /// When `status` is `WaitingForInput`, this is `Some` so the caller can
+    /// persist it and later call `FlowRunner::resume` (checklist §4.14).
+    pub checkpoint: Option<GraphCheckpoint>,
+}
+
+/// Serializable snapshot of the graph runner state at a pause (e.g. `WaitForInput`).
+///
+/// Persist this (e.g. to a durable journal or file) and pass it to
+/// `FlowRunner::resume` to continue the flow without re-running completed nodes.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct GraphCheckpoint {
+    /// Accumulated state at pause time.
+    pub state: serde_json::Value,
+    /// Prompt shown to the user (for display or logging).
+    pub prompt: String,
+    /// The node that requested the pause.
+    pub paused_at: NodeKey,
+    /// Nodes that had already completed when we paused.
+    pub completed: std::collections::HashSet<NodeKey>,
+    /// Nodes that were in the ready queue (not yet run).
+    pub ready: Vec<NodeKey>,
+    /// For each node, how many predecessors still need to complete.
+    pub pending_preds: std::collections::HashMap<NodeKey, usize>,
+    /// Per-node visit count (for cycle guard).
+    pub visit_count: std::collections::HashMap<NodeKey, usize>,
+    /// Total steps executed so far (for max_total_steps guard).
+    pub total_steps: usize,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -233,12 +260,28 @@ impl FlowRunner {
                     }
                     NextAction::WaitForInput { prompt } => {
                         info!(%prompt, "Workflow paused — waiting for human input");
+                        // Enqueue successors so that on resume the next nodes are ready.
+                        self.enqueue_successors(
+                            key,
+                            &state,
+                            &mut completed,
+                            &mut pending_preds,
+                            &mut ready,
+                        );
+                        let checkpoint = GraphCheckpoint {
+                            state: state.clone(),
+                            prompt: prompt.clone(),
+                            paused_at: key,
+                            completed: completed.clone(),
+                            ready: ready.iter().copied().collect(),
+                            pending_preds: pending_preds.clone(),
+                            visit_count: visit_count.clone(),
+                            total_steps,
+                        };
                         return Ok(RunResult {
                             state,
-                            status: RunStatus::WaitingForInput {
-                                prompt,
-                                paused_at: key,
-                            },
+                            status: RunStatus::WaitingForInput { prompt, paused_at: key },
+                            checkpoint: Some(checkpoint),
                         });
                     }
                     NextAction::End => {
@@ -252,6 +295,150 @@ impl FlowRunner {
         Ok(RunResult {
             state,
             status: RunStatus::Completed,
+            checkpoint: None,
+        })
+    }
+
+    /// Resume a paused flow from a previously saved checkpoint (§4.14).
+    ///
+    /// Use this when `run()` returned `RunStatus::WaitingForInput` and you have
+    /// persisted `result.checkpoint`. After collecting the human input and
+    /// optionally merging it into the state, call `resume` with the same graph
+    /// and the checkpoint to continue from the ready queue.
+    #[instrument(skip(self, checkpoint), fields(ready_len = checkpoint.ready.len()))]
+    pub async fn resume(
+        &self,
+        checkpoint: GraphCheckpoint,
+    ) -> rustmastra_core::Result<RunResult> {
+        let mut state = checkpoint.state;
+        let mut completed = checkpoint.completed;
+        let mut pending_preds = checkpoint.pending_preds;
+        let mut ready: VecDeque<NodeKey> = checkpoint.ready.into_iter().collect();
+        let mut visit_count = checkpoint.visit_count;
+        let mut total_steps = checkpoint.total_steps;
+
+        // ── Main scheduling loop (same as run(), but starting from checkpoint) ─
+        while !ready.is_empty() {
+            let batch: Vec<NodeKey> = ready.drain(..).collect();
+            debug!(batch_size = batch.len(), "Resume: dispatching ready batch");
+
+            for &key in &batch {
+                let visits = visit_count.entry(key).or_insert(0);
+                *visits += 1;
+                if *visits > self.config.max_cycles_per_node {
+                    let name = self
+                        .graph
+                        .task_of(key)
+                        .map(|t| t.name().to_owned())
+                        .unwrap_or_else(|| format!("{key:?}"));
+                    return Err(rustmastra_core::FrameworkError::Graph(format!(
+                        "Node '{name}' exceeded max cycle limit ({})",
+                        self.config.max_cycles_per_node
+                    )));
+                }
+                total_steps += 1;
+                if total_steps > self.config.max_total_steps {
+                    return Err(rustmastra_core::FrameworkError::Graph(format!(
+                        "FlowRunner exceeded max total steps ({})",
+                        self.config.max_total_steps
+                    )));
+                }
+            }
+
+            let mut join_set: JoinSet<(
+                NodeKey,
+                rustmastra_core::Result<(serde_json::Value, NextAction)>,
+            )> = JoinSet::new();
+
+            for &key in &batch {
+                let task = self.graph.task_of(key).ok_or_else(|| {
+                    rustmastra_core::FrameworkError::Graph(format!(
+                        "Node {key:?} has no associated task"
+                    ))
+                })?;
+                let state_snapshot = state.clone();
+                join_set.spawn(async move {
+                    let result = task.run_erased(key, state_snapshot).await;
+                    (key, result)
+                });
+            }
+
+            let base_state = state.clone();
+            let mut raw_results: Vec<(NodeKey, serde_json::Value, NextAction)> =
+                Vec::with_capacity(batch.len());
+
+            while let Some(join_result) = join_set.join_next().await {
+                let (key, task_result) = join_result.map_err(|e| {
+                    rustmastra_core::FrameworkError::Graph(format!(
+                        "Task panicked or was cancelled: {e}"
+                    ))
+                })?;
+                let (new_state, action) = task_result?;
+                completed.insert(key);
+                raw_results.push((key, new_state, action));
+            }
+
+            let mut batch_actions: Vec<(NodeKey, NextAction)> =
+                Vec::with_capacity(raw_results.len());
+            for (key, new_state, action) in raw_results {
+                json_additive_merge(&mut state, &base_state, new_state);
+                batch_actions.push((key, action));
+            }
+
+            for (key, action) in batch_actions {
+                match action {
+                    NextAction::Continue => {
+                        self.enqueue_successors(
+                            key,
+                            &state,
+                            &mut completed,
+                            &mut pending_preds,
+                            &mut ready,
+                        );
+                    }
+                    NextAction::Parallelize { node_keys } => {
+                        for nk in node_keys {
+                            if !ready.contains(&nk) {
+                                debug!(?nk, "Parallelize: force-queuing node");
+                                pending_preds.insert(nk, 0);
+                                ready.push_back(nk);
+                            }
+                        }
+                    }
+                    NextAction::WaitForInput { prompt } => {
+                        info!(%prompt, "Workflow paused — waiting for human input");
+                        self.enqueue_successors(
+                            key,
+                            &state,
+                            &mut completed,
+                            &mut pending_preds,
+                            &mut ready,
+                        );
+                        let cp = GraphCheckpoint {
+                            state: state.clone(),
+                            prompt: prompt.clone(),
+                            paused_at: key,
+                            completed: completed.clone(),
+                            ready: ready.iter().copied().collect(),
+                            pending_preds: pending_preds.clone(),
+                            visit_count: visit_count.clone(),
+                            total_steps,
+                        };
+                        return Ok(RunResult {
+                            state,
+                            status: RunStatus::WaitingForInput { prompt, paused_at: key },
+                            checkpoint: Some(cp),
+                        });
+                    }
+                    NextAction::End => {}
+                }
+            }
+        }
+
+        Ok(RunResult {
+            state,
+            status: RunStatus::Completed,
+            checkpoint: None,
         })
     }
 
@@ -547,6 +734,34 @@ mod tests {
         assert!(!state.visited.contains(&"B".to_owned()));
     }
 
+    // ── Test 4b: Resume from checkpoint continues and runs successor ────────
+
+    #[tokio::test]
+    async fn test_resume_after_wait_for_input() {
+        let mut b = GraphBuilder::new();
+        let a = b.add_node(AppendTask::new(
+            "A",
+            NextAction::WaitForInput { prompt: "ok?".into() },
+        ));
+        let bk = b.add_node(AppendTask::new("B", NextAction::End));
+        b.edge(a, bk).start(a);
+        let graph = Arc::new(b.build());
+
+        let runner = FlowRunner::new(Arc::clone(&graph));
+        let paused = runner.run(initial()).await.expect("run failed");
+        let RunStatus::WaitingForInput { .. } = paused.status else {
+            panic!("expected WaitingForInput");
+        };
+        let checkpoint = paused.checkpoint.expect("checkpoint should be Some");
+
+        let resumed = runner.resume(checkpoint).await.expect("resume failed");
+        assert!(matches!(resumed.status, RunStatus::Completed));
+
+        let state = decode(resumed.state);
+        assert!(state.visited.contains(&"A".to_owned()));
+        assert!(state.visited.contains(&"B".to_owned()));
+    }
+
     // ── Test 5: cycle guard — A → B → A hits max cycle limit ──────────────
 
     #[tokio::test]
@@ -587,5 +802,66 @@ mod tests {
 
         let state = decode(result.state);
         assert_eq!(state.visited, vec!["A".to_owned()]);
+    }
+
+    // ── Test 7: bounded cycle (evaluator-optimizer loop) ─────────────────────
+    //
+    // Evaluator runs; if counter < 2 it returns Continue → Optimizer runs,
+    // then back to Evaluator. When counter >= 2, Evaluator returns End and
+    // the cycle stops.
+
+    struct EvalOptimizerTask {
+        role: String,
+        threshold: i64,
+    }
+
+    #[async_trait]
+    impl Task for EvalOptimizerTask {
+        type State = TestState;
+
+        async fn run(
+            &self,
+            _key: NodeKey,
+            mut state: Self::State,
+        ) -> rustmastra_core::Result<(Self::State, NextAction)> {
+            state.visited.push(self.role.clone());
+            let action = if state.counter >= self.threshold {
+                NextAction::End
+            } else {
+                state.counter += 1;
+                NextAction::Continue
+            };
+            Ok((state, action))
+        }
+
+        fn name(&self) -> &str {
+            &self.role
+        }
+    }
+
+    #[tokio::test]
+    async fn test_cycle_evaluator_optimizer_loop() {
+        let mut b = GraphBuilder::new();
+        let eval = b.add_node(EvalOptimizerTask {
+            role: "eval".into(),
+            threshold: 2,
+        });
+        let opt = b.add_node(AppendTask::new("opt", NextAction::Continue));
+        b.edge(eval, opt).edge(opt, eval).start(eval);
+        let graph = Arc::new(b.build());
+
+        let runner = FlowRunner::new(graph);
+        let result = runner.run(initial()).await.expect("run failed");
+        assert!(matches!(result.status, RunStatus::Completed));
+
+        let state = decode(result.state);
+        // Order: eval (counter 0→1, Continue) → opt → eval (counter 1→2, Continue) → opt → eval (counter 2, End).
+        assert_eq!(state.counter, 2);
+        assert!(state.visited.contains(&"eval".to_owned()));
+        assert!(state.visited.contains(&"opt".to_owned()));
+        let eval_count = state.visited.iter().filter(|s| *s == "eval").count();
+        let opt_count = state.visited.iter().filter(|s| *s == "opt").count();
+        assert!(eval_count >= 2, "eval should run at least twice in cycle");
+        assert!(opt_count >= 1, "opt should run at least once");
     }
 }

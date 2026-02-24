@@ -10,7 +10,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 
 **Done so far:** Workspace and six crates (core, orchestrator, memory, mcp, runtime, macros). **Core:** `Runnable`, `Agent`, `Workflow`, three model providers (OpenAI, Anthropic, Gemini) with streaming, ReAct loop, `AgentConfig`/`ModelConfig`, tool traits. **Durable execution (§3):** `JournalBackend`, `JournalEntry`/`JournalKind`, `InMemoryJournal`, `FileJournal` (NDJSON WAL), `DurableContext` with `call_tool`, `sleep`, `timestamp`, `run_once`; journal check before execute + inject on replay; `resume()` for recovery; Replay vs Snapshot documented; tiered backends (memory + file); tests for replay/timestamp/sleep. **Orchestrator (§4):** `NodeKey`, `NextAction`, `Task` trait, `ExecutionGraph` (petgraph + slotmap), `GraphBuilder` with `add_node`, `edge`/`then`, `conditional_edge`, `parallel`, `start`, `build`; `FlowRunner` with ready queue, pending predecessor counts, parallel execution (JoinSet), state JSON-merge, `WaitForInput`/`RunStatus::WaitingForInput`, conditional edges (`EdgeKind`), cycles via cycle limit. **Memory:** `Memory` trait, `MemoryEntry` (heat), `EpisodicMemory`. **MCP:** `McpClient`, `McpTransport` (stdio/SSE/WebSocket), types (stubbed impl). **Runtime:** `SandboxConfig`, `Sandbox` (run stubbed). **Macros:** `#[tool]`, `#[workflow]` (stubs). README, `rust-toolchain.toml`, criterion, `.gitignore`. **Docs:** `documentation/rust/` (ownership, heap/stack, async, concurrency, unsafe, traits).
 
-**Not yet:** `#[workflow]` state-machine transformation (§3.11–3.12), graph–journal integration for pause/resume (§4.14), Wasmtime execution and WIT (§5–6), Rhai (§7), Tier 2/3 memory and Redis/Qdrant (§8), MCP JSON-RPC impl (§9), `#[tool]` schema expansion (§10), Supervisor/SPL/TQGR (§11), evaluators (§12), APM (§13), Redis Streams (§14), deploy CLI (§17), CONTRIBUTING, CI.
+**Not yet:** `#[workflow]` state-machine transformation (§3.11–3.12), graph–journal integration for pause/resume (§4.14), Wasmtime execution and WIT (§5–6), Rhai (§7), Tier 2/3 memory and Redis/Qdrant (§8), MCP JSON-RPC impl (§9), `#[tool]` schema expansion (§10), Supervisor/SPL/TQGR (§11), evaluators (§12), APM (§13), Redis Streams (§14), deploy CLI (§17). **Done this pass:** CONTRIBUTING + CODE_OF_CONDUCT (§1.5), CI workflow (§1.6), core replay determinism doc (§2.14), orchestrator tests DAG/cycle/parallel (§4.17).
 
 ---
 
@@ -20,8 +20,8 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 1.2 Define workspace-wide dependencies and versions (tokio, serde, etc.).
 - [x] 1.3 Set up rust-toolchain or rustfmt/clippy config.
 - [x] 1.4 Add README with architecture overview and crate map.
-- [ ] 1.5 Add CONTRIBUTING and code-of-conduct.
-- [ ] 1.6 Set up CI (test, fmt, clippy, doc) for all crates.
+- [x] 1.5 Add CONTRIBUTING and code-of-conduct.
+- [x] 1.6 Set up CI (test, fmt, clippy, doc) for all crates.
 - [x] 1.7 Add benchmark harness (criterion) for critical paths.
 - [x] 1.8 Document target: cold start <10ms, memory <5MB per agent.
 
@@ -42,7 +42,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [x] 2.11 Add minimal config for model (model ID, temperature, max tokens).
 - [x] 2.12 Add persona/system prompt support and injection into requests.
 - [x] 2.13 Support streaming (SSE or similar) for chat responses.
-- [ ] 2.14 Ensure core has no std::time or other non-deterministic calls in hot path (for durable execution).
+- [x] 2.14 Ensure core has no std::time or other non-deterministic calls in hot path (for durable execution).
 
 ---
 
@@ -84,7 +84,7 @@ Sources: `documentation/framework/*.md` (Technical Spec, PRD, Product Strategy, 
 - [ ] 4.14 Integrate graph state with durable journal so workflow can pause/resume.
 - [x] 4.15 Add GraphBuilder fluent API: .then(), .branch(), .parallel() style if desired (.then(), .edge(), .conditional_edge(), .parallel()).
 - [ ] 4.16 Document Alignment Principle: centralized orchestrator as validation bottleneck.
-- [ ] 4.17 Add tests: DAG execution, cycle (e.g. evaluator-optimizer loop), parallel branches.
+- [x] 4.17 Add tests: DAG execution, cycle (e.g. evaluator-optimizer loop), parallel branches.
 
 ---
 
