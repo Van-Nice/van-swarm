@@ -67,7 +67,7 @@ impl Router for AlwaysTier1 {
 /// # Example
 ///
 /// ```rust,no_run
-/// use rustmastra_core::supervisor::{KeywordRouter, Route, Router};
+/// use openswarm_core::supervisor::{KeywordRouter, Route, Router};
 ///
 /// # async fn example() {
 /// let router = KeywordRouter::default_keywords();
@@ -228,7 +228,7 @@ pub enum TqgrDecision {
 ///
 /// # Example
 /// ```
-/// use rustmastra_core::supervisor::{TqgrTracker, TqgrDecision};
+/// use openswarm_core::supervisor::{TqgrTracker, TqgrDecision};
 ///
 /// let mut tracker = TqgrTracker::new(0.05, 3); // ε=5%, patience=3 turns
 /// assert_eq!(tracker.record(0.2), TqgrDecision::Continue);

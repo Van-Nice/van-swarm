@@ -1,4 +1,4 @@
-# Orchestrator crate (rustmastra-orchestrator)
+# Orchestrator crate (openswarm-orchestrator)
 
 Graph-based workflow orchestration: build a DAG (or graph with cycles), then execute it with a single runner that schedules nodes and merges state.
 
@@ -6,7 +6,7 @@ Graph-based workflow orchestration: build a DAG (or graph with cycles), then exe
 
 ```mermaid
 flowchart LR
-    subgraph orchestrator["rustmastra-orchestrator"]
+    subgraph orchestrator["openswarm-orchestrator"]
         graph_mod[graph.rs]
         runner[runner.rs]
         task[task.rs]

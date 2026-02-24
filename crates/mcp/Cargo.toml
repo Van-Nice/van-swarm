@@ -1,6 +1,6 @@
 [package]
-name        = "rustmastra-mcp"
-description = "Model Context Protocol client/server for RustMastra"
+name        = "openswarm-mcp"
+description = "Model Context Protocol client/server for OpenSwarm"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -8,7 +8,7 @@ repository.workspace = true
 authors.workspace    = true
 
 [dependencies]
-rustmastra-core.workspace = true
+openswarm-core.workspace = true
 tokio.workspace           = true
 tokio-stream.workspace    = true
 async-trait.workspace     = true

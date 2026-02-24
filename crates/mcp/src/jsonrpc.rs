@@ -115,10 +115,10 @@ impl Response {
     /// Unwrap to the result value or map the RPC error to a `FrameworkError`.
     pub fn into_result(
         self,
-    ) -> Result<serde_json::Value, rustmastra_core::FrameworkError> {
+    ) -> Result<serde_json::Value, openswarm_core::FrameworkError> {
         match self.body {
             ResponseBody::Ok { result } => Ok(result),
-            ResponseBody::Err { error } => Err(rustmastra_core::FrameworkError::Config(
+            ResponseBody::Err { error } => Err(openswarm_core::FrameworkError::Config(
                 format!("RPC {} error {}: {}", self.id, error.code, error.message),
             )),
         }
@@ -175,19 +175,19 @@ pub enum IncomingMessage {
 /// Parse a raw JSON line into either a request (has `id`) or notification.
 pub fn parse_incoming(
     line: &str,
-) -> Result<IncomingMessage, rustmastra_core::FrameworkError> {
+) -> Result<IncomingMessage, openswarm_core::FrameworkError> {
     let v: serde_json::Value = serde_json::from_str(line).map_err(|e| {
-        rustmastra_core::FrameworkError::Config(format!("JSON-RPC parse error: {e}"))
+        openswarm_core::FrameworkError::Config(format!("JSON-RPC parse error: {e}"))
     })?;
 
     if v.get("id").is_some() {
         let req: Request = serde_json::from_value(v).map_err(|e| {
-            rustmastra_core::FrameworkError::Config(format!("Invalid request: {e}"))
+            openswarm_core::FrameworkError::Config(format!("Invalid request: {e}"))
         })?;
         Ok(IncomingMessage::Request(req))
     } else {
         let n: Notification = serde_json::from_value(v).map_err(|e| {
-            rustmastra_core::FrameworkError::Config(format!("Invalid notification: {e}"))
+            openswarm_core::FrameworkError::Config(format!("Invalid notification: {e}"))
         })?;
         Ok(IncomingMessage::Notification(n))
     }

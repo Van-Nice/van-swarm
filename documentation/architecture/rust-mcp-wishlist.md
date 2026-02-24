@@ -17,12 +17,12 @@ This doc lists capabilities or behaviors that would have made the rust-mcp serve
 
 ```mermaid
 flowchart LR
-    core[rustmastra-core]
-    orchestrator[rustmastra-orchestrator]
-    memory[rustmastra-memory]
-    mcp[rustmastra-mcp]
-    runtime[rustmastra-runtime]
-    macros[rustmastra-macros]
+    core[openswarm-core]
+    orchestrator[openswarm-orchestrator]
+    memory[openswarm-memory]
+    mcp[openswarm-mcp]
+    runtime[openswarm-runtime]
+    macros[openswarm-macros]
     orchestrator --> core
     memory --> core
     mcp --> core
@@ -34,7 +34,7 @@ flowchart LR
 
 ## 2. File / module structure diagram for a crate
 
-**What would help:** A diagram that shows **public modules and re-exports** for a crate (e.g. `rustmastra-core`), without diving into every symbol. For example:
+**What would help:** A diagram that shows **public modules and re-exports** for a crate (e.g. `openswarm-core`), without diving into every symbol. For example:
 
 - `lib.rs` → `config`, `message`, `traits`, `react`, `durable`, `providers`, `error`
 - `traits` → `agent`, `runnable`, `tool`, `workflow`
@@ -96,14 +96,14 @@ That would have made it easier to write “Key types” tables in the architectu
 
 ## Summary table
 
-| # | Capability | Why it would have been much more helpful |
-|---|------------|------------------------------------------|
-| 1 | Workspace-only crate graph | The only diagram we tried was useless for high-level docs; we drew the graph by hand. |
-| 2 | Crate-level module/structure diagram | Quick “map” of a crate for writing overviews. |
-| 3 | “Where is X implemented?” | Fast answers for “who implements this trait?” when writing docs. |
-| 4 | Workspace summary (no build) | Understand layout and deps without compile. |
-| 5 | Symbol list per file (name, kind, visibility) | Easy “key types” tables and navigation. |
-| 6 | Doc comment extraction | Reuse code’s own docs in architecture docs. |
-| 7 | Explicit workspace-root semantics | Fewer wrong-path mistakes and clearer tool contracts. |
+| #   | Capability                                    | Why it would have been much more helpful                                              |
+| --- | --------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1   | Workspace-only crate graph                    | The only diagram we tried was useless for high-level docs; we drew the graph by hand. |
+| 2   | Crate-level module/structure diagram          | Quick “map” of a crate for writing overviews.                                         |
+| 3   | “Where is X implemented?”                     | Fast answers for “who implements this trait?” when writing docs.                      |
+| 4   | Workspace summary (no build)                  | Understand layout and deps without compile.                                           |
+| 5   | Symbol list per file (name, kind, visibility) | Easy “key types” tables and navigation.                                               |
+| 6   | Doc comment extraction                        | Reuse code’s own docs in architecture docs.                                           |
+| 7   | Explicit workspace-root semantics             | Fewer wrong-path mistakes and clearer tool contracts.                                 |
 
 Implementing **#1 (workspace-only crate graph)** alone would have directly improved the architecture doc task; the rest would make the rust-mcp server much more helpful for future docs and refactors.

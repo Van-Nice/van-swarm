@@ -1,6 +1,6 @@
 [package]
-name        = "rustmastra-memory"
-description = "Three-tier cognitive memory subsystem for RustMastra agents"
+name        = "openswarm-memory"
+description = "Three-tier cognitive memory subsystem for OpenSwarm agents"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -8,7 +8,7 @@ repository.workspace = true
 authors.workspace    = true
 
 [dependencies]
-rustmastra-core.workspace = true
+openswarm-core.workspace = true
 tokio.workspace           = true
 async-trait.workspace     = true
 serde.workspace           = true

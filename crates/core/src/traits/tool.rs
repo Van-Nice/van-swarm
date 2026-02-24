@@ -70,7 +70,7 @@ pub trait ToolExecutor: Send + Sync {
 /// An in-process registry backed by a `Vec<Box<dyn Tool>>`.
 ///
 /// Suitable for unit tests and simple agents.  Production deployments would
-/// use the WASM-backed executor from `rustmastra-runtime`.
+/// use the WASM-backed executor from `openswarm-runtime`.
 pub struct LocalToolRegistry {
     tools: Vec<Box<dyn Tool>>,
 }
@@ -146,7 +146,7 @@ impl ToolExecutor for LocalToolRegistry {
 /// # Example
 ///
 /// ```rust,no_run
-/// use rustmastra_core::{LocalToolRegistry, traits::tool::FilteredToolExecutor};
+/// use openswarm_core::{LocalToolRegistry, traits::tool::FilteredToolExecutor};
 /// use std::sync::Arc;
 ///
 /// let registry = LocalToolRegistry::new();
@@ -255,7 +255,7 @@ mod tests {
 
     // ── #[tool] macro: schema + type-safe wrapper (§10.2–10.5) ──────────────
 
-    use rustmastra_macros::tool;
+    use openswarm_macros::tool;
 
     #[tool]
     /// Echoes the input text back. Use for testing tool dispatch.

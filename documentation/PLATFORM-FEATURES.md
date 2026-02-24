@@ -1,24 +1,24 @@
-# RustMastra Platform — Complete Feature List
+# OpenSwarm Platform — Complete Feature List
 
-This document lists **100% of implemented features** in the RustMastra agent framework, by crate and by domain. It reflects the current codebase and the completed items in the build checklist.
+This document lists **100% of implemented features** in the OpenSwarm agent framework, by crate and by domain. It reflects the current codebase and the completed items in the build checklist.
 
 ---
 
 ## Workspace & crates
 
-| Crate | Purpose |
-|-------|---------|
-| **rustmastra-core** | Traits, config, messages, providers, ReAct loop, durable execution, evaluators, supervisor, tools, guardrails, patterns, telemetry |
-| **rustmastra-orchestrator** | Graph-based workflow engine (DAG/cycles), FlowRunner, Task, NextAction |
-| **rustmastra-memory** | Three-tier memory (Episodic, MidTerm, Semantic), MemoryManager |
-| **rustmastra-mcp** | MCP client, server, McpToolExecutor, transports |
-| **rustmastra-mcp-server** | Production stdio MCP server binary (run_agent, memory, framework_info) |
-| **rustmastra-runtime** | WASM sandbox (Wasmtime), optional MCP bridge, optional Rhai scripting |
-| **rustmastra-macros** | `#[tool]`, `#[workflow]` procedural macros |
+| Crate                      | Purpose                                                                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **openswarm-core**         | Traits, config, messages, providers, ReAct loop, durable execution, evaluators, supervisor, tools, guardrails, patterns, telemetry |
+| **openswarm-orchestrator** | Graph-based workflow engine (DAG/cycles), FlowRunner, Task, NextAction                                                             |
+| **openswarm-memory**       | Three-tier memory (Episodic, MidTerm, Semantic), MemoryManager                                                                     |
+| **openswarm-mcp**          | MCP client, server, McpToolExecutor, transports                                                                                    |
+| **openswarm-mcp-server**   | Production stdio MCP server binary (run_agent, memory, framework_info)                                                             |
+| **openswarm-runtime**      | WASM sandbox (Wasmtime), optional MCP bridge, optional Rhai scripting                                                              |
+| **openswarm-macros**       | `#[tool]`, `#[workflow]` procedural macros                                                                                         |
 
 ---
 
-## 1. Core runtime (rustmastra-core)
+## 1. Core runtime (openswarm-core)
 
 ### 1.1 Traits & base
 
@@ -158,7 +158,7 @@ This document lists **100% of implemented features** in the RustMastra agent fra
 
 ---
 
-## 2. Orchestrator (rustmastra-orchestrator)
+## 2. Orchestrator (openswarm-orchestrator)
 
 - **NodeKey** — generational key (slotmap) for graph nodes
 - **Task** — trait: State, run(key, state) -> (State, NextAction), name()
@@ -186,7 +186,7 @@ This document lists **100% of implemented features** in the RustMastra agent fra
 
 ---
 
-## 3. Memory (rustmastra-memory)
+## 3. Memory (openswarm-memory)
 
 ### 3.1 Common
 
@@ -223,7 +223,7 @@ This document lists **100% of implemented features** in the RustMastra agent fra
 
 ---
 
-## 4. MCP (rustmastra-mcp)
+## 4. MCP (openswarm-mcp)
 
 - **McpClient** — connect to MCP server
   - **stdio(cmd, args)** — spawn subprocess transport
@@ -245,23 +245,23 @@ This document lists **100% of implemented features** in the RustMastra agent fra
 
 ---
 
-## 5. MCP server binary (rustmastra-mcp-server)
+## 5. MCP server binary (openswarm-mcp-server)
 
 - Stdio MCP server using **rmcp** (same SDK as rust-mcp)
 - **Provider auto-detection** — ANTHROPIC_API_KEY → Anthropic (claude-opus-4-6), OPENAI_API_KEY → OpenAI (gpt-4o), GEMINI_API_KEY → Gemini (gemini-2.0-flash)
 - **RUSTMASTRA_MODEL** — override default model
 - **Tools exposed:**
-  - **rustmastra_run_agent** — full ReAct loop (prompt, system_prompt, model, max_iterations), built-in time tool, auto-detected provider
-  - **rustmastra_memory_store** — store episodic entry (content)
-  - **rustmastra_memory_search** — search episodic memory (query, limit)
-  - **rustmastra_memory_recent** — recent episodic entries (limit)
-  - **rustmastra_framework_info** — framework name/version and provider info
-- Ships as **rustmastra-mcp-server** binary (~6.1 MB release)
+  - **openswarm_run_agent** — full ReAct loop (prompt, system_prompt, model, max_iterations), built-in time tool, auto-detected provider
+  - **openswarm_memory_store** — store episodic entry (content)
+  - **openswarm_memory_search** — search episodic memory (query, limit)
+  - **openswarm_memory_recent** — recent episodic entries (limit)
+  - **openswarm_framework_info** — framework name/version and provider info
+- Ships as **openswarm-mcp-server** binary (~6.1 MB release)
 - Cursor IDE: add to ~/.cursor/mcp.json
 
 ---
 
-## 6. Runtime (rustmastra-runtime)
+## 6. Runtime (openswarm-runtime)
 
 - **SandboxConfig** — max_memory_bytes, max_fuel, allow_mcp, optional mcp_client (mcp-bridge feature)
 - **Sandbox** — new(config), compile(wasm_bytes), load_aot(aot_bytes), run_compiled(module, params)
@@ -274,7 +274,7 @@ This document lists **100% of implemented features** in the RustMastra agent fra
 
 ---
 
-## 7. Macros (rustmastra-macros)
+## 7. Macros (openswarm-macros)
 
 - **#[tool]** — on async fn: derive JSON schema (schemars), description from Rustdoc, type-safe wrapper, validation errors to model
   - **#[tool(example(description, input, output))]** — one or more tool-use examples for the model
@@ -338,4 +338,4 @@ This document lists **100% of implemented features** in the RustMastra agent fra
 
 ---
 
-*This list is exhaustive for the current codebase. For checklist status (including not-yet-done items), see [FRAMEWORK-BUILD-CHECKLIST.md](FRAMEWORK-BUILD-CHECKLIST.md).*
+_This list is exhaustive for the current codebase. For checklist status (including not-yet-done items), see [FRAMEWORK-BUILD-CHECKLIST.md](FRAMEWORK-BUILD-CHECKLIST.md)._

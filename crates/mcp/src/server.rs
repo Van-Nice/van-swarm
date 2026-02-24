@@ -1,11 +1,11 @@
-//! `McpServer` — exposes `rustmastra_core` tools/resources as an MCP server.
+//! `McpServer` — exposes `openswarm_core` tools/resources as an MCP server.
 //!
 //! ## Usage
 //!
 //! ```rust,no_run
 //! # use std::sync::Arc;
-//! # use rustmastra_mcp::McpServer;
-//! # use rustmastra_core::LocalToolRegistry;
+//! # use openswarm_mcp::McpServer;
+//! # use openswarm_core::LocalToolRegistry;
 //! let registry = Arc::new(LocalToolRegistry::new());
 //! // registry.register(my_tool);
 //! let server = McpServer::new("my-agent", "0.1.0", registry);
@@ -22,7 +22,7 @@ use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tracing::{debug, warn};
 
-use rustmastra_core::ToolExecutor;
+use openswarm_core::ToolExecutor;
 
 use crate::{
     jsonrpc::{codes, parse_incoming, IncomingMessage, Request, Response, RpcError},
@@ -96,9 +96,9 @@ impl McpServer {
     /// and returns a fully-rendered [`GetPromptResult`].
     ///
     /// ```rust,no_run
-    /// # use rustmastra_mcp::{McpServer, protocol::{McpPrompt, PromptArgument, GetPromptResult, PromptMessage, PromptContent}};
+    /// # use openswarm_mcp::{McpServer, protocol::{McpPrompt, PromptArgument, GetPromptResult, PromptMessage, PromptContent}};
     /// # use std::sync::Arc;
-    /// # use rustmastra_core::LocalToolRegistry;
+    /// # use openswarm_core::LocalToolRegistry;
     /// let server = McpServer::new("demo", "0.1.0", Arc::new(LocalToolRegistry::new()))
     ///     .add_prompt(
     ///         McpPrompt {
@@ -268,14 +268,14 @@ impl McpServer {
 
         // Convert ContentBlock → CallToolResult.
         let call_result = match content_block {
-            rustmastra_core::ContentBlock::ToolResult { content, is_error, .. } => {
+            openswarm_core::ContentBlock::ToolResult { content, is_error, .. } => {
                 if is_error {
                     CallToolResult::error(content)
                 } else {
                     CallToolResult::text(content)
                 }
             }
-            rustmastra_core::ContentBlock::Text { text } => CallToolResult::text(text),
+            openswarm_core::ContentBlock::Text { text } => CallToolResult::text(text),
             other => CallToolResult::text(format!("{other:?}")),
         };
 

@@ -1,6 +1,6 @@
 [package]
-name        = "rustmastra-core"
-description = "Core traits, model providers, and ReAct loop for the RustMastra agent framework"
+name        = "openswarm-core"
+description = "Core traits, model providers, and ReAct loop for the OpenSwarm agent framework"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -30,5 +30,5 @@ path = "examples/basic_agent.rs"
 tokio              = { workspace = true, features = ["test-util"] }
 tracing-subscriber.workspace = true
 tempfile           = "3"
-rustmastra-macros.workspace = true
+openswarm-macros.workspace = true
 proptest           = "1"

@@ -1,6 +1,6 @@
-# MCP crate (rustmastra-mcp)
+# MCP crate (openswarm-mcp)
 
-Model Context Protocol client and server: connect agents to external MCP servers (e.g. filesystem, fetch) and expose RustMastra tools as an MCP server.
+Model Context Protocol client and server: connect agents to external MCP servers (e.g. filesystem, fetch) and expose OpenSwarm tools as an MCP server.
 
 ## Components
 
@@ -128,6 +128,6 @@ flowchart LR
 
 When many tools or resources are exposed via MCP, the model’s context can degrade (“context rot”): vague or overlapping descriptions lead to wrong tool choices or duplicated effort. Mitigate by:
 
-- **Clear, action-oriented server and tool descriptions**: For each tool, state *what* it does and *when* to use it (e.g. “Fetch order history by customer ID. Use when the user asks for past orders or order status.”). Avoid generic text like “get data”.
+- **Clear, action-oriented server and tool descriptions**: For each tool, state _what_ it does and _when_ to use it (e.g. “Fetch order history by customer ID. Use when the user asks for past orders or order status.”). Avoid generic text like “get data”.
 - **Distinct names and purposes**: Prefer one clear responsibility per tool so the model can pick the right one without guessing.
 - **Keep lists focused**: Use defer loading or tool search (§9.10) so the agent only sees tools relevant to the current task, reducing noise in the context.

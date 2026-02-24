@@ -6,10 +6,10 @@ This page indexes **runnable examples** and **copy-paste snippets** you can use 
 
 ## 1. In-repo examples
 
-| Crate | Example | How to run |
-|-------|---------|------------|
-| **rustmastra-core** | `basic_agent` | `cargo run -p rustmastra-core --example basic_agent` |
-| **rustmastra-mcp** | `rust_mcp_client` | `cargo run -p rustmastra-mcp --example rust_mcp_client` |
+| Crate              | Example           | How to run                                             |
+| ------------------ | ----------------- | ------------------------------------------------------ |
+| **openswarm-core** | `basic_agent`     | `cargo run -p openswarm-core --example basic_agent`    |
+| **openswarm-mcp**  | `rust_mcp_client` | `cargo run -p openswarm-mcp --example rust_mcp_client` |
 
 **rust_mcp_client** connects to the rust-mcp server (Rust dev MCP), lists tools, and calls `cargo_workspace_action` (e.g. `cargo check`). Set `RUST_MCP_BIN` to the path of the rust-mcp binary if it is not under `../rust-mcp/target/release/rust-mcp`.
 
@@ -17,11 +17,11 @@ This page indexes **runnable examples** and **copy-paste snippets** you can use 
 
 ## 2. Minimal agent (no tools)
 
-Create a binary that depends on `rustmastra-core` and paste:
+Create a binary that depends on `openswarm-core` and paste:
 
 ```rust
 use std::sync::Arc;
-use rustmastra_core::{
+use openswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::AnthropicProvider,
     react::{run_agent, ReActAgent},
@@ -29,7 +29,7 @@ use rustmastra_core::{
 };
 
 #[tokio::main]
-async fn main() -> rustmastra_core::Result<()> {
+async fn main() -> openswarm_core::Result<()> {
     let provider = AnthropicProvider::from_env()?;
     let executor = LocalToolRegistry::new();
     let config = AgentConfig::new("minimal", ModelConfig::new("claude-sonnet-4-20250514"));
@@ -45,7 +45,7 @@ async fn main() -> rustmastra_core::Result<()> {
 
 ```rust
 use std::sync::Arc;
-use rustmastra_core::{
+use openswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::AnthropicProvider,
     react::{run_agent, ReActAgent},
@@ -54,7 +54,7 @@ use rustmastra_core::{
 };
 
 #[tokio::main]
-async fn main() -> rustmastra_core::Result<()> {
+async fn main() -> openswarm_core::Result<()> {
     let provider = AnthropicProvider::from_env()?;
     let executor = LocalToolRegistry::new().register(TimeTool);
     let config = AgentConfig::new("with-time", ModelConfig::new("claude-sonnet-4-20250514"));
@@ -69,7 +69,7 @@ async fn main() -> rustmastra_core::Result<()> {
 ## 4. Agent with metrics (for SPL / evals)
 
 ```rust
-use rustmastra_core::react::run_agent_with_metrics;
+use openswarm_core::react::run_agent_with_metrics;
 
 let (answer, metrics) = run_agent_with_metrics(&agent, "Question?").await?;
 println!("Answer: {}", answer);
@@ -82,8 +82,8 @@ println!("Iterations: {}  Tool calls: {}", metrics.iterations, metrics.tool_call
 
 ```rust
 use async_trait::async_trait;
-use rustmastra_core::message::ToolDefinition;
-use rustmastra_core::traits::tool::Tool;
+use openswarm_core::message::ToolDefinition;
+use openswarm_core::traits::tool::Tool;
 
 struct GreetTool;
 
@@ -101,7 +101,7 @@ impl Tool for GreetTool {
             examples: vec![],
         }
     }
-    async fn execute(&self, args: serde_json::Value) -> rustmastra_core::Result<String> {
+    async fn execute(&self, args: serde_json::Value) -> openswarm_core::Result<String> {
         let name = args.get("name").and_then(|v| v.as_str()).unwrap_or("World");
         Ok(format!("Hello, {}!", name))
     }
@@ -113,7 +113,7 @@ impl Tool for GreetTool {
 ## 6. MCP client + list tools
 
 ```rust
-use rustmastra_mcp::McpClient;
+use openswarm_mcp::McpClient;
 
 let client = McpClient::stdio("npx", &["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]).await?;
 client.initialize().await?;
@@ -128,9 +128,9 @@ for t in client.list_tools().await? {
 
 ```rust
 use std::sync::Arc;
-use rustmastra_core::traits::tool::LocalToolRegistry;
-use rustmastra_core::TimeTool;
-use rustmastra_mcp::McpServer;
+use openswarm_core::traits::tool::LocalToolRegistry;
+use openswarm_core::TimeTool;
+use openswarm_mcp::McpServer;
 
 let registry = LocalToolRegistry::new().register(TimeTool);
 McpServer::new("my-server", "0.1.0", Arc::new(registry)).serve_stdio();
@@ -142,11 +142,11 @@ McpServer::new("my-server", "0.1.0", Arc::new(registry)).serve_stdio();
 
 ```rust
 use std::sync::Arc;
-use rustmastra_core::durable::{DurableContext, InMemoryJournal};
+use openswarm_core::durable::{DurableContext, InMemoryJournal};
 
 let journal = Arc::new(InMemoryJournal::new());
 let ctx = DurableContext::new("run-1", journal, None);
-let x = ctx.run_once("step1", async { Ok::<_, rustmastra_core::FrameworkError>("done") }).await?;
+let x = ctx.run_once("step1", async { Ok::<_, openswarm_core::FrameworkError>("done") }).await?;
 ```
 
 ---
@@ -155,7 +155,7 @@ let x = ctx.run_once("step1", async { Ok::<_, rustmastra_core::FrameworkError>("
 
 ```rust
 use async_trait::async_trait;
-use rustmastra_orchestrator::{FlowRunner, GraphBuilder, NextAction, NodeKey, Task};
+use openswarm_orchestrator::{FlowRunner, GraphBuilder, NextAction, NodeKey, Task};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -166,7 +166,7 @@ struct Node1;
 #[async_trait]
 impl Task for Node1 {
     type State = S;
-    async fn run(&self, _: NodeKey, mut s: S) -> rustmastra_core::Result<(S, NextAction)> {
+    async fn run(&self, _: NodeKey, mut s: S) -> openswarm_core::Result<(S, NextAction)> {
         s.value = "one".into();
         Ok((s, NextAction::Continue))
     }
@@ -176,7 +176,7 @@ struct Node2;
 #[async_trait]
 impl Task for Node2 {
     type State = S;
-    async fn run(&self, _: NodeKey, mut s: S) -> rustmastra_core::Result<(S, NextAction)> {
+    async fn run(&self, _: NodeKey, mut s: S) -> openswarm_core::Result<(S, NextAction)> {
         s.value = format!("{} -> two", s.value);
         Ok((s, NextAction::End))
     }
@@ -197,7 +197,7 @@ println!("{:?}", result.state);
 ## 10. Memory: EpisodicMemory store and search
 
 ```rust
-use rustmastra_memory::{EpisodicMemory, Memory, MemoryEntry};
+use openswarm_memory::{EpisodicMemory, Memory, MemoryEntry};
 
 let mem = EpisodicMemory::new(100);
 mem.store(MemoryEntry::new("User asked about Rust")).await?;
@@ -210,7 +210,7 @@ let hits = mem.search("Rust", 5).await?;
 ## 11. Evaluation: ContainsScorer + spl
 
 ```rust
-use rustmastra_core::evaluators::{ContainsScorer, ScoreInput, Scorer, SplRun, spl};
+use openswarm_core::evaluators::{ContainsScorer, ScoreInput, Scorer, SplRun, spl};
 
 let scorer = ContainsScorer::default();
 let input = ScoreInput {
@@ -227,15 +227,15 @@ println!("SPL: {}", spl(&runs));
 
 ## 12. Where each snippet is explained
 
-| Snippet | Guide |
-|--------|--------|
+| Snippet                          | Guide                                                                                |
+| -------------------------------- | ------------------------------------------------------------------------------------ |
 | Minimal agent, TimeTool, metrics | [01-quick-start](01-quick-start.md), [02-building-an-agent](02-building-an-agent.md) |
-| Custom Tool, registry | [03-tools](03-tools.md) |
-| MCP client, executor, server | [04-mcp](04-mcp.md) |
-| DurableContext, run_once | [05-durable-workflows](05-durable-workflows.md) |
-| GraphBuilder, FlowRunner, Task | [06-orchestrator](06-orchestrator.md) |
-| EpisodicMemory, search | [07-memory](07-memory.md) |
-| Scorer, SPL | [08-evaluation](08-evaluation.md) |
-| Sandbox, run_compiled | [09-runtime-wasm](09-runtime-wasm.md) |
+| Custom Tool, registry            | [03-tools](03-tools.md)                                                              |
+| MCP client, executor, server     | [04-mcp](04-mcp.md)                                                                  |
+| DurableContext, run_once         | [05-durable-workflows](05-durable-workflows.md)                                      |
+| GraphBuilder, FlowRunner, Task   | [06-orchestrator](06-orchestrator.md)                                                |
+| EpisodicMemory, search           | [07-memory](07-memory.md)                                                            |
+| Scorer, SPL                      | [08-evaluation](08-evaluation.md)                                                    |
+| Sandbox, run_compiled            | [09-runtime-wasm](09-runtime-wasm.md)                                                |
 
 For a single high-level overview, see [documentation/HOW-IT-WORKS.md](../HOW-IT-WORKS.md).

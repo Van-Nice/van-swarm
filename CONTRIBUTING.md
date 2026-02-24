@@ -1,4 +1,4 @@
-# Contributing to RustMastra
+# Contributing to OpenSwarm
 
 Thank you for your interest in contributing to the Rust AI Agent Framework.
 

@@ -45,7 +45,7 @@ impl Transport {
         &self,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> rustmastra_core::Result<serde_json::Value> {
+    ) -> openswarm_core::Result<serde_json::Value> {
         match self {
             Transport::Stdio(t) => t.send_request(method, params).await,
             Transport::Http(t) => t.send_request(method, params).await,
@@ -58,7 +58,7 @@ impl Transport {
         &self,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> rustmastra_core::Result<()> {
+    ) -> openswarm_core::Result<()> {
         match self {
             Transport::Stdio(t) => t.send_notification(method, params).await,
             Transport::Http(_) => Ok(()), // HTTP MCP uses polling, no notifications
@@ -85,7 +85,7 @@ impl StdioTransport {
     pub async fn spawn(
         command: &str,
         args: &[impl AsRef<str>],
-    ) -> rustmastra_core::Result<Self> {
+    ) -> openswarm_core::Result<Self> {
         use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
         use tokio::process::Command;
 
@@ -98,7 +98,7 @@ impl StdioTransport {
             .stderr(std::process::Stdio::null())
             .spawn()
             .map_err(|e| {
-                rustmastra_core::FrameworkError::Config(format!(
+                openswarm_core::FrameworkError::Config(format!(
                     "Failed to spawn MCP subprocess '{command}': {e}"
                 ))
             })?;
@@ -154,21 +154,21 @@ impl StdioTransport {
         &self,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> rustmastra_core::Result<serde_json::Value> {
+    ) -> openswarm_core::Result<serde_json::Value> {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let request = Request::new(id, method, params);
         let json = serde_json::to_string(&request)
-            .map_err(|e| rustmastra_core::FrameworkError::Serialization(e.into()))?;
+            .map_err(|e| openswarm_core::FrameworkError::Serialization(e.into()))?;
 
         let (tx, rx) = oneshot::channel();
         self.pending.lock().await.insert(id, tx);
 
         self.write_tx.send(json).map_err(|e| {
-            rustmastra_core::FrameworkError::Config(format!("MCP write channel closed: {e}"))
+            openswarm_core::FrameworkError::Config(format!("MCP write channel closed: {e}"))
         })?;
 
         let response = rx.await.map_err(|_| {
-            rustmastra_core::FrameworkError::Config(
+            openswarm_core::FrameworkError::Config(
                 "MCP response channel closed before reply arrived".into(),
             )
         })?;
@@ -180,12 +180,12 @@ impl StdioTransport {
         &self,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> rustmastra_core::Result<()> {
+    ) -> openswarm_core::Result<()> {
         let n = Notification::new(method, params);
         let json = serde_json::to_string(&n)
-            .map_err(|e| rustmastra_core::FrameworkError::Serialization(e.into()))?;
+            .map_err(|e| openswarm_core::FrameworkError::Serialization(e.into()))?;
         self.write_tx.send(json).map_err(|e| {
-            rustmastra_core::FrameworkError::Config(format!("MCP write channel closed: {e}"))
+            openswarm_core::FrameworkError::Config(format!("MCP write channel closed: {e}"))
         })
     }
 }
@@ -214,7 +214,7 @@ impl HttpTransport {
         &self,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> rustmastra_core::Result<serde_json::Value> {
+    ) -> openswarm_core::Result<serde_json::Value> {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let request = Request::new(id, method, params);
 
@@ -224,12 +224,12 @@ impl HttpTransport {
             .json(&request)
             .send()
             .await
-            .map_err(rustmastra_core::FrameworkError::Http)?;
+            .map_err(openswarm_core::FrameworkError::Http)?;
 
         let rpc_response: Response = http_response
             .json()
             .await
-            .map_err(rustmastra_core::FrameworkError::Http)?;
+            .map_err(openswarm_core::FrameworkError::Http)?;
 
         rpc_response.into_result()
     }
@@ -279,17 +279,17 @@ impl ChannelTransport {
         &self,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> rustmastra_core::Result<serde_json::Value> {
+    ) -> openswarm_core::Result<serde_json::Value> {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let request = Request::new(id, method, params);
         let json = serde_json::to_string(&request)
-            .map_err(|e| rustmastra_core::FrameworkError::Serialization(e.into()))?;
+            .map_err(|e| openswarm_core::FrameworkError::Serialization(e.into()))?;
 
         let (tx, rx) = oneshot::channel();
         self.pending.lock().await.insert(id, tx);
 
         self.request_tx.send(json).await.map_err(|e| {
-            rustmastra_core::FrameworkError::Config(format!(
+            openswarm_core::FrameworkError::Config(format!(
                 "Channel transport closed: {e}"
             ))
         })?;
@@ -313,7 +313,7 @@ impl ChannelTransport {
             }
         }
 
-        Err(rustmastra_core::FrameworkError::Config(
+        Err(openswarm_core::FrameworkError::Config(
             "Channel transport closed before response".into(),
         ))
     }
@@ -322,12 +322,12 @@ impl ChannelTransport {
         &self,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> rustmastra_core::Result<()> {
+    ) -> openswarm_core::Result<()> {
         let n = Notification::new(method, params);
         let json = serde_json::to_string(&n)
-            .map_err(|e| rustmastra_core::FrameworkError::Serialization(e.into()))?;
+            .map_err(|e| openswarm_core::FrameworkError::Serialization(e.into()))?;
         self.request_tx.send(json).await.map_err(|e| {
-            rustmastra_core::FrameworkError::Config(format!("Channel transport closed: {e}"))
+            openswarm_core::FrameworkError::Config(format!("Channel transport closed: {e}"))
         })
     }
 }

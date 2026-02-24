@@ -1,16 +1,16 @@
 # Memory
 
-This guide covers the **rustmastra-memory** crate: **Memory** trait, **EpisodicMemory**, **MidTermMemory**, **SemanticMemory**, and **MemoryManager** for conflict resolution.
+This guide covers the **openswarm-memory** crate: **Memory** trait, **EpisodicMemory**, **MidTermMemory**, **SemanticMemory**, and **MemoryManager** for conflict resolution.
 
 ---
 
 ## 1. Three-tier design
 
-| Tier | Name     | Storage (current)     | Use case                |
-|------|----------|------------------------|--------------------------|
-| 1    | Episodic | In-memory VecDeque     | Recent events, FIFO      |
-| 2    | Mid-term | NDJSON file (optional) | Summaries, heat-based    |
-| 3    | Semantic | In-memory vectors     | Similarity search (RAG)  |
+| Tier | Name     | Storage (current)      | Use case                |
+| ---- | -------- | ---------------------- | ----------------------- |
+| 1    | Episodic | In-memory VecDeque     | Recent events, FIFO     |
+| 2    | Mid-term | NDJSON file (optional) | Summaries, heat-based   |
+| 3    | Semantic | In-memory vectors      | Similarity search (RAG) |
 
 Implementations can be swapped (e.g. Redis for Tier 1, Qdrant for Tier 3) by providing different **Memory** impls.
 
@@ -39,7 +39,7 @@ pub trait Memory: Send + Sync {
 In-memory FIFO; when capacity is reached, the oldest entry is dropped. Search is substring match.
 
 ```rust
-use rustmastra_memory::{EpisodicMemory, MemoryEntry};
+use openswarm_memory::{EpisodicMemory, MemoryEntry};
 
 let mem = EpisodicMemory::new(1000);
 mem.store(MemoryEntry::new("User asked about Rust ownership")).await?;
@@ -51,7 +51,7 @@ let found = mem.search("ownership", 5).await?;
 
 **Time-travel helpers:**
 
-- **entries_before(id)** — entries in chronological order as they were before the given entry.  
+- **entries_before(id)** — entries in chronological order as they were before the given entry.
 - **recent_ordered(limit)** — most recent `limit` entries in chronological order (oldest first).
 
 ```rust
@@ -66,7 +66,7 @@ let timeline = mem.recent_ordered(20).await?;
 Disk-backed (optional NDJSON) summaries with **heat** (retrieval count). Used to consolidate episodic entries and promote hot items toward Tier 3.
 
 ```rust
-use rustmastra_memory::{MidTermMemory, MemoryEntry, SummaryEntry};
+use openswarm_memory::{MidTermMemory, MemoryEntry, SummaryEntry};
 
 let path = std::path::PathBuf::from("/tmp/midterm.json");
 let mem = MidTermMemory::new(Some(path), 5); // heat_threshold = 5
@@ -93,7 +93,7 @@ let hot = mem.hot_entries().await?;
 In-memory vector store; similarity search via **cosine_similarity**. Production would use Qdrant or pgvector.
 
 ```rust
-use rustmastra_memory::{MemoryEntry, SemanticMemory};
+use openswarm_memory::{MemoryEntry, SemanticMemory};
 
 let mem = SemanticMemory::new();
 let mut entry = MemoryEntry::new("Rust has ownership");
@@ -108,7 +108,7 @@ let results = mem.semantic_search(&query_embedding, 5).await?;
 **cosine_similarity** is also exported for custom use:
 
 ```rust
-use rustmastra_memory::cosine_similarity;
+use openswarm_memory::cosine_similarity;
 let sim = cosine_similarity(&[1.0, 0.0], &[0.9, 0.1]);
 ```
 
@@ -118,13 +118,13 @@ let sim = cosine_similarity(&[1.0, 0.0], &[0.9, 0.1]);
 
 **MemoryManager** applies a heuristic (Memory-R1 style) to decide what to do when adding a new fact:
 
-- **Add** — novel fact.  
-- **Noop** — duplicate (high word-overlap similarity).  
-- **Update { target_id }** — new fact supersedes an existing entry (update keywords + overlap).  
+- **Add** — novel fact.
+- **Noop** — duplicate (high word-overlap similarity).
+- **Update { target_id }** — new fact supersedes an existing entry (update keywords + overlap).
 - **Delete { target_id }** — new fact negates an existing entry (negation keywords + overlap).
 
 ```rust
-use rustmastra_memory::{MemoryEntry, MemoryManager, MemoryAction};
+use openswarm_memory::{MemoryEntry, MemoryManager, MemoryAction};
 
 let manager = MemoryManager::new(0.85);
 let existing = mem.recent(100).await?;
@@ -142,10 +142,10 @@ match action {
 ## 7. Full example: episodic + search
 
 ```rust
-use rustmastra_memory::{EpisodicMemory, Memory, MemoryEntry};
+use openswarm_memory::{EpisodicMemory, Memory, MemoryEntry};
 
 #[tokio::main]
-async fn main() -> rustmastra_core::Result<()> {
+async fn main() -> openswarm_core::Result<()> {
     let mem = EpisodicMemory::new(100);
     mem.store(MemoryEntry::new("User: What is Rust?")).await?;
     mem.store(MemoryEntry::new("Agent: Rust is a systems language.")).await?;
@@ -164,5 +164,5 @@ async fn main() -> rustmastra_core::Result<()> {
 
 ## 8. Next steps
 
-- Use memory inside an agent loop (e.g. store each turn, search before answering): [02-building-an-agent](02-building-an-agent.md).  
+- Use memory inside an agent loop (e.g. store each turn, search before answering): [02-building-an-agent](02-building-an-agent.md).
 - Architecture: [documentation/architecture/03-memory.md](../architecture/03-memory.md).

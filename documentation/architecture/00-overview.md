@@ -9,12 +9,12 @@ The workspace has six member crates. Dependencies between them look like this:
 ```mermaid
 flowchart LR
     subgraph workspace["rust-agent-framework"]
-        core["rustmastra-core"]
-        orchestrator["rustmastra-orchestrator"]
-        memory["rustmastra-memory"]
-        mcp["rustmastra-mcp"]
-        runtime["rustmastra-runtime"]
-        macros["rustmastra-macros"]
+        core["openswarm-core"]
+        orchestrator["openswarm-orchestrator"]
+        memory["openswarm-memory"]
+        mcp["openswarm-mcp"]
+        runtime["openswarm-runtime"]
+        macros["openswarm-macros"]
     end
 
     orchestrator --> core
@@ -91,13 +91,13 @@ flowchart TB
 
 ## Document index
 
-| File | Contents |
-|------|----------|
-| [00-overview.md](00-overview.md) | Workspace, crate graph, high-level architecture (this file) |
-| [01-core.md](01-core.md) | Core: traits, config, messages, providers, ReAct, durable execution |
-| [02-orchestrator.md](02-orchestrator.md) | Graph builder, ExecutionGraph, FlowRunner, Task, NextAction |
-| [03-memory.md](03-memory.md) | Memory trait, EpisodicMemory (Tier 1 stub) |
-| [04-mcp.md](04-mcp.md) | McpClient, McpServer, McpToolExecutor, transports |
-| [05-runtime.md](05-runtime.md) | WASM sandbox, SandboxConfig, run_json protocol |
-| [06-macros.md](06-macros.md) | `#[tool]` and `#[workflow]` macros |
-| [07-observability-apm.md](07-observability-apm.md) | Agentic APM vs traditional APM (§13.11) |
+| File                                               | Contents                                                            |
+| -------------------------------------------------- | ------------------------------------------------------------------- |
+| [00-overview.md](00-overview.md)                   | Workspace, crate graph, high-level architecture (this file)         |
+| [01-core.md](01-core.md)                           | Core: traits, config, messages, providers, ReAct, durable execution |
+| [02-orchestrator.md](02-orchestrator.md)           | Graph builder, ExecutionGraph, FlowRunner, Task, NextAction         |
+| [03-memory.md](03-memory.md)                       | Memory trait, EpisodicMemory (Tier 1 stub)                          |
+| [04-mcp.md](04-mcp.md)                             | McpClient, McpServer, McpToolExecutor, transports                   |
+| [05-runtime.md](05-runtime.md)                     | WASM sandbox, SandboxConfig, run_json protocol                      |
+| [06-macros.md](06-macros.md)                       | `#[tool]` and `#[workflow]` macros                                  |
+| [07-observability-apm.md](07-observability-apm.md) | Agentic APM vs traditional APM (§13.11)                             |

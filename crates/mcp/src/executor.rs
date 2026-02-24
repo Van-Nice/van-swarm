@@ -1,4 +1,4 @@
-//! MCP-backed `ToolExecutor` — use any MCP server's tools with a RustMastra agent.
+//! MCP-backed `ToolExecutor` — use any MCP server's tools with a OpenSwarm agent.
 //!
 //! After connecting and initializing an `McpClient`, wrap it in `McpToolExecutor`,
 //! call `refresh_tools().await`, then pass the executor to `ReActAgent`. The agent
@@ -7,7 +7,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use rustmastra_core::message::{ContentBlock, ToolDefinition, ToolExample};
+use openswarm_core::message::{ContentBlock, ToolDefinition, ToolExample};
 
 use crate::client::McpClient;
 use crate::protocol::McpTool;
@@ -42,7 +42,7 @@ impl McpToolExecutor {
     ///
     /// Call this after `client.initialize().await?` so that `tool_definitions()`
     /// returns the server's tools. Required before using this executor with an agent.
-    pub async fn refresh_tools(&self) -> rustmastra_core::Result<()> {
+    pub async fn refresh_tools(&self) -> openswarm_core::Result<()> {
         let tools = self.client.list_tools().await?;
         if let Ok(mut g) = self.cache.lock() {
             *g = Some(tools);
@@ -52,7 +52,7 @@ impl McpToolExecutor {
 }
 
 #[async_trait]
-impl rustmastra_core::ToolExecutor for McpToolExecutor {
+impl openswarm_core::ToolExecutor for McpToolExecutor {
     fn tool_definitions(&self) -> Vec<ToolDefinition> {
         if let Ok(g) = self.cache.lock() {
             if let Some(ref tools) = *g {

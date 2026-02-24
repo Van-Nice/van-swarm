@@ -1,6 +1,6 @@
 # Swarm & multi-agent patterns (§24)
 
-Multi-agent systems decompose a complex task into parallel or hierarchical sub-tasks, each handled by a specialized agent. RustMastra provides the primitives to build every standard swarm pattern.
+Multi-agent systems decompose a complex task into parallel or hierarchical sub-tasks, each handled by a specialized agent. OpenSwarm provides the primitives to build every standard swarm pattern.
 
 > **Before using multi-agent:** Be aware of the **Sequential Penalty** (§24.6) — multi-agent coordination has overhead. If the task is strictly sequential, a single well-prompted agent is often cheaper and faster.
 
@@ -85,7 +85,7 @@ Agents read from and write to a **shared knowledge repository** (the "blackboard
      └───────┘ └──────┘ └───────┘
 ```
 
-**Implementation in RustMastra:** The `FlowRunner`'s shared state (`S`) is the blackboard. Nodes read from `state`, append results, and pass the enriched state forward. `conditional_edge` allows the controller to route based on what's already on the blackboard.
+**Implementation in OpenSwarm:** The `FlowRunner`'s shared state (`S`) is the blackboard. Nodes read from `state`, append results, and pass the enriched state forward. `conditional_edge` allows the controller to route based on what's already on the blackboard.
 
 ```rust
 // Conditional routing: if blackboard has summary, go to store; else go to summarizer
@@ -123,10 +123,10 @@ Multiple independent agent trees run in parallel; a **Root Router** selects the 
    answer
 ```
 
-**Implementation:** Use `KeywordRouter` or `LlmRouter` for the root routing decision. For consensus, use `majority_vote` or `similarity_vote` from `rustmastra_orchestrator::patterns`:
+**Implementation:** Use `KeywordRouter` or `LlmRouter` for the root routing decision. For consensus, use `majority_vote` or `similarity_vote` from `openswarm_orchestrator::patterns`:
 
 ```rust
-use rustmastra_orchestrator::patterns::{majority_vote, similarity_vote};
+use openswarm_orchestrator::patterns::{majority_vote, similarity_vote};
 
 // Collect answers from each tree
 let answers = vec![answer_t1, answer_t2, answer_t3];
@@ -145,12 +145,13 @@ let best = similarity_vote(&answers).unwrap_or(answers[0].clone());
 Research shows that agents with more than **~16 tools** in context suffer degraded accuracy — the model struggles to select the right tool among too many options.
 
 **Mitigations:**
+
 - Use `FilteredToolExecutor` to expose only the tools relevant to a specific node.
 - Organise tools into categories; give each agent access to one category.
 - Use hierarchical routing: Director selects which agent tree (and its tools) to activate.
 
 ```rust
-use rustmastra_core::tools::FilteredToolExecutor;
+use openswarm_core::tools::FilteredToolExecutor;
 
 // Worker A only sees search and read_file
 let executor_a = FilteredToolExecutor::new(
@@ -164,11 +165,13 @@ let executor_a = FilteredToolExecutor::new(
 ## 6. Sequential penalty (§24.6)
 
 Multi-agent coordination has real costs:
+
 - **Latency:** Each agent handoff requires a new LLM call (TTFT × N agents).
 - **Token cost:** Each agent re-reads the problem, sometimes duplicating context.
 - **Coordination errors:** The orchestrator may misinterpret a worker's output.
 
 **Rule of thumb:** If the task can be solved with a single, well-prompted agent, do not add multi-agent overhead. Reserve multi-agent for tasks where:
+
 - Parallel specialization provides a measurable speedup, or
 - Context windows would overflow with a single agent, or
 - Different agents need different tool access.
@@ -179,7 +182,7 @@ Multi-agent coordination has real costs:
 
 For safety-critical decisions, run the same task across multiple agents and require agreement before acting.
 
-RustMastra provides three utilities in `rustmastra_orchestrator::patterns`:
+OpenSwarm provides three utilities in `openswarm_orchestrator::patterns`:
 
 ```rust
 /// Exact string match: return the value held by the majority.
@@ -217,10 +220,10 @@ let aggregate = spl(&runs);
 
 ## Summary
 
-| Pattern | Best for | RustMastra primitive |
-|---|---|---|
-| Orchestrator-Worker | Decomposable parallel tasks | `NextAction::Parallel` in FlowRunner |
-| Hierarchical Swarm | Deep decomposition, many tools | Nested `ReActAgent` nodes in Workflow |
-| Blackboard | Emergent assembly from partial results | Shared `State` + `conditional_edge` |
-| Forest Swarm | Multiple specialist trees | `Router` + `majority_vote` |
-| Consensus | Safety-critical decisions | `majority_vote` / `similarity_vote` |
+| Pattern             | Best for                               | OpenSwarm primitive                   |
+| ------------------- | -------------------------------------- | ------------------------------------- |
+| Orchestrator-Worker | Decomposable parallel tasks            | `NextAction::Parallel` in FlowRunner  |
+| Hierarchical Swarm  | Deep decomposition, many tools         | Nested `ReActAgent` nodes in Workflow |
+| Blackboard          | Emergent assembly from partial results | Shared `State` + `conditional_edge`   |
+| Forest Swarm        | Multiple specialist trees              | `Router` + `majority_vote`            |
+| Consensus           | Safety-critical decisions              | `majority_vote` / `similarity_vote`   |

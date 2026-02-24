@@ -1,6 +1,6 @@
-# Macros crate (rustmastra-macros)
+# Macros crate (openswarm-macros)
 
-Procedural macros for the RustMastra framework: **`#[tool]`** and **`#[workflow]`**.
+Procedural macros for the OpenSwarm framework: **`#[tool]`** and **`#[workflow]`**.
 
 ## Crate role
 
@@ -9,7 +9,7 @@ flowchart LR
     User[User code]
     tool_attr["#[tool]"]
     workflow_attr["#[workflow]"]
-    core[rustmastra-core]
+    core[openswarm-core]
 
     User --> tool_attr
     User --> workflow_attr
@@ -17,7 +17,7 @@ flowchart LR
     workflow_attr --> core
 ```
 
-- Macros live in **rustmastra-macros** and depend on **rustmastra-core** for types referenced in error messages and validation (e.g. `DurableContext`).
+- Macros live in **openswarm-macros** and depend on **openswarm-core** for types referenced in error messages and validation (e.g. `DurableContext`).
 
 ## #[tool]
 

@@ -1,6 +1,6 @@
 # Evaluation
 
-This guide covers **evaluators** in **rustmastra-core**: **Scorer**, **ScoreInput** / **ScoreResult**, **batch_score**, **SPL** (Success weighted by Path Length), and **RunMetrics**.
+This guide covers **evaluators** in **openswarm-core**: **Scorer**, **ScoreInput** / **ScoreResult**, **batch_score**, **SPL** (Success weighted by Path Length), and **RunMetrics**.
 
 ---
 
@@ -9,7 +9,7 @@ This guide covers **evaluators** in **rustmastra-core**: **Scorer**, **ScoreInpu
 Use **run_agent_with_metrics** to get **RunMetrics** for each run:
 
 ```rust
-use rustmastra_core::react::run_agent_with_metrics;
+use openswarm_core::react::run_agent_with_metrics;
 
 let (answer, metrics) = run_agent_with_metrics(&agent, "What is the capital of France?").await?;
 // metrics.iterations   — number of ReAct steps
@@ -32,8 +32,8 @@ pub trait Scorer: Send + Sync {
 
 **ScoreInput** contains:
 
-- **messages** — full conversation.  
-- **final_answer** — the agent’s final text.  
+- **messages** — full conversation.
+- **final_answer** — the agent’s final text.
 - **expected** — optional ground truth (for supervised evals).
 
 **ScoreResult** has **score: f64** and **reason: String**.
@@ -42,17 +42,17 @@ pub trait Scorer: Send + Sync {
 
 ## 3. Built-in scorers
 
-| Scorer | Use |
-|--------|-----|
-| **NonEmptyScorer** | Passes if `final_answer` is non-empty. |
-| **ContainsScorer** | Passes if `final_answer` contains `expected` (case-insensitive by default). |
-| **LlmJudgeScorer** | Uses an LLM to judge quality (e.g. relevance, correctness). |
-| **CompletenessScorer**, **RelevancyScorer**, **FaithfulnessScorer**, **BiasScorer**, **ToolAccuracyScorer** | Domain-specific LLM or rule-based. |
+| Scorer                                                                                                      | Use                                                                         |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **NonEmptyScorer**                                                                                          | Passes if `final_answer` is non-empty.                                      |
+| **ContainsScorer**                                                                                          | Passes if `final_answer` contains `expected` (case-insensitive by default). |
+| **LlmJudgeScorer**                                                                                          | Uses an LLM to judge quality (e.g. relevance, correctness).                 |
+| **CompletenessScorer**, **RelevancyScorer**, **FaithfulnessScorer**, **BiasScorer**, **ToolAccuracyScorer** | Domain-specific LLM or rule-based.                                          |
 
 Example:
 
 ```rust
-use rustmastra_core::evaluators::{ContainsScorer, ScoreInput, Scorer};
+use openswarm_core::evaluators::{ContainsScorer, ScoreInput, Scorer};
 
 let scorer = ContainsScorer::default();
 let input = ScoreInput {
@@ -71,7 +71,7 @@ println!("Score: {} Reason: {}", result.score, result.reason);
 For CI or benchmarks, run a scorer on a list of inputs:
 
 ```rust
-use rustmastra_core::evaluators::{batch_score, ContainsScorer, ScoreInput};
+use openswarm_core::evaluators::{batch_score, ContainsScorer, ScoreInput};
 
 let scorer = ContainsScorer::default();
 let inputs = vec![
@@ -96,12 +96,12 @@ let results = batch_score(&scorer, &inputs).await?;
 
 SPL rewards correct answers with **shorter** tool-use paths. You need:
 
-- **score** S_i ∈ [0, 1] for each run (e.g. from a **Scorer**).  
-- **path_length** L_exec = `RunMetrics.tool_call_count`.  
+- **score** S_i ∈ [0, 1] for each run (e.g. from a **Scorer**).
+- **path_length** L_exec = `RunMetrics.tool_call_count`.
 - **optimal_path_length** L_opt (from your benchmark definition).
 
 ```rust
-use rustmastra_core::evaluators::{BenchmarkTask, SplRun, spl};
+use openswarm_core::evaluators::{BenchmarkTask, SplRun, spl};
 
 let runs = vec![
     SplRun {
@@ -126,7 +126,7 @@ let spl_value = spl(&runs);
 ## 6. Full example: eval loop with RunMetrics and ContainsScorer
 
 ```rust
-use rustmastra_core::{
+use openswarm_core::{
     evaluators::{ContainsScorer, ScoreInput, Scorer, SplRun, spl},
     react::run_agent_with_metrics,
 };
@@ -162,5 +162,5 @@ println!("SPL: {}", spl_value);
 
 ## 7. Next steps
 
-- More scorers and golden datasets: see `rustmastra_core::evaluators` and [documentation/architecture/01-core.md](../architecture/01-core.md).  
+- More scorers and golden datasets: see `openswarm_core::evaluators` and [documentation/architecture/01-core.md](../architecture/01-core.md).
 - Traces and cost: [02-building-an-agent](02-building-an-agent.md) (run_agent_traced).

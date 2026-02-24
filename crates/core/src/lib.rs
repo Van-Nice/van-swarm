@@ -1,12 +1,12 @@
-//! # rustmastra-core
+//! # openswarm-core
 //!
-//! Core traits, model providers, and ReAct loop for the RustMastra agent
+//! Core traits, model providers, and ReAct loop for the OpenSwarm agent
 //! framework.
 //!
 //! ## Quick start
 //!
 //! ```rust,no_run
-//! use rustmastra_core::{
+//! use openswarm_core::{
 //!     config::{AgentConfig, ModelConfig, ProviderCredentials},
 //!     providers::AnthropicProvider,
 //!     react::{run_agent, ReActAgent},
@@ -15,7 +15,7 @@
 //! use std::sync::Arc;
 //!
 //! #[tokio::main]
-//! async fn main() -> rustmastra_core::Result<()> {
+//! async fn main() -> openswarm_core::Result<()> {
 //!     let provider = AnthropicProvider::from_env()?;
 //!     let executor = LocalToolRegistry::new();
 //!     let config = AgentConfig::new("assistant", ModelConfig::new("claude-opus-4-6"))
@@ -39,7 +39,7 @@
 //! | `providers`   | `ModelProvider` + OpenAI / Anthropic / Gemini|
 //! | `react`       | `ReActAgent` and `run_agent` loop           |
 
-extern crate self as rustmastra_core;
+extern crate self as openswarm_core;
 
 pub mod config;
 pub mod durable;

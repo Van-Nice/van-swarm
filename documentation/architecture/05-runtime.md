@@ -1,4 +1,4 @@
-# Runtime crate (rustmastra-runtime)
+# Runtime crate (openswarm-runtime)
 
 Wasmtime-based WASM sandbox for secure, isolated tool execution. Each invocation gets a fresh Store; fuel and memory are capped.
 
@@ -44,11 +44,11 @@ classDiagram
     }
 ```
 
-| Field | Purpose |
-|-------|---------|
-| `max_memory_bytes` | Cap on linear memory (e.g. 5 MiB). |
-| `max_fuel` | Instruction fuel; exhaustion traps (stops runaway loops). |
-| `allow_mcp` | When true, linker may expose MCP bridge so sandboxed WASM can call host MCP tools; default false = no host imports. See also [04-wasm-mcp-bridge](../../framework/workflows/04-wasm-mcp-bridge.md). |
+| Field              | Purpose                                                                                                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `max_memory_bytes` | Cap on linear memory (e.g. 5 MiB).                                                                                                                                                                  |
+| `max_fuel`         | Instruction fuel; exhaustion traps (stops runaway loops).                                                                                                                                           |
+| `allow_mcp`        | When true, linker may expose MCP bridge so sandboxed WASM can call host MCP tools; default false = no host imports. See also [04-wasm-mcp-bridge](../../framework/workflows/04-wasm-mcp-bridge.md). |
 
 ## run_json calling convention
 
@@ -63,10 +63,10 @@ flowchart LR
     end
 ```
 
-| Export | Signature | Description |
-|--------|------------|-------------|
-| `memory` | `Memory` | Guest linear memory |
-| `alloc` | `(i32) -> i32` | Allocate `len` bytes; return guest pointer |
+| Export     | Signature           | Description                                                                             |
+| ---------- | ------------------- | --------------------------------------------------------------------------------------- |
+| `memory`   | `Memory`            | Guest linear memory                                                                     |
+| `alloc`    | `(i32) -> i32`      | Allocate `len` bytes; return guest pointer                                              |
 | `run_json` | `(i32, i32) -> i64` | Input JSON at `(ptr, len)`; return `(result_ptr << 32) \| result_len`, or `-1` on error |
 
 Host writes params JSON into guest memory via `alloc` + memory write; calls `run_json`; reads result from guest memory and deserializes JSON.
@@ -140,7 +140,7 @@ Target: **&lt;10 ms** for a single WASM tool call (framework goal). Measure wi
 - **Cold (compile + run):** first-time `compile(wasm_bytes)` then `run_compiled` — includes JIT.
 - **AOT (load + run):** `load_aot(aot_bytes)` then `run_compiled` — no JIT; typically sub-ms after load.
 
-Run: `cargo bench -p rustmastra-runtime --features wasm`.
+Run: `cargo bench -p openswarm-runtime --features wasm`.
 
 ## Guest/host contract and WIT (§5.11, §6.1)
 
@@ -148,7 +148,7 @@ The current **guest/host contract** is the `run_json` convention (see crate root
 
 **WIT (Wasm Interface Type)** will formalise the guest/host contract when the WASM-to-MCP bridge is implemented (§6). The intended interface is defined in `crates/runtime/wit/mcp.wit`:
 
-- **`rustmastra:runtime/mcp`** — interface that the guest can import when `allow_mcp` is true.
+- **`openswarm:runtime/mcp`** — interface that the guest can import when `allow_mcp` is true.
 - **`call-tool(name-ptr, name-len, params-ptr, params-len)`** — returns `result<(ptr, len), string>` so the guest can invoke MCP tools via the host.
 
 **§6 implemented:** With the `mcp-bridge` feature and `SandboxConfig::mcp_client` set, the host binds `mcp/call_tool` to the given [`McpClient`]. The guest passes (name_ptr, name_len, params_ptr, params_len); the host reads name/params from linear memory, calls the MCP client, writes the result JSON via the guest’s `alloc`, and returns (ptr|len). The sandboxed agent can only invoke tools exposed by that MCP server (§6.9). See test `test_guest_calls_mcp_tool_via_bridge`.

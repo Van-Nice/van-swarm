@@ -1,4 +1,4 @@
-//! Integration tests for rustmastra-core (§22.1–22.4).
+//! Integration tests for openswarm-core (§22.1–22.4).
 //!
 //! These tests exercise the full public API with a scripted `MockModelProvider`
 //! so no real API keys or network access are needed.
@@ -16,7 +16,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use rustmastra_core::{
+use openswarm_core::{
     config::{AgentConfig, ModelConfig},
     message::{
         CompletionRequest, CompletionResponse, ContentBlock, Message, ResponseStream,

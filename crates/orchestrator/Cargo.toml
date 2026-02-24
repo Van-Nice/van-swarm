@@ -1,6 +1,6 @@
 [package]
-name        = "rustmastra-orchestrator"
-description = "Graph-based workflow orchestration engine for RustMastra"
+name        = "openswarm-orchestrator"
+description = "Graph-based workflow orchestration engine for OpenSwarm"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -8,7 +8,7 @@ repository.workspace = true
 authors.workspace    = true
 
 [dependencies]
-rustmastra-core.workspace = true
+openswarm-core.workspace = true
 tokio.workspace           = true
 futures.workspace         = true
 async-trait.workspace     = true

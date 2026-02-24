@@ -6,9 +6,9 @@ This guide covers **ReActAgent**, configuration, model providers, and the main e
 
 ## 1. The ReAct loop
 
-RustMastra agents use the **ReAct** pattern: the model receives conversation history and tool definitions, then either:
+OpenSwarm agents use the **ReAct** pattern: the model receives conversation history and tool definitions, then either:
 
-- Returns a **final answer** (text), or  
+- Returns a **final answer** (text), or
 - Issues **tool calls**; the runner executes them, appends results to the conversation, and calls the model again.
 
 This repeats until the model answers or the iteration limit is reached.
@@ -19,13 +19,13 @@ This repeats until the model answers or the iteration limit is reached.
 
 You need three things:
 
-1. **AgentConfig** — name, model id, system prompt, max iterations, etc.  
-2. **ModelProvider** — OpenAI, Anthropic, or Gemini (or your own impl).  
+1. **AgentConfig** — name, model id, system prompt, max iterations, etc.
+2. **ModelProvider** — OpenAI, Anthropic, or Gemini (or your own impl).
 3. **ToolExecutor** — e.g. `LocalToolRegistry` or `McpToolExecutor`.
 
 ```rust
 use std::sync::Arc;
-use rustmastra_core::{
+use openswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::AnthropicProvider,
     react::ReActAgent,
@@ -45,18 +45,18 @@ let agent = ReActAgent::new(config, Arc::new(provider), Arc::new(executor));
 
 ## 3. AgentConfig in detail
 
-| Method | Purpose |
-|--------|---------|
-| `AgentConfig::new(name, model_config)` | Required: agent name and model id. |
-| `.with_system_prompt(s)` | System message the model sees every run. |
-| `.with_max_iterations(n)` | Cap on ReAct steps (default is finite; avoid runaway loops). |
-| `.with_chain_of_thought(true)` | Asks the model to reason in `<thinking>…</thinking>` tags. |
-| `.with_model_config(c)` | Replace model config (temperature, max_tokens, etc.). |
+| Method                                 | Purpose                                                      |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `AgentConfig::new(name, model_config)` | Required: agent name and model id.                           |
+| `.with_system_prompt(s)`               | System message the model sees every run.                     |
+| `.with_max_iterations(n)`              | Cap on ReAct steps (default is finite; avoid runaway loops). |
+| `.with_chain_of_thought(true)`         | Asks the model to reason in `<thinking>…</thinking>` tags.   |
+| `.with_model_config(c)`                | Replace model config (temperature, max_tokens, etc.).        |
 
 **ModelConfig:**
 
 ```rust
-use rustmastra_core::config::ModelConfig;
+use openswarm_core::config::ModelConfig;
 
 // Minimal: model id only
 let model = ModelConfig::new("claude-sonnet-4-20250514");
@@ -74,7 +74,7 @@ let model = ModelConfig::new("gpt-4o")
 ### run_agent — final answer only
 
 ```rust
-use rustmastra_core::react::run_agent;
+use openswarm_core::react::run_agent;
 
 let answer: String = run_agent(&agent, "Summarize the Rust ownership rules in 3 bullets.").await?;
 println!("{}", answer);
@@ -83,7 +83,7 @@ println!("{}", answer);
 ### run_agent_with_metrics — answer + RunMetrics (for SPL / evals)
 
 ```rust
-use rustmastra_core::react::run_agent_with_metrics;
+use openswarm_core::react::run_agent_with_metrics;
 
 let (answer, metrics) = run_agent_with_metrics(&agent, "What is the current year?").await?;
 println!("Answer: {}", answer);
@@ -96,7 +96,7 @@ Use `metrics.tool_call_count` as L_exec when computing **SPL** (Success weighted
 ### run_agent_traced — full APM trace
 
 ```rust
-use rustmastra_core::react::run_agent_traced;
+use openswarm_core::react::run_agent_traced;
 
 let (answer, trace) = run_agent_traced(&agent, "Explain async Rust in one paragraph.").await?;
 println!("{}", answer);
@@ -112,7 +112,7 @@ You can persist `trace` with a `TraceStore` (e.g. `InMemoryTraceStore`, `FileTra
 If you enable chain-of-thought, the model may emit `<thinking>…</thinking>` in its reply. Parse it with:
 
 ```rust
-use rustmastra_core::message::extract_xml_blocks;
+use openswarm_core::message::extract_xml_blocks;
 
 let assistant_text = "..."; // from the final message
 let thoughts = extract_xml_blocks(assistant_text, "thinking");
@@ -128,7 +128,7 @@ for t in &thoughts {
 To route by complexity and choose a cheaper or more capable model:
 
 ```rust
-use rustmastra_core::supervisor::{Router, Route, AlwaysTier1};
+use openswarm_core::supervisor::{Router, Route, AlwaysTier1};
 
 // Stub: always Tier1 (e.g. fast/cheap model)
 let router: AlwaysTier1 = AlwaysTier1;
@@ -148,7 +148,7 @@ You can implement `Router` yourself (e.g. keyword-based or LLM-based) and build 
 
 ```rust
 use std::sync::Arc;
-use rustmastra_core::{
+use openswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::{AnthropicProvider, OpenAiProvider},
     react::{run_agent_with_metrics, ReActAgent},
@@ -156,9 +156,9 @@ use rustmastra_core::{
 };
 
 #[tokio::main]
-async fn main() -> rustmastra_core::Result<()> {
+async fn main() -> openswarm_core::Result<()> {
     let use_openai = std::env::var("USE_OPENAI").is_ok();
-    let provider: Arc<dyn rustmastra_core::providers::ModelProvider> = if use_openai {
+    let provider: Arc<dyn openswarm_core::providers::ModelProvider> = if use_openai {
         Arc::new(OpenAiProvider::from_env()?)
     } else {
         Arc::new(AnthropicProvider::from_env()?)
@@ -182,6 +182,6 @@ async fn main() -> rustmastra_core::Result<()> {
 
 ## 8. Next steps
 
-- Register custom tools: [03-tools](03-tools.md).  
-- Use MCP tools: [04-mcp](04-mcp.md).  
+- Register custom tools: [03-tools](03-tools.md).
+- Use MCP tools: [04-mcp](04-mcp.md).
 - Evaluate runs (SPL, batch): [08-evaluation](08-evaluation.md).

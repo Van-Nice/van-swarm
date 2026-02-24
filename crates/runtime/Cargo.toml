@@ -1,6 +1,6 @@
 [package]
-name        = "rustmastra-runtime"
-description = "Wasmtime-based WASM sandbox runtime for RustMastra tool isolation"
+name        = "openswarm-runtime"
+description = "Wasmtime-based WASM sandbox runtime for OpenSwarm tool isolation"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -14,10 +14,10 @@ wasm      = ["dep:wasmtime", "dep:wasmtime-wasi"]
 # Rhai embedded scripting (§7).
 scripting = ["dep:rhai"]
 # WASM-to-MCP bridge (§6): bind guest mcp/call_tool to host McpClient.
-mcp-bridge = ["dep:rustmastra-mcp"]
+mcp-bridge = ["dep:openswarm-mcp"]
 
 [dependencies]
-rustmastra-core.workspace = true
+openswarm-core.workspace = true
 tokio.workspace           = true
 async-trait.workspace     = true
 serde.workspace           = true
@@ -30,7 +30,7 @@ wasmtime-wasi = { version = "26", optional = true }
 # Rhai embedded scripting engine (§7).
 rhai             = { version = "1", optional = true }
 # MCP client for WASM-to-MCP bridge (§6).
-rustmastra-mcp   = { path = "../mcp", optional = true }
+openswarm-mcp   = { path = "../mcp", optional = true }
 
 [dev-dependencies]
 tokio     = { workspace = true, features = ["test-util"] }

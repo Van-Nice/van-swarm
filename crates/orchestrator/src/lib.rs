@@ -1,6 +1,6 @@
-//! # rustmastra-orchestrator
+//! # openswarm-orchestrator
 //!
-//! Graph-based workflow orchestration engine for the RustMastra agent framework.
+//! Graph-based workflow orchestration engine for the OpenSwarm agent framework.
 //!
 //! ## Alignment Principle (checklist §4.16)
 //!
@@ -33,7 +33,7 @@
 //! ## Quick example
 //!
 //! ```rust,no_run
-//! use rustmastra_orchestrator::{FlowRunner, GraphBuilder, NextAction, NodeKey, Task};
+//! use openswarm_orchestrator::{FlowRunner, GraphBuilder, NextAction, NodeKey, Task};
 //! use async_trait::async_trait;
 //! use serde::{Deserialize, Serialize};
 //! use std::sync::Arc;
@@ -47,7 +47,7 @@
 //! impl Task for ExtractNode {
 //!     type State = PipelineState;
 //!     async fn run(&self, _key: NodeKey, mut s: PipelineState)
-//!         -> rustmastra_core::Result<(PipelineState, NextAction)>
+//!         -> openswarm_core::Result<(PipelineState, NextAction)>
 //!     {
 //!         s.result = "extracted".into();
 //!         Ok((s, NextAction::Continue))
@@ -56,7 +56,7 @@
 //! }
 //!
 //! #[tokio::main]
-//! async fn main() -> rustmastra_core::Result<()> {
+//! async fn main() -> openswarm_core::Result<()> {
 //!     let mut b = GraphBuilder::new();
 //!     let n = b.add_node(ExtractNode);
 //!     b.start(n);
@@ -161,7 +161,7 @@ pub trait Task: Send + Sync {
         &self,
         key: NodeKey,
         state: Self::State,
-    ) -> rustmastra_core::Result<(Self::State, NextAction)>;
+    ) -> openswarm_core::Result<(Self::State, NextAction)>;
 
     /// Human-readable name used in logs and error messages.
     fn name(&self) -> &str;

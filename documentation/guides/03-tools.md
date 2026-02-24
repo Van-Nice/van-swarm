@@ -8,12 +8,12 @@ This guide covers implementing **Tool**, registering tools with **LocalToolRegis
 
 A **Tool** has:
 
-- **definition()** — JSON schema and description the model uses to discover and call the tool.  
+- **definition()** — JSON schema and description the model uses to discover and call the tool.
 - **execute(arguments)** — run the tool with the parsed JSON; return a string (or error) the model can read.
 
 ```rust
 use async_trait::async_trait;
-use rustmastra_core::{
+use openswarm_core::{
     message::ToolDefinition,
     traits::tool::Tool,
 };
@@ -37,7 +37,7 @@ impl Tool for EchoTool {
         }
     }
 
-    async fn execute(&self, arguments: serde_json::Value) -> rustmastra_core::Result<String> {
+    async fn execute(&self, arguments: serde_json::Value) -> openswarm_core::Result<String> {
         let msg = arguments
             .get("message")
             .and_then(|v| v.as_str())
@@ -56,7 +56,7 @@ impl Tool for EchoTool {
 Use **LocalToolRegistry** and pass it to **ReActAgent** as the **ToolExecutor**:
 
 ```rust
-use rustmastra_core::traits::tool::LocalToolRegistry;
+use openswarm_core::traits::tool::LocalToolRegistry;
 
 let executor = LocalToolRegistry::new()
     .register(EchoTool)
@@ -70,16 +70,16 @@ let agent = ReActAgent::new(config, provider, Arc::new(executor));
 
 ## 3. Built-in tools
 
-| Tool | Purpose | Parameters |
-|------|---------|------------|
-| **TimeTool** | Current UTC time (ISO 8601) | None |
-| **ReadFileTool** | Read file under a root path (path traversal rejected) | `path` (relative to root) |
-| **SearchTool** | Stub search (returns a message; use MCP or custom in production) | `query` |
+| Tool             | Purpose                                                          | Parameters                |
+| ---------------- | ---------------------------------------------------------------- | ------------------------- |
+| **TimeTool**     | Current UTC time (ISO 8601)                                      | None                      |
+| **ReadFileTool** | Read file under a root path (path traversal rejected)            | `path` (relative to root) |
+| **SearchTool**   | Stub search (returns a message; use MCP or custom in production) | `query`                   |
 
 Example:
 
 ```rust
-use rustmastra_core::tools::builtin::{ReadFileTool, TimeTool};
+use openswarm_core::tools::builtin::{ReadFileTool, TimeTool};
 
 let executor = LocalToolRegistry::new()
     .register(TimeTool)
@@ -90,20 +90,20 @@ let executor = LocalToolRegistry::new()
 
 ## 4. #[tool] macro
 
-The **rustmastra-macros** crate provides **#[tool]** to derive the schema from your function signature and Rustdoc, and optionally add **examples** for the model.
+The **openswarm-macros** crate provides **#[tool]** to derive the schema from your function signature and Rustdoc, and optionally add **examples** for the model.
 
 Add dependency:
 
 ```toml
-rustmastra-macros = { path = "../macros" }  # or your path
-rustmastra-core = { path = "../core" }
+openswarm-macros = { path = "../macros" }  # or your path
+openswarm-core = { path = "../core" }
 ```
 
 Example:
 
 ```rust
-use rustmastra_core::Result;
-use rustmastra_macros::tool;
+use openswarm_core::Result;
+use openswarm_macros::tool;
 
 /// Multiplies two integers.
 #[tool]
@@ -114,8 +114,8 @@ async fn multiply(a: i64, b: i64) -> Result<String> {
 
 The macro generates a struct and `Tool` impl with:
 
-- **name**: `multiply`  
-- **description**: from the doc comment  
+- **name**: `multiply`
+- **description**: from the doc comment
 - **input_schema**: from parameter types (schemars)
 
 Optional **examples** (for few-shot tool use):
@@ -148,7 +148,7 @@ let executor = LocalToolRegistry::new()
 Wrap another executor and restrict by keyword:
 
 ```rust
-use rustmastra_core::traits::tool::{FilteredToolExecutor, LocalToolRegistry};
+use openswarm_core::traits::tool::{FilteredToolExecutor, LocalToolRegistry};
 
 let base = LocalToolRegistry::new().register(TimeTool).register(ReadFileTool::new("/tmp"));
 let executor = FilteredToolExecutor::new(
@@ -166,7 +166,7 @@ Useful when you have many tools but want to give the agent only a subset per tas
 ```rust
 use async_trait::async_trait;
 use std::sync::Arc;
-use rustmastra_core::{
+use openswarm_core::{
     config::{AgentConfig, ModelConfig},
     message::ToolDefinition,
     providers::AnthropicProvider,
@@ -192,14 +192,14 @@ impl Tool for GreetTool {
         }
     }
 
-    async fn execute(&self, arguments: serde_json::Value) -> rustmastra_core::Result<String> {
+    async fn execute(&self, arguments: serde_json::Value) -> openswarm_core::Result<String> {
         let name = arguments.get("name").and_then(|v| v.as_str()).unwrap_or("World");
         Ok(format!("Hello, {}!", name))
     }
 }
 
 #[tokio::main]
-async fn main() -> rustmastra_core::Result<()> {
+async fn main() -> openswarm_core::Result<()> {
     let provider = AnthropicProvider::from_env()?;
     let executor = LocalToolRegistry::new()
         .register(GreetTool)
@@ -218,5 +218,5 @@ async fn main() -> rustmastra_core::Result<()> {
 
 ## 7. Next steps
 
-- Expose your tools to IDEs via MCP: [04-mcp](04-mcp.md).  
+- Expose your tools to IDEs via MCP: [04-mcp](04-mcp.md).
 - Call external MCP tools from the agent: [04-mcp](04-mcp.md).

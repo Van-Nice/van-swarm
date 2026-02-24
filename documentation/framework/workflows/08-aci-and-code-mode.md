@@ -13,7 +13,7 @@ flowchart LR
         Doc[Rustdoc comments]
     end
 
-    subgraph Macro["rustmastra-macros"]
+    subgraph Macro["openswarm-macros"]
         Schema[JSON schema]
         Wrapper[Type-safe wrapper]
     end
@@ -78,12 +78,12 @@ Keep error payloads small and readable so they fit in context and guide the next
 
 - **Discovery**: The model sees only the tool list and schemas you provide. Give each tool a **distinct purpose** (e.g. `fetch_order_history` vs `cancel_order`) so the model can choose the right one.
 - **One task per tool**: Prefer several focused tools over one “do everything” tool. If a tool does two unrelated things, split it or document clearly when to use which “mode.”
-- **Use tool descriptions**: Put “Use when …” in the description so the model knows *when* to call (e.g. “Use when the user asks for the current time or date” for a `time` tool).
+- **Use tool descriptions**: Put “Use when …” in the description so the model knows _when_ to call (e.g. “Use when the user asks for the current time or date” for a `time` tool).
 - **Handle errors in context**: When a tool returns an error (validation or external), the model sees it as tool output. Document in your ACI that the model should read the error message and retry with corrected inputs or a different tool when appropriate.
 
 ### Thinking time and XML-style tags (§10.10)
 
-Allow the model to **reason before** each tool call so it chooses tools more reliably. Enable with `AgentConfig::with_chain_of_thought()`; the framework appends an instruction that the model should reason inside `<thinking>…</thinking>` tags. Parsing: use `rustmastra_core::extract_xml_blocks(assistant_text, "thinking")` to get a list of thinking segments from the assistant message (e.g. for observability or to strip thinking from the final answer). Other XML-style tags can be parsed the same way for custom protocols.
+Allow the model to **reason before** each tool call so it chooses tools more reliably. Enable with `AgentConfig::with_chain_of_thought()`; the framework appends an instruction that the model should reason inside `<thinking>…</thinking>` tags. Parsing: use `openswarm_core::extract_xml_blocks(assistant_text, "thinking")` to get a list of thinking segments from the assistant message (e.g. for observability or to strip thinking from the final answer). Other XML-style tags can be parsed the same way for custom protocols.
 
 ## JSON Tool Calling vs Code Mode
 

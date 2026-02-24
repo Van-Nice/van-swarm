@@ -35,12 +35,12 @@ Modular crates keep binary size small and compilation fast.
 ```mermaid
 graph LR
     subgraph RustCrates["Rust Crate Structure"]
-        core["rustmastra-core\nRunnable, Agent, Workflow traits\nModel providers"]
-        orch["rustmastra-orchestrator\nGraphBuilder, FlowRunner\nTask trait, TaskResult"]
-        mem["rustmastra-memory\nThree-tier memory API\nQdrant, Redis, pgvector"]
-        mcp["rustmastra-mcp\nMCP client/server\nProgrammatic tool calling"]
-        rt["rustmastra-runtime\nWasmtime sandbox\nFuel + memory limits"]
-        macros["rustmastra-macros\n#\[tool\], #\[workflow\]"]
+        core["openswarm-core\nRunnable, Agent, Workflow traits\nModel providers"]
+        orch["openswarm-orchestrator\nGraphBuilder, FlowRunner\nTask trait, TaskResult"]
+        mem["openswarm-memory\nThree-tier memory API\nQdrant, Redis, pgvector"]
+        mcp["openswarm-mcp\nMCP client/server\nProgrammatic tool calling"]
+        rt["openswarm-runtime\nWasmtime sandbox\nFuel + memory limits"]
+        macros["openswarm-macros\n#\[tool\], #\[workflow\]"]
     end
 
     core --> orch
@@ -76,15 +76,15 @@ flowchart LR
 
 ## Performance Targets
 
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| Cold start | < 10 ms | Enable thousands of isolates per host |
-| Memory per agent | < 5 MB | High density (e.g. 1,500+ per 8GB VPS) |
-| Tool isolation | WASM (Wasmtime) | Capability-gated, no host access |
-| State persistence | Durable execution (Replay) | Resume after crash/migration |
+| Metric            | Target                     | Rationale                              |
+| ----------------- | -------------------------- | -------------------------------------- |
+| Cold start        | < 10 ms                    | Enable thousands of isolates per host  |
+| Memory per agent  | < 5 MB                     | High density (e.g. 1,500+ per 8GB VPS) |
+| Tool isolation    | WASM (Wasmtime)            | Capability-gated, no host access       |
+| State persistence | Durable execution (Replay) | Resume after crash/migration           |
 
 ## References
 
-- *Rust Agent Framework Technical Specification* — Durable execution, graph orchestration, WASM–MCP, memory, convergence.
-- *AI Agent Framework Strategy & PRD* — Architecture diagram, crate layout, platform vs framework.
-- *Rust AI Framework Product Strategy* — RustMastra crate design, Workflow vs Agent, ACI.
+- _Rust Agent Framework Technical Specification_ — Durable execution, graph orchestration, WASM–MCP, memory, convergence.
+- _AI Agent Framework Strategy & PRD_ — Architecture diagram, crate layout, platform vs framework.
+- _Rust AI Framework Product Strategy_ — OpenSwarm crate design, Workflow vs Agent, ACI.

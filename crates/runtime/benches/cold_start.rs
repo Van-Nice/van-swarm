@@ -4,7 +4,7 @@
 //! intended for sub-millisecond invocation after load.
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rustmastra_runtime::{Sandbox, SandboxConfig};
+use openswarm_runtime::{Sandbox, SandboxConfig};
 
 /// Minimal WAT that exports memory, alloc, run_json and returns a fixed JSON result.
 /// Matches the ECHO_WAT in lib.rs tests.

@@ -1,4 +1,4 @@
-# Memory crate (rustmastra-memory)
+# Memory crate (openswarm-memory)
 
 Three-tier cognitive memory subsystem. Currently only **Tier 1 (Episodic)** is implemented as an in-process stub.
 
@@ -32,11 +32,11 @@ flowchart TB
     S1 --> S3
 ```
 
-| Tier | Name     | Storage (target)     | Consolidation (target)   |
-|------|----------|----------------------|---------------------------|
-| 1    | Episodic | Redis / in-memory    | Sliding window / FIFO     |
-| 2    | Mid-term | Disk / summaries     | Heat-based promotion      |
-| 3    | Semantic | Qdrant / pgvector    | Embedding-based RAG       |
+| Tier | Name     | Storage (target)  | Consolidation (target) |
+| ---- | -------- | ----------------- | ---------------------- |
+| 1    | Episodic | Redis / in-memory | Sliding window / FIFO  |
+| 2    | Mid-term | Disk / summaries  | Heat-based promotion   |
+| 3    | Semantic | Qdrant / pgvector | Embedding-based RAG    |
 
 ## Implemented: Memory trait and EpisodicMemory
 
@@ -83,4 +83,4 @@ flowchart LR
     Memory <|.. Episodic
 ```
 
-- Depend on `rustmastra-memory`; construct `EpisodicMemory::new(max_entries)` and use it as `dyn Memory` where the three-tier design will later plug in Tier 2 and Tier 3 implementations.
+- Depend on `openswarm-memory`; construct `EpisodicMemory::new(max_entries)` and use it as `dyn Memory` where the three-tier design will later plug in Tier 2 and Tier 3 implementations.

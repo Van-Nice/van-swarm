@@ -130,9 +130,9 @@ impl FlowRunner {
     pub async fn run(
         &self,
         initial_state: serde_json::Value,
-    ) -> rustmastra_core::Result<RunResult> {
+    ) -> openswarm_core::Result<RunResult> {
         let start = self.graph.start_node().ok_or_else(|| {
-            rustmastra_core::FrameworkError::Graph(
+            openswarm_core::FrameworkError::Graph(
                 "ExecutionGraph has no start node — call GraphBuilder::start()".into(),
             )
         })?;
@@ -171,7 +171,7 @@ impl FlowRunner {
                         .task_of(key)
                         .map(|t| t.name().to_owned())
                         .unwrap_or_else(|| format!("{key:?}"));
-                    return Err(rustmastra_core::FrameworkError::Graph(format!(
+                    return Err(openswarm_core::FrameworkError::Graph(format!(
                         "Node '{name}' exceeded max cycle limit ({})",
                         self.config.max_cycles_per_node
                     )));
@@ -179,7 +179,7 @@ impl FlowRunner {
 
                 total_steps += 1;
                 if total_steps > self.config.max_total_steps {
-                    return Err(rustmastra_core::FrameworkError::Graph(format!(
+                    return Err(openswarm_core::FrameworkError::Graph(format!(
                         "FlowRunner exceeded max total steps ({})",
                         self.config.max_total_steps
                     )));
@@ -189,12 +189,12 @@ impl FlowRunner {
             // ── Spawn all nodes in the batch concurrently ──────────────────
             let mut join_set: JoinSet<(
                 NodeKey,
-                rustmastra_core::Result<(serde_json::Value, NextAction)>,
+                openswarm_core::Result<(serde_json::Value, NextAction)>,
             )> = JoinSet::new();
 
             for &key in &batch {
                 let task = self.graph.task_of(key).ok_or_else(|| {
-                    rustmastra_core::FrameworkError::Graph(format!(
+                    openswarm_core::FrameworkError::Graph(format!(
                         "Node {key:?} has no associated task"
                     ))
                 })?;
@@ -217,7 +217,7 @@ impl FlowRunner {
 
             while let Some(join_result) = join_set.join_next().await {
                 let (key, task_result) = join_result.map_err(|e| {
-                    rustmastra_core::FrameworkError::Graph(format!(
+                    openswarm_core::FrameworkError::Graph(format!(
                         "Task panicked or was cancelled: {e}"
                     ))
                 })?;
@@ -309,7 +309,7 @@ impl FlowRunner {
     pub async fn resume(
         &self,
         checkpoint: GraphCheckpoint,
-    ) -> rustmastra_core::Result<RunResult> {
+    ) -> openswarm_core::Result<RunResult> {
         let mut state = checkpoint.state;
         let mut completed = checkpoint.completed;
         let mut pending_preds = checkpoint.pending_preds;
@@ -331,14 +331,14 @@ impl FlowRunner {
                         .task_of(key)
                         .map(|t| t.name().to_owned())
                         .unwrap_or_else(|| format!("{key:?}"));
-                    return Err(rustmastra_core::FrameworkError::Graph(format!(
+                    return Err(openswarm_core::FrameworkError::Graph(format!(
                         "Node '{name}' exceeded max cycle limit ({})",
                         self.config.max_cycles_per_node
                     )));
                 }
                 total_steps += 1;
                 if total_steps > self.config.max_total_steps {
-                    return Err(rustmastra_core::FrameworkError::Graph(format!(
+                    return Err(openswarm_core::FrameworkError::Graph(format!(
                         "FlowRunner exceeded max total steps ({})",
                         self.config.max_total_steps
                     )));
@@ -347,12 +347,12 @@ impl FlowRunner {
 
             let mut join_set: JoinSet<(
                 NodeKey,
-                rustmastra_core::Result<(serde_json::Value, NextAction)>,
+                openswarm_core::Result<(serde_json::Value, NextAction)>,
             )> = JoinSet::new();
 
             for &key in &batch {
                 let task = self.graph.task_of(key).ok_or_else(|| {
-                    rustmastra_core::FrameworkError::Graph(format!(
+                    openswarm_core::FrameworkError::Graph(format!(
                         "Node {key:?} has no associated task"
                     ))
                 })?;
@@ -369,7 +369,7 @@ impl FlowRunner {
 
             while let Some(join_result) = join_set.join_next().await {
                 let (key, task_result) = join_result.map_err(|e| {
-                    rustmastra_core::FrameworkError::Graph(format!(
+                    openswarm_core::FrameworkError::Graph(format!(
                         "Task panicked or was cancelled: {e}"
                     ))
                 })?;
@@ -586,7 +586,7 @@ mod tests {
             &self,
             _key: NodeKey,
             mut state: Self::State,
-        ) -> rustmastra_core::Result<(Self::State, NextAction)> {
+        ) -> openswarm_core::Result<(Self::State, NextAction)> {
             state.visited.push(self.name.clone());
             Ok((state, self.action.clone()))
         }
@@ -617,7 +617,7 @@ mod tests {
             &self,
             _key: NodeKey,
             mut state: Self::State,
-        ) -> rustmastra_core::Result<(Self::State, NextAction)> {
+        ) -> openswarm_core::Result<(Self::State, NextAction)> {
             state.counter += self.by;
             state.visited.push(self.name.clone());
             Ok((state, NextAction::Continue))
@@ -823,7 +823,7 @@ mod tests {
             &self,
             _key: NodeKey,
             mut state: Self::State,
-        ) -> rustmastra_core::Result<(Self::State, NextAction)> {
+        ) -> openswarm_core::Result<(Self::State, NextAction)> {
             state.visited.push(self.role.clone());
             let action = if state.counter >= self.threshold {
                 NextAction::End

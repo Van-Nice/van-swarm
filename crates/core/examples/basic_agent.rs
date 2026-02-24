@@ -2,13 +2,13 @@
 //!
 //! Run from workspace root:
 //!
-//!   cargo run -p rustmastra-core --example basic_agent
+//!   cargo run -p openswarm-core --example basic_agent
 //!
 //! Set one of: ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY.
 
 use std::sync::Arc;
 
-use rustmastra_core::{
+use openswarm_core::{
     config::{AgentConfig, ModelConfig},
     providers::AnthropicProvider,
     react::{run_agent, ReActAgent},
@@ -16,7 +16,7 @@ use rustmastra_core::{
 };
 
 #[tokio::main]
-async fn main() -> rustmastra_core::Result<()> {
+async fn main() -> openswarm_core::Result<()> {
     let provider = AnthropicProvider::from_env()?;
     let executor = LocalToolRegistry::new();
     let config = AgentConfig::new("basic", ModelConfig::new("claude-sonnet-4-20250514"))

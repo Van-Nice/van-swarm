@@ -1,4 +1,4 @@
-//! # rustmastra-runtime
+//! # openswarm-runtime
 //!
 //! Wasmtime-based WASM sandbox for secure tool isolation.
 //!
@@ -31,7 +31,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use rustmastra_core::FrameworkError;
+use openswarm_core::FrameworkError;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SandboxConfig
@@ -67,7 +67,7 @@ pub struct SandboxConfig {
 /// Wrapper for [`McpClient`] so [`SandboxConfig`] can derive `Debug`. Use with `mcp-bridge` feature.
 #[cfg(feature = "mcp-bridge")]
 #[derive(Clone)]
-pub struct McpClientRef(pub std::sync::Arc<rustmastra_mcp::McpClient>);
+pub struct McpClientRef(pub std::sync::Arc<openswarm_mcp::McpClient>);
 
 #[cfg(feature = "mcp-bridge")]
 impl std::fmt::Debug for McpClientRef {
@@ -123,7 +123,7 @@ impl Sandbox {
     ///
     /// Returns an error if Wasmtime engine initialisation fails (unlikely
     /// under normal conditions).
-    pub fn new(config: SandboxConfig) -> rustmastra_core::Result<Self> {
+    pub fn new(config: SandboxConfig) -> openswarm_core::Result<Self> {
         #[cfg(feature = "wasm")]
         {
             let mut wt_config = wasmtime::Config::new();
@@ -147,7 +147,7 @@ impl Sandbox {
     ///
     /// Compilation is CPU-intensive; prefer calling this once and caching the
     /// returned `CompiledModule`.
-    pub fn compile(&self, wasm_bytes: &[u8]) -> rustmastra_core::Result<CompiledModule> {
+    pub fn compile(&self, wasm_bytes: &[u8]) -> openswarm_core::Result<CompiledModule> {
         #[cfg(feature = "wasm")]
         {
             let module = wasmtime::Module::new(&self.engine, wasm_bytes)
@@ -158,7 +158,7 @@ impl Sandbox {
         }
         #[cfg(not(feature = "wasm"))]
         Err(FrameworkError::Wasm(
-            "rustmastra-runtime compiled without 'wasm' feature".into(),
+            "openswarm-runtime compiled without 'wasm' feature".into(),
         ))
     }
 
@@ -172,7 +172,7 @@ impl Sandbox {
     ///
     /// AOT bytes are engine-version- and platform-specific.  They must only
     /// be deserialized by an engine with the **same** configuration.
-    pub fn serialize_aot(&self, module: &CompiledModule) -> rustmastra_core::Result<Vec<u8>> {
+    pub fn serialize_aot(&self, module: &CompiledModule) -> openswarm_core::Result<Vec<u8>> {
         #[cfg(feature = "wasm")]
         {
             module
@@ -184,7 +184,7 @@ impl Sandbox {
         {
             let _ = module;
             Err(FrameworkError::Wasm(
-                "rustmastra-runtime compiled without 'wasm' feature".into(),
+                "openswarm-runtime compiled without 'wasm' feature".into(),
             ))
         }
     }
@@ -199,7 +199,7 @@ impl Sandbox {
     pub unsafe fn load_aot(
         &self,
         aot_bytes: &[u8],
-    ) -> rustmastra_core::Result<CompiledModule> {
+    ) -> openswarm_core::Result<CompiledModule> {
         #[cfg(feature = "wasm")]
         {
             // SAFETY: caller guarantees bytes came from a compatible engine.
@@ -213,7 +213,7 @@ impl Sandbox {
         {
             let _ = aot_bytes;
             Err(FrameworkError::Wasm(
-                "rustmastra-runtime compiled without 'wasm' feature".into(),
+                "openswarm-runtime compiled without 'wasm' feature".into(),
             ))
         }
     }
@@ -226,7 +226,7 @@ impl Sandbox {
         &self,
         wasm_bytes: &[u8],
         params: serde_json::Value,
-    ) -> rustmastra_core::Result<serde_json::Value> {
+    ) -> openswarm_core::Result<serde_json::Value> {
         let module = self.compile(wasm_bytes)?;
         self.run_compiled(&module, params).await
     }
@@ -238,7 +238,7 @@ impl Sandbox {
         &self,
         wasm_bytes: &[u8],
         params: serde_json::Value,
-    ) -> rustmastra_core::Result<serde_json::Value> {
+    ) -> openswarm_core::Result<serde_json::Value> {
         self.run(wasm_bytes, params).await
     }
 
@@ -250,7 +250,7 @@ impl Sandbox {
         &self,
         module: &CompiledModule,
         params: serde_json::Value,
-    ) -> rustmastra_core::Result<serde_json::Value> {
+    ) -> openswarm_core::Result<serde_json::Value> {
         #[cfg(feature = "wasm")]
         {
             let engine = self.engine.clone();
@@ -277,7 +277,7 @@ impl Sandbox {
         {
             let _ = (module, params);
             Err(FrameworkError::Wasm(
-                "rustmastra-runtime compiled without 'wasm' feature".into(),
+                "openswarm-runtime compiled without 'wasm' feature".into(),
             ))
         }
     }
@@ -320,7 +320,7 @@ fn execute_module_sync(
     module: &wasmtime::Module,
     config: &SandboxConfig,
     params: &serde_json::Value,
-) -> rustmastra_core::Result<serde_json::Value> {
+) -> openswarm_core::Result<serde_json::Value> {
     use wasmtime::{Linker, Store};
 
     let data = StoreData {
@@ -361,7 +361,7 @@ fn run_json_and_decode(
     store: &mut wasmtime::Store<StoreData>,
     instance: &wasmtime::Instance,
     params: &serde_json::Value,
-) -> rustmastra_core::Result<serde_json::Value> {
+) -> openswarm_core::Result<serde_json::Value> {
     let memory = instance.get_memory(&mut *store, "memory").ok_or_else(|| {
         FrameworkError::Wasm("Module must export 'memory'".into())
     })?;
@@ -425,7 +425,7 @@ fn execute_module_sync(
     module: &wasmtime::Module,
     config: &SandboxConfig,
     params: &serde_json::Value,
-) -> rustmastra_core::Result<serde_json::Value> {
+) -> openswarm_core::Result<serde_json::Value> {
     execute_module_sync_with_mcp(
         engine,
         module,
@@ -444,7 +444,7 @@ fn execute_module_sync_with_mcp(
     params: &serde_json::Value,
     tokio_handle: tokio::runtime::Handle,
     mcp_client: Option<McpClientRef>,
-) -> rustmastra_core::Result<serde_json::Value> {
+) -> openswarm_core::Result<serde_json::Value> {
     use wasmtime::{Caller, Linker, Store};
 
     let data = StoreData {
@@ -550,7 +550,7 @@ struct StoreData {
     limiter: WasmLimiter,
     wasi: wasmtime_wasi::preview1::WasiP1Ctx,
     #[cfg(feature = "mcp-bridge")]
-    mcp_client: Option<std::sync::Arc<rustmastra_mcp::McpClient>>,
+    mcp_client: Option<std::sync::Arc<openswarm_mcp::McpClient>>,
     #[cfg(feature = "mcp-bridge")]
     tokio_handle: Option<tokio::runtime::Handle>,
 }
@@ -748,8 +748,8 @@ mod tests {
         use std::sync::Arc;
 
         use async_trait::async_trait;
-        use rustmastra_core::{ContentBlock, ToolDefinition, ToolExecutor};
-        use rustmastra_mcp::{McpClient, McpServer};
+        use openswarm_core::{ContentBlock, ToolDefinition, ToolExecutor};
+        use openswarm_mcp::{McpClient, McpServer};
 
         use super::super::*;
 

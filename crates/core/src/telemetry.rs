@@ -224,7 +224,7 @@ pub fn default_pricing() -> Vec<ModelPricing> {
 ///
 /// # Example
 /// ```
-/// use rustmastra_core::telemetry::ContextMeter;
+/// use openswarm_core::telemetry::ContextMeter;
 ///
 /// let mut m = ContextMeter::new(200_000); // 200K token limit
 /// m.record(5_000);
@@ -544,7 +544,7 @@ impl TraceStore for InMemoryTraceStore {
 ///
 /// # Example
 /// ```
-/// use rustmastra_core::telemetry::SamplingFilter;
+/// use openswarm_core::telemetry::SamplingFilter;
 ///
 /// let filter = SamplingFilter::new(0.1); // 10 % of traffic
 /// if filter.should_sample() {

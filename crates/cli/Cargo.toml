@@ -1,14 +1,14 @@
 [package]
-name = "rustmastra-cli"
+name = "openswarm-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "CLI for scaffolding RustMastra agent projects"
+description = "CLI for scaffolding OpenSwarm agent projects"
 
 [[bin]]
-name = "rustmastra"
+name = "openswarm"
 path = "src/main.rs"
 
 [dependencies]

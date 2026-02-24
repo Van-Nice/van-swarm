@@ -15,7 +15,7 @@
 /// winner encountered (stable across equal counts).
 ///
 /// ```
-/// use rustmastra_orchestrator::patterns::majority_vote;
+/// use openswarm_orchestrator::patterns::majority_vote;
 /// let candidates = vec!["Paris", "Paris", "Berlin"];
 /// assert_eq!(majority_vote(&candidates), Some("Paris"));
 /// ```
@@ -42,7 +42,7 @@ pub fn majority_vote<'a>(candidates: &'a [&'a str]) -> Option<&'a str> {
 /// Returns `None` if `candidates` is empty.
 ///
 /// ```
-/// use rustmastra_orchestrator::patterns::majority_vote_owned;
+/// use openswarm_orchestrator::patterns::majority_vote_owned;
 /// let candidates = vec!["Paris".to_string(), "Paris".to_string(), "Berlin".to_string()];
 /// assert_eq!(majority_vote_owned(&candidates).as_deref(), Some("Paris"));
 /// ```
@@ -80,7 +80,7 @@ fn jaccard_similarity(a: &str, b: &str) -> f64 {
 /// Returns `None` if `candidates` is empty.
 ///
 /// ```
-/// use rustmastra_orchestrator::patterns::similarity_vote;
+/// use openswarm_orchestrator::patterns::similarity_vote;
 /// let candidates = vec![
 ///     "The Eiffel Tower is in Paris, France",
 ///     "The Eiffel Tower is located in Paris",

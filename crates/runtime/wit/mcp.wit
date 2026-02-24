@@ -2,7 +2,7 @@
 // Guest modules that import this can call MCP tools via the host.
 // The host linker binds these when SandboxConfig::allow_mcp is true.
 
-package rustmastra:runtime;
+package openswarm:runtime;
 
 interface mcp {
   // Invoke an MCP tool by name with JSON params.

@@ -1,4 +1,4 @@
-# Core crate (rustmastra-core)
+# Core crate (openswarm-core)
 
 The core crate provides traits, configuration, messages, model providers, the ReAct agent loop, log-centric durable execution, **supervisor** (Router / Route), **evaluators** (Scorer, SPL, batch evals), and **tools** (built-in tools).
 
@@ -6,7 +6,7 @@ The core crate provides traits, configuration, messages, model providers, the Re
 
 ```mermaid
 flowchart TD
-  rustmastra_core["rustmastra-core"]
+  openswarm_core["openswarm-core"]
   config["config"]
   durable["durable"]
   error["error"]
@@ -17,16 +17,16 @@ flowchart TD
   supervisor["supervisor"]
   traits["traits"]
   tools["tools"]
-  rustmastra_core --> config
-  rustmastra_core --> durable
-  rustmastra_core --> error
-  rustmastra_core --> evaluators
-  rustmastra_core --> message
-  rustmastra_core --> providers
-  rustmastra_core --> react
-  rustmastra_core --> supervisor
-  rustmastra_core --> traits
-  rustmastra_core --> tools
+  openswarm_core --> config
+  openswarm_core --> durable
+  openswarm_core --> error
+  openswarm_core --> evaluators
+  openswarm_core --> message
+  openswarm_core --> providers
+  openswarm_core --> react
+  openswarm_core --> supervisor
+  openswarm_core --> traits
+  openswarm_core --> tools
 ```
 
 - **evaluators** — Scorer trait, ScoreInput/ScoreResult, batch_score, SPL (SplRun, spl), BenchmarkTask, NonEmptyScorer, ContainsScorer.
@@ -53,13 +53,13 @@ flowchart TB
     ToolExecutor --> execute["execute()"]
 ```
 
-| Trait | Purpose | Used by |
-|-------|---------|--------|
-| `Runnable` | Base for runnable components | `Agent`, `Workflow` |
-| `Agent` | Probabilistic, model-driven; maintains message history and calls LLM each step | `ReActAgent` |
-| `Workflow` | Deterministic; steps are explicit | Orchestrator / durable workflows |
-| `Tool` | Single tool: `definition()` + `execute(arguments)` | Boxed in `LocalToolRegistry` |
-| `ToolExecutor` | Registry: `tool_definitions()` + `execute(name, id, args)` | `ReActAgent`, `McpServer` |
+| Trait          | Purpose                                                                        | Used by                          |
+| -------------- | ------------------------------------------------------------------------------ | -------------------------------- |
+| `Runnable`     | Base for runnable components                                                   | `Agent`, `Workflow`              |
+| `Agent`        | Probabilistic, model-driven; maintains message history and calls LLM each step | `ReActAgent`                     |
+| `Workflow`     | Deterministic; steps are explicit                                              | Orchestrator / durable workflows |
+| `Tool`         | Single tool: `definition()` + `execute(arguments)`                             | Boxed in `LocalToolRegistry`     |
+| `ToolExecutor` | Registry: `tool_definitions()` + `execute(name, id, args)`                     | `ReActAgent`, `McpServer`        |
 
 ## ReAct loop
 
@@ -243,10 +243,10 @@ flowchart LR
     Route --> T3[Tier3: frontier]
 ```
 
-| Type | Purpose |
-|------|---------|
-| `Route` | Enum: `Tier1`, `Tier2`, `Tier3` (§11.2–11.4). |
-| `Router` | Async trait: `route(&self, input: &str) -> Result<Route>`. |
+| Type          | Purpose                                                       |
+| ------------- | ------------------------------------------------------------- |
+| `Route`       | Enum: `Tier1`, `Tier2`, `Tier3` (§11.2–11.4).                 |
+| `Router`      | Async trait: `route(&self, input: &str) -> Result<Route>`.    |
 | `AlwaysTier1` | Stub impl that always returns `Tier1` (tests / single-model). |
 
 ## Evaluators and SPL (§12, §11.6–11.7)

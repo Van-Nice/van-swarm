@@ -1,6 +1,6 @@
 [package]
-name        = "rustmastra-mcp-server"
-description = "MCP server exposing RustMastra agent-framework capabilities over stdio"
+name        = "openswarm-mcp-server"
+description = "MCP server exposing OpenSwarm agent-framework capabilities over stdio"
 version.workspace    = true
 edition.workspace    = true
 license.workspace    = true
@@ -8,12 +8,12 @@ repository.workspace = true
 authors.workspace    = true
 
 [[bin]]
-name = "rustmastra-mcp-server"
+name = "openswarm-mcp-server"
 path = "src/main.rs"
 
 [dependencies]
-rustmastra-core.workspace    = true
-rustmastra-memory.workspace  = true
+openswarm-core.workspace    = true
+openswarm-memory.workspace  = true
 
 # MCP protocol — same SDK as rust-mcp.
 # Features: server handler, stdio transport, proc-macro helpers, schemars integration.

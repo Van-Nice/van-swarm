@@ -1,33 +1,33 @@
-# RustMastra — High-Performance Rust AI Agent Framework
+# OpenSwarm — High-Performance Rust AI Agent Framework
 
 > **Status:** Active development — Phase 1 (foundations) in progress.
 
 A production-grade Rust framework for building autonomous AI agents,
-deterministic workflows, and multi-agent swarms.  Inspired by Mastra.ai's
+deterministic workflows, and multi-agent swarms. Inspired by Mastra.ai's
 developer experience, rebuilt on Rust's zero-cost abstractions and fearless
 concurrency.
 
 ## Why Rust?
 
-| Metric               | RustMastra      | TypeScript (Node) | Python (CPython) |
-|----------------------|-----------------|-------------------|------------------|
-| Cold start           | **<10 ms**      | >100 ms           | >500 ms          |
-| Memory per agent     | **<5 MB**       | ~200 MB           | ~500 MB          |
-| Isolates / 8 GB VPS  | **1,500+**      | ~100              | ~20              |
-| Concurrency model    | Async/Tokio     | Event loop        | GIL-limited      |
-| Memory management    | Ownership (no GC)| GC               | GC               |
+| Metric              | OpenSwarm         | TypeScript (Node) | Python (CPython) |
+| ------------------- | ----------------- | ----------------- | ---------------- |
+| Cold start          | **<10 ms**        | >100 ms           | >500 ms          |
+| Memory per agent    | **<5 MB**         | ~200 MB           | ~500 MB          |
+| Isolates / 8 GB VPS | **1,500+**        | ~100              | ~20              |
+| Concurrency model   | Async/Tokio       | Event loop        | GIL-limited      |
+| Memory management   | Ownership (no GC) | GC                | GC               |
 
 ## Crate map
 
 ```
 rust-agent-framework/
 ├── crates/
-│   ├── core/          rustmastra-core       – traits, providers, ReAct loop
-│   ├── orchestrator/  rustmastra-orchestrator – graph engine (§4)
-│   ├── memory/        rustmastra-memory      – three-tier memory (§8)
-│   ├── mcp/           rustmastra-mcp         – Model Context Protocol (§9)
-│   ├── runtime/       rustmastra-runtime     – WASM sandbox (§5)
-│   └── macros/        rustmastra-macros      – #[tool], #[workflow] (§3,§10)
+│   ├── core/          openswarm-core       – traits, providers, ReAct loop
+│   ├── orchestrator/  openswarm-orchestrator – graph engine (§4)
+│   ├── memory/        openswarm-memory      – three-tier memory (§8)
+│   ├── mcp/           openswarm-mcp         – Model Context Protocol (§9)
+│   ├── runtime/       openswarm-runtime     – WASM sandbox (§5)
+│   └── macros/        openswarm-macros      – #[tool], #[workflow] (§3,§10)
 ```
 
 ## Core concepts
@@ -83,20 +83,20 @@ let executor = LocalToolRegistry::new()
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-cargo run -p rustmastra-core --example basic_agent
+cargo run -p openswarm-core --example basic_agent
 ```
 
 ## Checklist progress
 
-- [x] §1  Project & workspace setup
-- [x] §2  Core runtime (traits, providers, ReAct loop)
-- [ ] §3  Durable execution (journal, `#[workflow]`)
-- [ ] §4  Graph orchestration (petgraph + slotmap)
-- [ ] §5  WASM sandbox (wasmtime)
-- [ ] §6  WASM-to-MCP bridge
-- [ ] §7  Embedded scripting (Rhai)
-- [ ] §8  Three-tier memory (Redis / Qdrant)
-- [ ] §9  Model Context Protocol client/server
+- [x] §1 Project & workspace setup
+- [x] §2 Core runtime (traits, providers, ReAct loop)
+- [ ] §3 Durable execution (journal, `#[workflow]`)
+- [ ] §4 Graph orchestration (petgraph + slotmap)
+- [ ] §5 WASM sandbox (wasmtime)
+- [ ] §6 WASM-to-MCP bridge
+- [ ] §7 Embedded scripting (Rhai)
+- [ ] §8 Three-tier memory (Redis / Qdrant)
+- [ ] §9 Model Context Protocol client/server
 - [ ] §10 `#[tool]` macro + ACI
 - [ ] §11–§25 Supervisor, observability, platform, enterprise …
 

@@ -1,20 +1,20 @@
 # Workflow vs Agent — when to use which (§15.9)
 
-Two fundamental execution models exist in RustMastra: **Workflows** (deterministic) and **Agents** (probabilistic). Choosing the right one for a task is one of the most impactful architectural decisions you will make.
+Two fundamental execution models exist in OpenSwarm: **Workflows** (deterministic) and **Agents** (probabilistic). Choosing the right one for a task is one of the most impactful architectural decisions you will make.
 
 ---
 
 ## 1. The key distinction
 
-| Property | Workflow (`Task` + `FlowRunner`) | Agent (`ReActAgent`) |
-|---|---|---|
-| **Execution path** | Fixed, coded in the graph | Chosen at runtime by the model |
-| **Determinism** | Yes — given the same inputs the same code runs | No — model may pick different tools or stop earlier |
-| **Debuggability** | High — you can inspect every edge and state transition | Low — you must inspect the full trace to understand decisions |
-| **Cost** | Lower — one LLM call per node that needs it | Higher — multiple rounds of inference |
-| **Flexibility** | Lower — you must anticipate all branches | Higher — model adapts to novel inputs |
-| **Auditability** | Excellent — every step is a journal entry | Good — full transcript stored, but reasoning is implicit |
-| **Durable replay** | Full support via `DurableContext` | Supported but replay only replays tool calls, not model choices |
+| Property           | Workflow (`Task` + `FlowRunner`)                       | Agent (`ReActAgent`)                                            |
+| ------------------ | ------------------------------------------------------ | --------------------------------------------------------------- |
+| **Execution path** | Fixed, coded in the graph                              | Chosen at runtime by the model                                  |
+| **Determinism**    | Yes — given the same inputs the same code runs         | No — model may pick different tools or stop earlier             |
+| **Debuggability**  | High — you can inspect every edge and state transition | Low — you must inspect the full trace to understand decisions   |
+| **Cost**           | Lower — one LLM call per node that needs it            | Higher — multiple rounds of inference                           |
+| **Flexibility**    | Lower — you must anticipate all branches               | Higher — model adapts to novel inputs                           |
+| **Auditability**   | Excellent — every step is a journal entry              | Good — full transcript stored, but reasoning is implicit        |
+| **Durable replay** | Full support via `DurableContext`                      | Supported but replay only replays tool calls, not model choices |
 
 ---
 
@@ -82,7 +82,7 @@ Workflow graph:
 
 The outer Workflow guarantees the sequence (ingest → enrich → store) and handles durability. The inner Agent handles the open-ended enrichment step using whatever tools it needs.
 
-RustMastra's `Task` trait makes this pattern natural — any node can internally call `run_agent`:
+OpenSwarm's `Task` trait makes this pattern natural — any node can internally call `run_agent`:
 
 ```rust
 struct EnrichNode {
@@ -139,10 +139,10 @@ When evaluating agents with SPL (§11.6), the **optimal path length** (`L_opt`) 
 
 ## Summary
 
-| Use Workflow when... | Use Agent when... |
-|---|---|
-| Steps are predetermined | Steps are unknown upfront |
-| Compliance/audit is critical | Flexibility is more important |
-| Cost is a hard constraint | Open-ended exploration is needed |
-| Durable replay required | Novel inputs expected |
-| Parallelism is explicit | Tool order depends on observations |
+| Use Workflow when...         | Use Agent when...                  |
+| ---------------------------- | ---------------------------------- |
+| Steps are predetermined      | Steps are unknown upfront          |
+| Compliance/audit is critical | Flexibility is more important      |
+| Cost is a hard constraint    | Open-ended exploration is needed   |
+| Durable replay required      | Novel inputs expected              |
+| Parallelism is explicit      | Tool order depends on observations |
